@@ -27,10 +27,3 @@ export function parseTags(tagFields: string[]): Record<string, string> {
   }
   return tags;
 }
-
-/**
- * Format a number with locale-specific separators
- */
-export function formatNumber(n: number): string {
-  return n.toLocaleString();
-}

@@ -207,22 +207,6 @@ export const FIXTURES: Record<string, FixtureInfo> = {
     description: 'GFA assembly graph',
   },
 
-  // Quantification files
-  'htseq-counts': {
-    path: 'htseq_counts.txt',
-    languageId: 'omics-htseq',
-    description: 'HTSeq count file',
-  },
-  'salmon-quant': {
-    path: 'salmon_quant.sf',
-    languageId: 'omics-salmon',
-    description: 'Salmon quantification file',
-  },
-  'kallisto-abundance': {
-    path: 'kallisto_abundance.tsv',
-    languageId: 'omics-kallisto',
-    description: 'Kallisto abundance file',
-  },
 };
 
 /**
@@ -236,16 +220,3 @@ export function getFixturePath(fixtureId: string): string {
   return path.join(FIXTURES_DIR, fixture.path);
 }
 
-/**
- * Get all fixtures for a given language ID
- */
-export function getFixturesForLanguage(languageId: string): FixtureInfo[] {
-  return Object.values(FIXTURES).filter((f) => f.languageId === languageId);
-}
-
-/**
- * Get all available fixture IDs
- */
-export function getAllFixtureIds(): string[] {
-  return Object.keys(FIXTURES);
-}
