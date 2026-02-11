@@ -299,7 +299,7 @@ function parseAllelicDepth(raw: string, ctx: FormatRecordContext): ParsedAD {
   const values = parseIntegerArray(raw);
   const refDepth = values.length > 0 ? values[0] : null;
   const altDepths = values.slice(1);
-  const total = values.reduce((sum, v) => sum + (v ?? 0), 0);
+  const total = values.reduce((sum: number, v) => sum + (v ?? 0), 0);
 
   return {
     values,

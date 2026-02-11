@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { VirtualTable, ColumnDefinition } from './VirtualTable';
+import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 
@@ -80,7 +80,7 @@ export function SamPreview({ metadata, rows, loadedLineCount, onRequestRows }: S
 
   // Parse rows
   const { parsedRows, references, headerLines } = useMemo(() => {
-    const parsed: (Record<string, string> & {
+    const parsed: (TableRow & {
       _tags: Record<string, { type: string; value: string }>;
       _flagBits: string[];
       _flagNum: number;
