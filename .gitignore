@@ -34,6 +34,12 @@ coverage/
 *.log
 npm-debug.log*
 
+# Documents
+*.docx
+CLAUDE.md
+SPEC.md
+TODO.md
+
 # Temp files
 *.tmp
 *.temp

@@ -3,17 +3,17 @@
   "displayName": "BioFmt",
   "description": "View and validate genomics, transcriptomics, and proteomics text formats with syntax highlighting, LSP features, and high-performance previews",
   "version": "0.1.0",
-  "publisher": "biofmt",
+  "publisher": "jfan",
   "license": "GPL-3.0",
   "icon": "images/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/biofmt/biofmt"
+    "url": "https://github.com/zhemingfan/BioFmt"
   },
   "bugs": {
-    "url": "https://github.com/biofmt/biofmt/issues"
+    "url": "https://github.com/zhemingfan/BioFmt/issues"
   },
-  "homepage": "https://github.com/biofmt/biofmt#readme",
+  "homepage": "https://github.com/zhemingfan/BioFmt#readme",
   "engines": {
     "vscode": "^1.85.0"
   },

@@ -2,41 +2,46 @@
 
 **High-fidelity viewer for bioinformatics file formats in VS Code**
 
-BioFmt provides syntax highlighting, intelligent hover tooltips, real-time validation, and previews for genomics, transcriptomics, and proteomics file formats.
+BioFmt provides syntax highlighting, intelligent hover tooltips, real-time validation, and interactive previews for 25 genomics, transcriptomics, and proteomics file formats.
 
 ## Features
 
-### VCF (Variant Call Format)
+- **Syntax highlighting** via TextMate grammars for all 25 formats
+- **LSP-powered diagnostics** with viewport-aware validation (~500 lines around cursor)
+- **Hover tooltips** for VCF INFO/FORMAT field definitions from file headers
+- **Interactive previews** with virtualized tables handling 200K+ rows, resizable columns, text search, and TSV export
+- **Automatic format detection** via file extension and `firstLine` content matching
 
-- **Rich syntax highlighting** with distinct colors for CHROM, POS, REF, ALT, QUAL, FILTER, INFO, and FORMAT fields
-- **Intelligent hover** showing INFO/FORMAT field descriptions from VCF header
-- **Real-time validation** detecting malformed lines, invalid QUAL values, and column count mismatches
-- **Interactive preview** with:
-  - Virtualized table handling 200K+ variants
-  - Color-coded INFO and FORMAT fields
-  - Expandable row details
-  - Filter by chromosome, quality, or INFO fields
-  - Sample column limiting (10 by default, expandable)
-
-### Additional Formats
-
-BioFmt also supports:
+## Supported Formats
 
 | Format | Highlighting | Validation | Preview |
-|--------|-------------|------------|---------|
-| SAM    | Yes | Yes | Table |
-| BED    | Yes | Yes | Table |
-| BEDPE  | Yes | Yes | Table |
-| GTF/GFF3 | Yes | Yes | Table |
-| PSL    | Yes | Yes | Table |
-| PAF    | Yes | Yes | Table |
-| WIG/bedGraph | Yes | Yes | Track Plot |
-| MAF (alignment) | Yes | - | Block View |
-| MAF (mutation) | Yes | - | Table |
-| GenBank | Yes | - | Outline |
-| MTX    | Yes | - | Sparse Matrix |
-| mzTab  | Yes | - | Table |
-| MGF    | Yes | - | Spectrum Plot |
+|--------|:-----------:|:----------:|---------|
+| VCF | Yes | Yes | Interactive table with sample data, genotype coloring, expandable rows |
+| SAM | Yes | Yes | Alignment table with FLAG decoding, optional tag expansion |
+| BED | Yes | Yes | Table with chromosome filter |
+| BEDPE | Yes | Yes | Paired-end table with chromosome filter |
+| GTF | Yes | Yes | Annotation table with feature/source filter, attribute expansion |
+| GFF3 | Yes | Yes | Annotation table with feature/source filter, attribute expansion |
+| PSL | Yes | Yes | Alignment table with block visualization |
+| PAF | Yes | Yes | Alignment table with tag expansion |
+| MAF (alignment) | Yes | - | Multi-alignment block view with nucleotide coloring |
+| MAF (mutation) | Yes | - | Mutation table |
+| WIG | Yes | Yes | Track plot with downsampling |
+| bedGraph | Yes | Yes | Track plot with downsampling |
+| narrowPeak | Yes | Yes | Peak table |
+| broadPeak | Yes | Yes | Peak table |
+| GenBank | Yes | - | Feature outline |
+| MTX | Yes | - | Sparse matrix view |
+| mzTab | Yes | - | Section-tabbed table |
+| MGF | Yes | - | Spectrum list |
+| Chain | Yes | - | Chain table with expandable alignment blocks |
+| Net | Yes | - | Hierarchical fill/gap tree view |
+| GFA | Yes | - | Tabbed view (Segments, Links, Paths, Header) |
+| PED | Yes | - | Table |
+| MAP | Yes | - | Table |
+| GCT | Yes | - | Table |
+
+All preview tables support **text search** and **TSV export**.
 
 ## Installation
 
@@ -49,13 +54,11 @@ BioFmt also supports:
 
 ### Open a File
 
-Simply open any supported file format (`.vcf`, `.sam`, `.bed`, etc.). BioFmt automatically activates based on file extension.
+Open any supported file format (`.vcf`, `.sam`, `.bed`, etc.). BioFmt automatically activates based on file extension or first-line content.
 
 ### Open Preview
 
-Click the preview icon in the editor title bar, or:
-- Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-- Type "BioFmt: Open Preview"
+Click the preview icon in the editor title bar, or use the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and type **BioFmt: Open Preview**.
 
 ### Hover for Field Info
 
@@ -65,11 +68,13 @@ In VCF files, hover over INFO or FORMAT field keys to see their definitions from
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `biofmt.preview.maxLines` | 200000 | Maximum lines to load in preview |
-| `biofmt.preview.sampleColumnLimit` | 10 | VCF samples shown initially |
-| `biofmt.validation.level` | "basic" | Validation strictness (off/basic/strict) |
-| `biofmt.validation.maxDiagnostics` | 2000 | Maximum diagnostics per file |
-
+| `biofmt.preview.maxLines` | 200,000 | Maximum lines to load in preview |
+| `biofmt.preview.maxBytes` | 50 MB | Maximum file size for preview |
+| `biofmt.preview.downsampleLimit` | 200,000 | Max points in track plots before downsampling |
+| `biofmt.preview.sampleColumnLimit` | 10 | VCF sample columns shown initially |
+| `biofmt.validation.level` | `basic` | Validation strictness (`off` / `basic` / `strict`) |
+| `biofmt.validation.maxDiagnostics` | 2,000 | Maximum diagnostics per file |
+| `biofmt.lsp.viewportBufferLines` | 500 | Lines around cursor to validate |
 
 ## Requirements
 
@@ -77,11 +82,7 @@ In VCF files, hover over INFO or FORMAT field keys to see their definitions from
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Issues and pull requests welcome at [GitHub](https://github.com/biofmt/biofmt).
+GPL-3.0 License - see [LICENSE](LICENSE.txt) for details.
 
 ## Release Notes
 

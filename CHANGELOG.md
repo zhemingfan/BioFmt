@@ -42,7 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MTX (Matrix Market): Syntax highlighting, sparse matrix preview
 - mzTab: Syntax highlighting, table preview
 - MGF: Syntax highlighting, spectrum plot preview
-- Chain/Net/GFA: Syntax highlighting, generic preview
+- Chain: Syntax highlighting, chain table with expandable alignment blocks
+- Net: Syntax highlighting, hierarchical fill/gap tree view
+- GFA: Syntax highlighting, tabbed view (Segments, Links, Paths, Header)
 
 #### Core Features
 - Single LSP server handling all formats
@@ -51,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - react-window virtualization for preview performance
 - VS Code theme integration (respects light/dark/high-contrast)
 - Commands: Open Preview, Copy Row as TSV, Copy Cell as JSON
+- Text search filtering across all preview tables
+- TSV export for all preview tables
+- Resizable columns in all preview tables
 
 ### Performance Targets Met
 - Header parse: <50ms
