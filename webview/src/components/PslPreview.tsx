@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { VirtualTable, ColumnDefinition } from './VirtualTable';
+import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 
@@ -48,7 +48,7 @@ export function PslPreview({ metadata, rows, loadedLineCount, onRequestRows }: P
 
   // Parse rows
   const { parsedRows, queries, targets, hasHeader } = useMemo(() => {
-    const parsed: (Record<string, string> & {
+    const parsed: (TableRow & {
       _blockSizes: number[];
       _qStarts: number[];
       _tStarts: number[];

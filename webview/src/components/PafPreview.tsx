@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { VirtualTable, ColumnDefinition } from './VirtualTable';
+import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 import { parseTags } from '../utils';
@@ -36,7 +36,7 @@ export function PafPreview({ metadata, rows, loadedLineCount, onRequestRows }: P
 
   // Parse rows
   const { parsedRows, queries, targets } = useMemo(() => {
-    const parsed: (Record<string, string> & { _tags: Record<string, string> })[] = [];
+    const parsed: (TableRow & { _tags: Record<string, string> })[] = [];
     const querySet = new Set<string>();
     const targetSet = new Set<string>();
 

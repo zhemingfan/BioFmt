@@ -3,23 +3,27 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+// Row type allows string columns plus extra parsed metadata (prefixed with _)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TableRow = Record<string, any>;
+
 export interface ColumnDefinition {
   key: string;
   label: string;
   width?: number;
   minWidth?: number;
   maxWidth?: number;
-  render?: (value: string, row: Record<string, string>, rowIndex: number) => React.ReactNode;
+  render?: (value: string, row: TableRow, rowIndex: number) => React.ReactNode;
 }
 
 export interface VirtualTableProps {
   columns: ColumnDefinition[];
-  rows: Record<string, string>[];
+  rows: TableRow[];
   rowHeight?: number;
   headerHeight?: number;
-  onRowClick?: (row: Record<string, string>, index: number) => void;
+  onRowClick?: (row: TableRow, index: number) => void;
   expandedRow?: number | null;
-  renderExpandedContent?: (row: Record<string, string>, index: number) => React.ReactNode;
+  renderExpandedContent?: (row: TableRow, index: number) => React.ReactNode;
   onScroll?: (scrollInfo: { scrollOffset: number }) => void;
   className?: string;
 }

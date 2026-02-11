@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { VirtualTable, ColumnDefinition } from './VirtualTable';
+import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 
@@ -57,7 +57,7 @@ export function GtfGffPreview({ metadata, rows, loadedLineCount, onRequestRows }
 
   // Parse rows
   const { parsedRows, features, sources } = useMemo(() => {
-    const parsed: (Record<string, string> & { _parsedAttrs: Record<string, string> })[] = [];
+    const parsed: (TableRow & { _parsedAttrs: Record<string, string> })[] = [];
     const featureSet = new Set<string>();
     const sourceSet = new Set<string>();
 
