@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "bedGraph",
+  "scopeName": "source.bedgraph",
+  "patterns": [
+    { "include": "#track-line" },
+    { "include": "#browser-line" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "track-line": {
+      "match": "^(track)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.track.bedgraph" },
+        "2": { "name": "meta.track.attributes.bedgraph" }
+      }
+    },
+    "browser-line": {
+      "match": "^(browser)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.browser.bedgraph" },
+        "2": { "name": "meta.browser.attributes.bedgraph" }
+      }
+    },
+    "data-line": {
+      "match": "^([^\\t\\s]+)[\\t\\s]+([0-9]+)[\\t\\s]+([0-9]+)[\\t\\s]+([0-9.eE+-]+)$",
+      "captures": {
+        "1": { "name": "string.unquoted.chrom.bedgraph" },
+        "2": { "name": "constant.numeric.start.bedgraph" },
+        "3": { "name": "constant.numeric.end.bedgraph" },
+        "4": { "name": "constant.numeric.value.bedgraph" }
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+# Source files (compiled outputs are in dist/)
+src/**
+server/src/**
+webview/src/**
+
+# Test files
+test/**
+
+# Development configuration
+.vscode/**
+.github/**
+tsconfig.json
+tsconfig.*.json
+.eslintrc.*
+.prettierrc*
+.editorconfig
+
+# Node modules (bundled into dist/)
+node_modules/**
+server/node_modules/**
+webview/node_modules/**
+
+# Webview source (bundled into webview/dist/)
+webview/public/**
+webview/tsconfig.json
+webview/vite.config.ts
+webview/package.json
+webview/package-lock.json
+
+# Build artifacts and caches
+.turbo/**
+.cache/**
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git
+.git/**
+.gitignore
+.gitattributes
+
+# Documentation (keep README and CHANGELOG)
+CLAUDE.md
+SPEC.md
+TODO.md
+docs/**
+
+# Package files
+*.vsix
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~

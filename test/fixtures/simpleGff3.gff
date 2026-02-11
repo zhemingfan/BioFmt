@@ -1,0 +1,26 @@
+##gff-version 2
+# exonerate output in gff2 format; not gff3 because
+#   - 'similarity' is not a Sequence Ontology term
+#   - attributes' name/values are separated by space ' ' not equals '='
+##source-version exonerate:protein2genome:local 2.2.0
+##date 2015-01-16
+##type DNA
+#
+# exonerate run with --showtargetgff generates 'features on the target' i.e. mappings to the query
+# tab-delimited
+# seqname source feature start end score strand frame attributes
+#
+seq1	exonerate:protein2genome:local	gene	8	11	3652	-	.	gene_id 0 ; sequence seq2 ; gene_orientation .
+seq1	exonerate:protein2genome:local	cds	9	11	.	-	.	
+seq1	exonerate:protein2genome:local	exon	9	11	.	-	.	insertions 3 ; deletions 6
+#seq1	exonerate:protein2genome:local	similarity	8	11	3652	-	.	alignment_id 0 ; Query seq2 ; Align 11 1 3
+seq1	exonerate:protein2genome:local	similarity	9	11	3652	-	.	alignment_id 0 ; Query seq2 ; Align 11 1 3
+#
+# appending FASTA sequences is strictly a GFF3 format feature
+# but Jalview is able to handle this mixture of GFF2 / GFF3 :-)
+#
+##FASTA
+>seq1
+ACTACGACACGACGACGACGACG
+>seq2
+CDEQEATGTQDAQEQAQC

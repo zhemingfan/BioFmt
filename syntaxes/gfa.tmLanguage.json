@@ -1,0 +1,70 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GFA",
+  "scopeName": "source.gfa",
+  "patterns": [
+    { "include": "#header" },
+    { "include": "#segment" },
+    { "include": "#link" },
+    { "include": "#containment" },
+    { "include": "#path" },
+    { "include": "#comment" }
+  ],
+  "repository": {
+    "header": {
+      "match": "^(H)\\t(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.header.gfa" },
+        "2": { "name": "meta.header.tags.gfa" }
+      }
+    },
+    "segment": {
+      "match": "^(S)\\t([^\\t]+)\\t([^\\t]+)(\\t.+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.segment.gfa" },
+        "2": { "name": "entity.name.segment.gfa" },
+        "3": { "name": "string.unquoted.sequence.gfa" },
+        "4": { "name": "meta.segment.tags.gfa" }
+      }
+    },
+    "link": {
+      "match": "^(L)\\t([^\\t]+)\\t([+\\-])\\t([^\\t]+)\\t([+\\-])\\t([^\\t]+)(\\t.+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.link.gfa" },
+        "2": { "name": "entity.name.from.gfa" },
+        "3": { "name": "keyword.operator.fromOrient.gfa" },
+        "4": { "name": "entity.name.to.gfa" },
+        "5": { "name": "keyword.operator.toOrient.gfa" },
+        "6": { "name": "string.unquoted.overlap.gfa" },
+        "7": { "name": "meta.link.tags.gfa" }
+      }
+    },
+    "containment": {
+      "match": "^(C)\\t([^\\t]+)\\t([+\\-])\\t([^\\t]+)\\t([+\\-])\\t([0-9]+)\\t([^\\t]+)(\\t.+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.containment.gfa" },
+        "2": { "name": "entity.name.container.gfa" },
+        "3": { "name": "keyword.operator.containerOrient.gfa" },
+        "4": { "name": "entity.name.contained.gfa" },
+        "5": { "name": "keyword.operator.containedOrient.gfa" },
+        "6": { "name": "constant.numeric.pos.gfa" },
+        "7": { "name": "string.unquoted.overlap.gfa" },
+        "8": { "name": "meta.containment.tags.gfa" }
+      }
+    },
+    "path": {
+      "match": "^(P)\\t([^\\t]+)\\t([^\\t]+)\\t([^\\t]+)(\\t.+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.path.gfa" },
+        "2": { "name": "entity.name.pathname.gfa" },
+        "3": { "name": "meta.segments.gfa" },
+        "4": { "name": "meta.overlaps.gfa" },
+        "5": { "name": "meta.path.tags.gfa" }
+      }
+    },
+    "comment": {
+      "match": "^#.*$",
+      "name": "comment.line.gfa"
+    }
+  }
+}

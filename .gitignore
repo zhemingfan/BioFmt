@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+webview/node_modules/
+
+# Build outputs
+dist/
+webview/dist/
+out/
+*.vsix
+
+# VS Code test runner
+.vscode-test/
+
+# IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+*.tmp
+*.temp
+
+# Large test fixtures (keep locally, too big for GitHub)
+test/fixtures/large_250k.vcf
+
+# Environment
+.env
+.env.local

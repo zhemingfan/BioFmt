@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "narrowPeak",
+  "scopeName": "source.narrowpeak",
+  "patterns": [
+    { "include": "#track-line" },
+    { "include": "#browser-line" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "track-line": {
+      "match": "^(track)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.track.narrowpeak" },
+        "2": { "name": "meta.track.attributes.narrowpeak" }
+      }
+    },
+    "browser-line": {
+      "match": "^(browser)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.browser.narrowpeak" },
+        "2": { "name": "meta.browser.attributes.narrowpeak" }
+      }
+    },
+    "data-line": {
+      "match": "^([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([0-9]+)\\t([+\\-\\.])\\t([0-9.eE+-]+)\\t([0-9.eE+-]+)\\t([0-9.eE+-]+)\\t([0-9-]+)$",
+      "captures": {
+        "1": { "name": "string.unquoted.chrom.narrowpeak" },
+        "2": { "name": "constant.numeric.start.narrowpeak" },
+        "3": { "name": "constant.numeric.end.narrowpeak" },
+        "4": { "name": "entity.name.narrowpeak" },
+        "5": { "name": "constant.numeric.score.narrowpeak" },
+        "6": { "name": "keyword.operator.strand.narrowpeak" },
+        "7": { "name": "constant.numeric.signalValue.narrowpeak" },
+        "8": { "name": "constant.numeric.pValue.narrowpeak" },
+        "9": { "name": "constant.numeric.qValue.narrowpeak" },
+        "10": { "name": "constant.numeric.peak.narrowpeak" }
+      }
+    }
+  }
+}

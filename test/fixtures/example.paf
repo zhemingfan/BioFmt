@@ -1,0 +1,2 @@
+query1	1000	0	900	+	targetA	2000	100	1000	800	900	60	NM:i:5	ms:i:780	AS:i:780	cg:Z:900M
+query2	500	10	450	-	targetB	800	50	490	420	440	40	NM:i:8	ms:i:400	AS:i:400	cg:Z:20S420M10S

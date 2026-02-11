@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GCT",
+  "scopeName": "source.gct",
+  "patterns": [
+    { "include": "#version" },
+    { "include": "#dimensions" },
+    { "include": "#header" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "version": {
+      "match": "^(#1\\.2)$",
+      "captures": {
+        "1": { "name": "keyword.control.version.gct" }
+      }
+    },
+    "dimensions": {
+      "match": "^([0-9]+)\\t([0-9]+)$",
+      "captures": {
+        "1": { "name": "constant.numeric.rows.gct" },
+        "2": { "name": "constant.numeric.columns.gct" }
+      }
+    },
+    "header": {
+      "match": "^(Name)\\t(Description)\\t(.+)$",
+      "captures": {
+        "1": { "name": "variable.language.name.gct" },
+        "2": { "name": "variable.language.description.gct" },
+        "3": { "name": "meta.samples.gct" }
+      }
+    },
+    "data-line": {
+      "match": "^([^\\t]+)\\t([^\\t]*)\\t(.+)$",
+      "captures": {
+        "1": { "name": "entity.name.gene.gct" },
+        "2": { "name": "string.unquoted.description.gct" },
+        "3": { "name": "meta.values.gct" }
+      }
+    }
+  }
+}
