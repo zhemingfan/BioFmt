@@ -38,6 +38,9 @@ npm-debug.log*
 *.tmp
 *.temp
 
+# Large test fixtures (keep locally, too big for GitHub)
+test/fixtures/large_250k.vcf
+
 # Environment
 .env
 .env.local
