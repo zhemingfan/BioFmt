@@ -651,9 +651,7 @@ function validateBed(
       diagnostics.push(createColumnDiagnostic(i, columns, 1, 'Start position cannot be negative'));
     }
 
-    if (start >= end) {
-      diagnostics.push(createLineDiagnostic(i, line, 'Start position must be less than end position'));
-    }
+    validateCoordinatePair(i, line, columns, 1, 2, 'Start', 'End', diagnostics);
 
     if (diagnostics.length >= settings.validation.maxDiagnostics) break;
   }
@@ -928,19 +926,7 @@ function validateGtf(
     }
 
     // Validate strand (column 7)
-    const strand = columns[6];
-    if (!validStrands.has(strand)) {
-      const strandStart = columns.slice(0, 6).join('\t').length + 1;
-      diagnostics.push({
-        severity: DiagnosticSeverity.Error,
-        range: {
-          start: { line: i, character: strandStart },
-          end: { line: i, character: strandStart + strand.length },
-        },
-        message: `Invalid strand "${strand}" (expected +, -, or .)`,
-        source: 'biofmt',
-      });
-    }
+    validateStrand(i, columns, 6, validStrands, diagnostics);
 
     // Validate frame (column 8)
     const frame = columns[7];
@@ -1109,6 +1095,7 @@ function validatePaf(
   const lines = text.split('\n');
 
   const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
+  const pafValidStrands = new Set(['+', '-']);
 
   for (let i = 0; i < maxLines; i++) {
     const line = lines[i];
@@ -1146,36 +1133,10 @@ function validatePaf(
       { idx: 11, name: 'mapping quality' },
     ];
 
-    for (const col of numericCols) {
-      const val = parseInt(columns[col.idx], 10);
-      if (isNaN(val) || val < 0) {
-        const colStart = columns.slice(0, col.idx).join('\t').length + (col.idx > 0 ? 1 : 0);
-        diagnostics.push({
-          severity: DiagnosticSeverity.Error,
-          range: {
-            start: { line: i, character: colStart },
-            end: { line: i, character: colStart + columns[col.idx].length },
-          },
-          message: `${col.name} must be a non-negative integer`,
-          source: 'biofmt',
-        });
-      }
-    }
+    validateNumericColumns(i, columns, numericCols, diagnostics);
 
     // Validate strand (column 5)
-    const strand = columns[4];
-    if (strand !== '+' && strand !== '-') {
-      const strandStart = columns.slice(0, 4).join('\t').length + 1;
-      diagnostics.push({
-        severity: DiagnosticSeverity.Error,
-        range: {
-          start: { line: i, character: strandStart },
-          end: { line: i, character: strandStart + strand.length },
-        },
-        message: `Invalid strand "${strand}" (expected + or -)`,
-        source: 'biofmt',
-      });
-    }
+    validateStrand(i, columns, 4, pafValidStrands, diagnostics);
 
     // Validate query start < query end
     const qStart = parseInt(columns[2], 10);

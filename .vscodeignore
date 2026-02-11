@@ -45,6 +45,7 @@ CLAUDE.md
 SPEC.md
 TODO.md
 docs/**
+*.docx
 
 # Package files
 *.vsix

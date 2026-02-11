@@ -105,6 +105,7 @@
         "id": "omics-gff3",
         "aliases": ["GFF3", "General Feature Format 3"],
         "extensions": [".gff", ".gff3"],
+        "firstLine": "^##gff-version",
         "configuration": "./language-configuration/gff3.language-configuration.json"
       },
       {
@@ -163,6 +164,7 @@
         "id": "omics-mztab",
         "aliases": ["mzTab", "mzTab Format"],
         "extensions": [".mztab", ".mzTab"],
+        "firstLine": "^(MTD|COM)\\t",
         "configuration": "./language-configuration/mztab.language-configuration.json"
       },
       {
