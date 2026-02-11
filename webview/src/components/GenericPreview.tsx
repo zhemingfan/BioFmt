@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useMemo } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import React, { useMemo } from 'react';
+import { VirtualTable, ColumnDefinition } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 
@@ -14,19 +14,58 @@ interface GenericPreviewProps {
   onRequestRows: (startLine: number, endLine: number) => void;
 }
 
-const ROW_HEIGHT = 28;
 const MAX_COLUMNS = 20;
 
-export function GenericPreview({ metadata, rows, loadedLineCount, getRow, isLineLoaded, onRequestRows }: GenericPreviewProps) {
-  // Parse rows into columns
-  const maxCols = useMemo(() => {
-    let max = 0;
+export function GenericPreview({ metadata, rows, loadedLineCount, isLineLoaded, onRequestRows }: GenericPreviewProps) {
+  // Parse rows into structured data and determine columns
+  const { parsedRows, columns } = useMemo(() => {
+    const parsed: Record<string, string>[] = [];
+    let maxCols = 0;
+
+    // First pass: determine max columns
     for (const row of rows) {
       if (!row.trim()) continue;
-      const columns = row.split('\t').slice(0, MAX_COLUMNS);
-      max = Math.max(max, columns.length);
+      const cols = row.split('\t').slice(0, MAX_COLUMNS);
+      maxCols = Math.max(maxCols, cols.length);
     }
-    return max;
+
+    // Build column definitions with content-based width estimation
+    const colMaxLens: number[] = new Array(maxCols).fill(0);
+    const sampleSize = Math.min(rows.length, 50);
+    const sampleRows = rows.slice(0, sampleSize);
+
+    for (const row of sampleRows) {
+      if (!row.trim()) continue;
+      const cols = row.split('\t').slice(0, MAX_COLUMNS);
+      for (let i = 0; i < cols.length; i++) {
+        colMaxLens[i] = Math.max(colMaxLens[i], cols[i].length);
+      }
+    }
+
+    const colDefs: ColumnDefinition[] = [];
+    for (let i = 0; i < maxCols; i++) {
+      const estimated = Math.max(80, colMaxLens[i] * 7.5 + 16);
+      colDefs.push({
+        key: `col_${i}`,
+        label: `Col ${i + 1}`,
+        width: Math.min(600, estimated),
+      });
+    }
+
+    // Second pass: parse all rows
+    for (let i = 0; i < rows.length; i++) {
+      const line = rows[i];
+      if (!line.trim()) continue;
+
+      const cols = line.split('\t').slice(0, MAX_COLUMNS);
+      const row: Record<string, string> = { _lineNumber: String(i + 1) };
+      for (let j = 0; j < cols.length; j++) {
+        row[`col_${j}`] = cols[j];
+      }
+      parsed.push(row);
+    }
+
+    return { parsedRows: parsed, columns: colDefs };
   }, [rows]);
 
   // Handle scroll for lazy loading
@@ -35,56 +74,7 @@ export function GenericPreview({ metadata, rows, loadedLineCount, getRow, isLine
     totalLineCount: metadata.lineCount,
     onRequestRows,
     isLineLoaded,
-    rowHeight: ROW_HEIGHT,
   });
-
-  // Row renderer
-  const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const line = getRow(index);
-    if (!line) {
-      return (
-        <div style={style} className="table-row loading-row">
-          <div
-            className="table-cell"
-            style={{ width: 150, minWidth: 80, maxWidth: 300, opacity: 0.6 }}
-          >
-            Loading...
-          </div>
-        </div>
-      );
-    }
-
-    if (!line.trim()) {
-      return (
-        <div style={style} className="table-row">
-          <div
-            className="table-cell"
-            style={{ width: 150, minWidth: 80, maxWidth: 300 }}
-          >
-            &nbsp;
-          </div>
-        </div>
-      );
-    }
-
-    const isHeader = line.startsWith('#') || line.startsWith('@');
-    const columns = line.split('\t').slice(0, MAX_COLUMNS);
-
-    return (
-      <div style={style} className={`table-row ${isHeader ? 'header-row' : ''}`}>
-        {columns.map((col, colIdx) => (
-          <div
-            key={colIdx}
-            className="table-cell"
-            style={{ width: 150, minWidth: 80, maxWidth: 300 }}
-            title={col}
-          >
-            {col}
-          </div>
-        ))}
-      </div>
-    );
-  }, [getRow]);
 
   const formatName = metadata.languageId.replace('omics-', '').toUpperCase();
 
@@ -96,21 +86,17 @@ export function GenericPreview({ metadata, rows, loadedLineCount, getRow, isLine
         <div className="meta">
           <span>Format: {formatName}</span>
           <span>Lines: {metadata.lineCount.toLocaleString()}</span>
-          <span>Columns: {maxCols}</span>
+          <span>Columns: {columns.length}</span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="table-container">
-        <List
-          height={window.innerHeight - 120}
-          itemCount={metadata.lineCount}
-          itemSize={ROW_HEIGHT}
-          width="100%"
+      <div className="table-container" style={{ flex: 1 }}>
+        <VirtualTable
+          columns={columns}
+          rows={parsedRows}
           onScroll={handleScroll}
-        >
-          {Row}
-        </List>
+        />
       </div>
     </div>
   );
