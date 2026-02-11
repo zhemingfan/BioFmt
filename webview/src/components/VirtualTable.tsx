@@ -26,11 +26,30 @@ export interface VirtualTableProps {
   renderExpandedContent?: (row: TableRow, index: number) => React.ReactNode;
   onScroll?: (scrollInfo: { scrollOffset: number }) => void;
   className?: string;
+  /** Enable search bar for filtering rows by text. Default: true */
+  searchable?: boolean;
+  /** Enable TSV export button. Default: true */
+  exportable?: boolean;
 }
 
 const DEFAULT_ROW_HEIGHT = 28;
 const DEFAULT_HEADER_HEIGHT = 36;
 const COL_MIN_WIDTH = 60;
+
+function exportRowsAsTsv(columns: ColumnDefinition[], rows: TableRow[]) {
+  const header = columns.map(c => c.label).join('\t');
+  const lines = rows.map(row =>
+    columns.map(c => String(row[c.key] ?? '')).join('\t')
+  );
+  const content = [header, ...lines].join('\n');
+  const blob = new Blob([content], { type: 'text/tab-separated-values' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'export.tsv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function VirtualTable({
   columns,
@@ -42,9 +61,12 @@ export function VirtualTable({
   renderExpandedContent,
   onScroll,
   className = '',
+  searchable = true,
+  exportable = true,
 }: VirtualTableProps) {
   const [containerHeight, setContainerHeight] = useState(600);
   const [resizeOverrides, setResizeOverrides] = useState<Record<string, number>>({});
+  const [searchTerm, setSearchTerm] = useState('');
   const resizingRef = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
 
   // Measure container
@@ -99,9 +121,21 @@ export function VirtualTable({
     });
   }, [columns, resizeOverrides]);
 
+  // Search filtering
+  const filteredRows = useMemo(() => {
+    if (!searchTerm) return rows;
+    const lower = searchTerm.toLowerCase();
+    return rows.filter(row =>
+      columns.some(col => {
+        const val = row[col.key];
+        return val != null && String(val).toLowerCase().includes(lower);
+      })
+    );
+  }, [rows, searchTerm, columns]);
+
   // Row renderer
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const row = rows[index];
+    const row = filteredRows[index];
     if (!row) return null;
 
     const isExpanded = expandedRow === index;
@@ -142,13 +176,69 @@ export function VirtualTable({
         ))}
       </div>
     );
-  }, [rows, columnWidths, expandedRow, onRowClick]);
+  }, [filteredRows, columnWidths, expandedRow, onRowClick]);
 
   // Calculate total width
   const totalWidth = columnWidths.reduce((sum, col) => sum + col.computedWidth, 0);
 
   return (
     <div ref={containerRef} className={`virtual-table-container ${className}`} style={{ flex: 1, overflow: 'hidden' }}>
+      {/* Search/Export toolbar */}
+      {(searchable || exportable) && (
+        <div
+          className="virtual-table-toolbar"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '4px 8px',
+            borderBottom: '1px solid var(--vscode-widget-border, #333)',
+            background: 'var(--vscode-editor-background)',
+          }}
+        >
+          {searchable && (
+            <input
+              type="text"
+              placeholder="Search rows..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                flex: 1,
+                maxWidth: 300,
+                padding: '3px 8px',
+                border: '1px solid var(--vscode-input-border, #3c3c3c)',
+                background: 'var(--vscode-input-background, #1e1e1e)',
+                color: 'var(--vscode-input-foreground, #ccc)',
+                borderRadius: 3,
+                fontSize: '0.85em',
+              }}
+            />
+          )}
+          {searchTerm && (
+            <span style={{ fontSize: '0.8em', opacity: 0.7 }}>
+              {filteredRows.length} of {rows.length} rows
+            </span>
+          )}
+          {exportable && (
+            <button
+              onClick={() => exportRowsAsTsv(columns, filteredRows)}
+              title="Export visible rows as TSV"
+              style={{
+                marginLeft: 'auto',
+                padding: '3px 10px',
+                border: '1px solid var(--vscode-button-border, #3c3c3c)',
+                background: 'var(--vscode-button-secondaryBackground, #3a3d41)',
+                color: 'var(--vscode-button-secondaryForeground, #ccc)',
+                cursor: 'pointer',
+                borderRadius: 3,
+                fontSize: '0.8em',
+              }}
+            >
+              Export TSV
+            </button>
+          )}
+        </div>
+      )}
       {/* Header */}
       <div
         className="virtual-table-header"
@@ -205,7 +295,7 @@ export function VirtualTable({
         <div style={{ minWidth: totalWidth }}>
           <List
             height={containerHeight}
-            itemCount={rows.length}
+            itemCount={filteredRows.length}
             itemSize={rowHeight}
             width="100%"
             onScroll={onScroll}
@@ -216,9 +306,9 @@ export function VirtualTable({
       </div>
 
       {/* Expanded row content */}
-      {expandedRow !== null && expandedRow !== undefined && renderExpandedContent && rows[expandedRow] && (
+      {expandedRow !== null && expandedRow !== undefined && renderExpandedContent && filteredRows[expandedRow] && (
         <div className="virtual-table-expanded-content">
-          {renderExpandedContent(rows[expandedRow], expandedRow)}
+          {renderExpandedContent(filteredRows[expandedRow], expandedRow)}
         </div>
       )}
     </div>

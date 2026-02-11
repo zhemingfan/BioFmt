@@ -15,6 +15,9 @@ import { MtxPreview } from './components/MtxPreview';
 import { MzTabPreview } from './components/MzTabPreview';
 import { GenbankPreview } from './components/GenbankPreview';
 import { GenericPreview } from './components/GenericPreview';
+import { ChainPreview } from './components/ChainPreview';
+import { NetPreview } from './components/NetPreview';
+import { GfaPreview } from './components/GfaPreview';
 import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
 import './styles.css';
 
@@ -285,11 +288,36 @@ export function App() {
         />
       );
 
-    // chain, net, GFA use generic preview for now
-    // with basic readability from syntax highlighting
     case 'omics-chain':
+      return (
+        <ChainPreview
+          metadata={metadata}
+          rows={rows}
+          loadedLineCount={loadedCount}
+          onRequestRows={requestRows}
+        />
+      );
+
     case 'omics-net':
+      return (
+        <NetPreview
+          metadata={metadata}
+          rows={rows}
+          loadedLineCount={loadedCount}
+          onRequestRows={requestRows}
+        />
+      );
+
     case 'omics-gfa':
+      return (
+        <GfaPreview
+          metadata={metadata}
+          rows={rows}
+          loadedLineCount={loadedCount}
+          onRequestRows={requestRows}
+        />
+      );
+
     default:
       return (
         <GenericPreview
