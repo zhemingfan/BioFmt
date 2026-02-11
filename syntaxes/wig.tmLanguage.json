@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "WIG",
+  "scopeName": "source.wig",
+  "patterns": [
+    { "include": "#track-line" },
+    { "include": "#browser-line" },
+    { "include": "#comment" },
+    { "include": "#fixed-step" },
+    { "include": "#variable-step" },
+    { "include": "#variable-data" },
+    { "include": "#fixed-data" }
+  ],
+  "repository": {
+    "track-line": {
+      "match": "^(track)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.track.wig" },
+        "2": { "name": "meta.track.attributes.wig" }
+      }
+    },
+    "browser-line": {
+      "match": "^(browser)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.browser.wig" },
+        "2": { "name": "meta.browser.attributes.wig" }
+      }
+    },
+    "comment": {
+      "match": "^#.*$",
+      "name": "comment.line.wig"
+    },
+    "fixed-step": {
+      "match": "^(fixedStep)\\s+(chrom=\\S+)\\s+(start=[0-9]+)\\s+(step=[0-9]+)(\\s+span=[0-9]+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.fixedstep.wig" },
+        "2": { "name": "variable.parameter.chrom.wig" },
+        "3": { "name": "variable.parameter.start.wig" },
+        "4": { "name": "variable.parameter.step.wig" },
+        "5": { "name": "variable.parameter.span.wig" }
+      }
+    },
+    "variable-step": {
+      "match": "^(variableStep)\\s+(chrom=\\S+)(\\s+span=[0-9]+)?$",
+      "captures": {
+        "1": { "name": "keyword.control.variablestep.wig" },
+        "2": { "name": "variable.parameter.chrom.wig" },
+        "3": { "name": "variable.parameter.span.wig" }
+      }
+    },
+    "variable-data": {
+      "match": "^([0-9]+)\\s+([0-9.eE+-]+)$",
+      "captures": {
+        "1": { "name": "constant.numeric.position.wig" },
+        "2": { "name": "constant.numeric.value.wig" }
+      }
+    },
+    "fixed-data": {
+      "match": "^\\s*([0-9.eE+-]+)\\s*$",
+      "captures": {
+        "1": { "name": "constant.numeric.value.wig" }
+      }
+    }
+  }
+}

@@ -1,0 +1,456 @@
+{
+  "name": "biofmt",
+  "displayName": "BioFmt",
+  "description": "View and validate genomics, transcriptomics, and proteomics text formats with syntax highlighting, LSP features, and high-performance previews",
+  "version": "0.1.0",
+  "publisher": "biofmt",
+  "license": "GPL-3.0",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/biofmt/biofmt"
+  },
+  "bugs": {
+    "url": "https://github.com/biofmt/biofmt/issues"
+  },
+  "homepage": "https://github.com/biofmt/biofmt#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Visualization"
+  ],
+  "keywords": [
+    "bioinformatics",
+    "genomics",
+    "vcf",
+    "sam",
+    "bed",
+    "bedpe",
+    "gtf",
+    "gff",
+    "proteomics",
+    "transcriptomics",
+    "variant",
+    "sequencing",
+    "ngs"
+  ],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onLanguage:omics-vcf",
+    "onLanguage:omics-sam",
+    "onLanguage:omics-bed",
+    "onLanguage:omics-bedpe",
+    "onLanguage:omics-gtf",
+    "onLanguage:omics-gff3",
+    "onLanguage:omics-psl",
+    "onLanguage:omics-paf",
+    "onLanguage:omics-maf-alignment",
+    "onLanguage:omics-maf-mutation",
+    "onLanguage:omics-ped",
+    "onLanguage:omics-map",
+    "onLanguage:omics-gct",
+    "onLanguage:omics-mtx",
+    "onLanguage:omics-mztab",
+    "onLanguage:omics-mgf",
+    "onLanguage:omics-bedgraph",
+    "onLanguage:omics-wig",
+    "onLanguage:omics-narrowpeak",
+    "onLanguage:omics-broadpeak",
+    "onLanguage:omics-genbank",
+    "onLanguage:omics-chain",
+    "onLanguage:omics-net",
+    "onLanguage:omics-gfa"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "omics-vcf",
+        "aliases": ["VCF", "Variant Call Format"],
+        "extensions": [".vcf"],
+        "firstLine": "^##fileformat=VCF",
+        "configuration": "./language-configuration/vcf.language-configuration.json"
+      },
+      {
+        "id": "omics-sam",
+        "aliases": ["SAM", "Sequence Alignment Map"],
+        "extensions": [".sam"],
+        "configuration": "./language-configuration/sam.language-configuration.json"
+      },
+      {
+        "id": "omics-bed",
+        "aliases": ["BED", "Browser Extensible Data"],
+        "extensions": [".bed"],
+        "configuration": "./language-configuration/bed.language-configuration.json"
+      },
+      {
+        "id": "omics-bedpe",
+        "aliases": ["BEDPE", "Paired-End BED"],
+        "extensions": [".bedpe"],
+        "configuration": "./language-configuration/bedpe.language-configuration.json"
+      },
+      {
+        "id": "omics-gtf",
+        "aliases": ["GTF", "Gene Transfer Format"],
+        "extensions": [".gtf"],
+        "configuration": "./language-configuration/gtf.language-configuration.json"
+      },
+      {
+        "id": "omics-gff3",
+        "aliases": ["GFF3", "General Feature Format 3"],
+        "extensions": [".gff", ".gff3"],
+        "configuration": "./language-configuration/gff3.language-configuration.json"
+      },
+      {
+        "id": "omics-psl",
+        "aliases": ["PSL", "Pattern Space Layout"],
+        "extensions": [".psl"],
+        "configuration": "./language-configuration/psl.language-configuration.json"
+      },
+      {
+        "id": "omics-paf",
+        "aliases": ["PAF", "Pairwise mApping Format"],
+        "extensions": [".paf"],
+        "configuration": "./language-configuration/paf.language-configuration.json"
+      },
+      {
+        "id": "omics-maf-alignment",
+        "aliases": ["MAF Alignment", "Multiple Alignment Format"],
+        "extensions": [".maf"],
+        "firstLine": "^##maf|^a\\s+score=",
+        "configuration": "./language-configuration/maf.language-configuration.json"
+      },
+      {
+        "id": "omics-maf-mutation",
+        "aliases": ["MAF Mutation", "Mutation Annotation Format"],
+        "extensions": [".maf"],
+        "firstLine": "^#version|^Hugo_Symbol",
+        "configuration": "./language-configuration/maf.language-configuration.json"
+      },
+      {
+        "id": "omics-ped",
+        "aliases": ["PED", "Pedigree Format"],
+        "extensions": [".ped"],
+        "configuration": "./language-configuration/ped.language-configuration.json"
+      },
+      {
+        "id": "omics-map",
+        "aliases": ["MAP", "Genetic Map Format"],
+        "extensions": [".map"],
+        "configuration": "./language-configuration/map.language-configuration.json"
+      },
+      {
+        "id": "omics-gct",
+        "aliases": ["GCT", "Gene Cluster Text"],
+        "extensions": [".gct"],
+        "firstLine": "^#1\\.2",
+        "configuration": "./language-configuration/gct.language-configuration.json"
+      },
+      {
+        "id": "omics-mtx",
+        "aliases": ["MTX", "Matrix Market"],
+        "extensions": [".mtx"],
+        "firstLine": "^%%MatrixMarket",
+        "configuration": "./language-configuration/mtx.language-configuration.json"
+      },
+      {
+        "id": "omics-mztab",
+        "aliases": ["mzTab", "mzTab Format"],
+        "extensions": [".mztab"],
+        "configuration": "./language-configuration/mztab.language-configuration.json"
+      },
+      {
+        "id": "omics-mgf",
+        "aliases": ["MGF", "Mascot Generic Format"],
+        "extensions": [".mgf"],
+        "firstLine": "^BEGIN IONS",
+        "configuration": "./language-configuration/mgf.language-configuration.json"
+      },
+      {
+        "id": "omics-bedgraph",
+        "aliases": ["bedGraph"],
+        "extensions": [".bedGraph", ".bdg"],
+        "configuration": "./language-configuration/bedgraph.language-configuration.json"
+      },
+      {
+        "id": "omics-wig",
+        "aliases": ["WIG", "Wiggle Track"],
+        "extensions": [".wig"],
+        "configuration": "./language-configuration/wig.language-configuration.json"
+      },
+      {
+        "id": "omics-narrowpeak",
+        "aliases": ["narrowPeak"],
+        "extensions": [".narrowPeak"],
+        "configuration": "./language-configuration/bed.language-configuration.json"
+      },
+      {
+        "id": "omics-broadpeak",
+        "aliases": ["broadPeak"],
+        "extensions": [".broadPeak"],
+        "configuration": "./language-configuration/bed.language-configuration.json"
+      },
+      {
+        "id": "omics-genbank",
+        "aliases": ["GenBank"],
+        "extensions": [".gbk", ".gb", ".genbank"],
+        "firstLine": "^LOCUS",
+        "configuration": "./language-configuration/genbank.language-configuration.json"
+      },
+      {
+        "id": "omics-chain",
+        "aliases": ["Chain", "UCSC Chain"],
+        "extensions": [".chain"],
+        "firstLine": "^chain\\s+",
+        "configuration": "./language-configuration/chain.language-configuration.json"
+      },
+      {
+        "id": "omics-net",
+        "aliases": ["Net", "UCSC Net"],
+        "extensions": [".net"],
+        "configuration": "./language-configuration/net.language-configuration.json"
+      },
+      {
+        "id": "omics-gfa",
+        "aliases": ["GFA", "Graphical Fragment Assembly"],
+        "extensions": [".gfa"],
+        "firstLine": "^H\\t|^S\\t",
+        "configuration": "./language-configuration/gfa.language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "omics-vcf",
+        "scopeName": "source.vcf",
+        "path": "./syntaxes/vcf.tmLanguage.json"
+      },
+      {
+        "language": "omics-sam",
+        "scopeName": "source.sam",
+        "path": "./syntaxes/sam.tmLanguage.json"
+      },
+      {
+        "language": "omics-bed",
+        "scopeName": "source.bed",
+        "path": "./syntaxes/bed.tmLanguage.json"
+      },
+      {
+        "language": "omics-bedpe",
+        "scopeName": "source.bedpe",
+        "path": "./syntaxes/bedpe.tmLanguage.json"
+      },
+      {
+        "language": "omics-gtf",
+        "scopeName": "source.gtf",
+        "path": "./syntaxes/gtf.tmLanguage.json"
+      },
+      {
+        "language": "omics-gff3",
+        "scopeName": "source.gff3",
+        "path": "./syntaxes/gff3.tmLanguage.json"
+      },
+      {
+        "language": "omics-psl",
+        "scopeName": "source.psl",
+        "path": "./syntaxes/psl.tmLanguage.json"
+      },
+      {
+        "language": "omics-paf",
+        "scopeName": "source.paf",
+        "path": "./syntaxes/paf.tmLanguage.json"
+      },
+      {
+        "language": "omics-maf-alignment",
+        "scopeName": "source.maf.alignment",
+        "path": "./syntaxes/maf-alignment.tmLanguage.json"
+      },
+      {
+        "language": "omics-maf-mutation",
+        "scopeName": "source.maf.mutation",
+        "path": "./syntaxes/maf-mutation.tmLanguage.json"
+      },
+      {
+        "language": "omics-ped",
+        "scopeName": "source.ped",
+        "path": "./syntaxes/ped.tmLanguage.json"
+      },
+      {
+        "language": "omics-map",
+        "scopeName": "source.map",
+        "path": "./syntaxes/map.tmLanguage.json"
+      },
+      {
+        "language": "omics-gct",
+        "scopeName": "source.gct",
+        "path": "./syntaxes/gct.tmLanguage.json"
+      },
+      {
+        "language": "omics-mtx",
+        "scopeName": "source.mtx",
+        "path": "./syntaxes/mtx.tmLanguage.json"
+      },
+      {
+        "language": "omics-mztab",
+        "scopeName": "source.mztab",
+        "path": "./syntaxes/mztab.tmLanguage.json"
+      },
+      {
+        "language": "omics-mgf",
+        "scopeName": "source.mgf",
+        "path": "./syntaxes/mgf.tmLanguage.json"
+      },
+      {
+        "language": "omics-bedgraph",
+        "scopeName": "source.bedgraph",
+        "path": "./syntaxes/bedgraph.tmLanguage.json"
+      },
+      {
+        "language": "omics-wig",
+        "scopeName": "source.wig",
+        "path": "./syntaxes/wig.tmLanguage.json"
+      },
+      {
+        "language": "omics-narrowpeak",
+        "scopeName": "source.narrowpeak",
+        "path": "./syntaxes/narrowpeak.tmLanguage.json"
+      },
+      {
+        "language": "omics-broadpeak",
+        "scopeName": "source.broadpeak",
+        "path": "./syntaxes/broadpeak.tmLanguage.json"
+      },
+      {
+        "language": "omics-genbank",
+        "scopeName": "source.genbank",
+        "path": "./syntaxes/genbank.tmLanguage.json"
+      },
+      {
+        "language": "omics-chain",
+        "scopeName": "source.chain",
+        "path": "./syntaxes/chain.tmLanguage.json"
+      },
+      {
+        "language": "omics-net",
+        "scopeName": "source.net",
+        "path": "./syntaxes/net.tmLanguage.json"
+      },
+      {
+        "language": "omics-gfa",
+        "scopeName": "source.gfa",
+        "path": "./syntaxes/gfa.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "biofmt.openPreview",
+        "title": "BioFmt: Open Preview",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "biofmt.openFixture",
+        "title": "BioFmt: Open Fixture (Dev)"
+      },
+      {
+        "command": "biofmt.copyRowAsTsv",
+        "title": "BioFmt: Copy Row as TSV"
+      },
+      {
+        "command": "biofmt.copyCellAsJson",
+        "title": "BioFmt: Copy Cell as JSON"
+      },
+      {
+        "command": "biofmt.jumpToHeaderDefinition",
+        "title": "BioFmt: Jump to Header Definition"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "biofmt.openPreview",
+          "when": "resourceLangId =~ /^omics-/",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "BioFmt",
+      "properties": {
+        "biofmt.preview.maxLines": {
+          "type": "number",
+          "default": 200000,
+          "description": "Maximum number of lines to load in preview"
+        },
+        "biofmt.preview.maxBytes": {
+          "type": "number",
+          "default": 52428800,
+          "description": "Maximum file size in bytes for preview (default: 50MB)"
+        },
+        "biofmt.preview.downsampleLimit": {
+          "type": "number",
+          "default": 200000,
+          "description": "Maximum number of points in track plots before downsampling"
+        },
+        "biofmt.preview.sampleColumnLimit": {
+          "type": "number",
+          "default": 10,
+          "description": "Number of VCF sample columns to show initially"
+        },
+        "biofmt.validation.level": {
+          "type": "string",
+          "enum": ["off", "basic", "strict"],
+          "default": "basic",
+          "description": "Validation strictness level"
+        },
+        "biofmt.validation.maxDiagnostics": {
+          "type": "number",
+          "default": 2000,
+          "description": "Maximum number of diagnostics to report per file"
+        },
+        "biofmt.lsp.viewportBufferLines": {
+          "type": "number",
+          "default": 500,
+          "description": "Number of lines around cursor to validate"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "npm run build:extension && npm run build:server && npm run build:webview",
+    "build:extension": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs",
+    "build:server": "esbuild server/src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs",
+    "build:webview": "cd webview && npm run build",
+    "watch": "npm run build:extension -- --watch",
+    "lint": "eslint src server/src --ext .ts",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "mocha --require ts-node/register 'test/unit/**/*.test.ts'",
+    "test:integration": "node ./test/runIntegration.js",
+    "test:perf": "mocha --require ts-node/register 'test/perf/**/*.test.ts' --timeout 60000",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.8",
+    "eslint": "^8.55.0",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11"
+  }
+}

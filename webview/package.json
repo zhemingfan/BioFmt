@@ -1,0 +1,28 @@
+{
+  "name": "biofmt-webview",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/index.tsx --bundle --outfile=dist/webview.js --format=iife --target=es2020 --loader:.tsx=tsx --loader:.ts=ts --minify && cp src/styles.css dist/styles.css",
+    "watch": "esbuild src/index.tsx --bundle --outfile=dist/webview.js --format=iife --target=es2020 --loader:.tsx=tsx --loader:.ts=ts --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-window": "^1.8.10"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/react-window": "^1.8.8",
+    "@types/jest": "^29.5.11",
+    "esbuild": "^0.19.8",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.6"
+  }
+}

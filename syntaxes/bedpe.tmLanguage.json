@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "BEDPE",
+  "scopeName": "source.bedpe",
+  "patterns": [
+    { "include": "#comment-line" },
+    { "include": "#header-line" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "comment-line": {
+      "match": "^#.*$",
+      "name": "comment.line.bedpe"
+    },
+    "header-line": {
+      "match": "^(chrom1|#chrom1)\\t.*$",
+      "name": "markup.heading.bedpe"
+    },
+    "data-line": {
+      "match": "^([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]*)\\t([^\\t]*)\\t([+\\-\\.])\\t([+\\-\\.])(\\t.*)?$",
+      "captures": {
+        "1": { "name": "string.unquoted.chrom1.bedpe" },
+        "2": { "name": "constant.numeric.start1.bedpe" },
+        "3": { "name": "constant.numeric.end1.bedpe" },
+        "4": { "name": "string.unquoted.chrom2.bedpe" },
+        "5": { "name": "constant.numeric.start2.bedpe" },
+        "6": { "name": "constant.numeric.end2.bedpe" },
+        "7": { "name": "entity.name.bedpe" },
+        "8": { "name": "constant.numeric.score.bedpe" },
+        "9": { "name": "keyword.operator.strand1.bedpe" },
+        "10": { "name": "keyword.operator.strand2.bedpe" },
+        "11": { "name": "meta.extra.bedpe" }
+      }
+    }
+  }
+}

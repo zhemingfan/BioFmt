@@ -1,0 +1,5 @@
+track type=bedGraph name="exampleBedGraph" description="Example bedGraph track"
+chr1	0	100	0.10
+chr1	100	200	0.23
+chr1	200	300	0.05
+chr2	0	150	0.80

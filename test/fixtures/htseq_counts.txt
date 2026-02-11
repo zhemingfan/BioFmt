@@ -1,0 +1,8 @@
+TP53	10
+EGFR	3
+GAPDH	200
+__no_feature	0
+__ambiguous	0
+__too_low_aQual	0
+__not_aligned	0
+__alignment_not_unique	0

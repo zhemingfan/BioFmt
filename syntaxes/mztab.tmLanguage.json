@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mzTab",
+  "scopeName": "source.mztab",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#metadata" },
+    { "include": "#protein-header" },
+    { "include": "#peptide-header" },
+    { "include": "#psm-header" },
+    { "include": "#small-molecule-header" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "^COM\\t.*$",
+      "name": "comment.line.mztab"
+    },
+    "metadata": {
+      "match": "^(MTD)\\t([^\\t]+)\\t(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.metadata.mztab" },
+        "2": { "name": "entity.name.tag.mztab" },
+        "3": { "name": "string.unquoted.value.mztab" }
+      }
+    },
+    "protein-header": {
+      "match": "^(PRH)\\t.*$",
+      "captures": {
+        "1": { "name": "keyword.control.protein-header.mztab" }
+      },
+      "name": "meta.header.protein.mztab"
+    },
+    "peptide-header": {
+      "match": "^(PEH)\\t.*$",
+      "captures": {
+        "1": { "name": "keyword.control.peptide-header.mztab" }
+      },
+      "name": "meta.header.peptide.mztab"
+    },
+    "psm-header": {
+      "match": "^(PSH)\\t.*$",
+      "captures": {
+        "1": { "name": "keyword.control.psm-header.mztab" }
+      },
+      "name": "meta.header.psm.mztab"
+    },
+    "small-molecule-header": {
+      "match": "^(SMH|SFH|SEH)\\t.*$",
+      "captures": {
+        "1": { "name": "keyword.control.sm-header.mztab" }
+      },
+      "name": "meta.header.small-molecule.mztab"
+    },
+    "data-line": {
+      "match": "^(PRT|PEP|PSM|SML|SMF|SME)\\t(.*)$",
+      "captures": {
+        "1": { "name": "keyword.other.section.mztab" },
+        "2": { "name": "meta.data.mztab" }
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+##fileformat=VCFv4.5
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=GROUP,Number=1,Type=String,Description="Format group being demonstrated">
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chr1,length=248956422>
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype - GROUP 1 PURPLE">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depth - GROUP 2 ORANGE">
+##FORMAT=<ID=ADF,Number=R,Type=Integer,Description="Allelic depth forward - GROUP 2 ORANGE">
+##FORMAT=<ID=ADR,Number=R,Type=Integer,Description="Allelic depth reverse - GROUP 2 ORANGE">
+##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allelic depth - GROUP 2 ORANGE">
+##FORMAT=<ID=LADF,Number=LR,Type=Integer,Description="Local allelic depth forward - GROUP 2 ORANGE">
+##FORMAT=<ID=LADR,Number=LR,Type=Integer,Description="Local allelic depth reverse - GROUP 2 ORANGE">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth - GROUP 3 CYAN">
+##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description="Minimum DP - GROUP 3 CYAN">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality - GROUP 4 TEAL">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Mapping quality - GROUP 4 TEAL">
+##FORMAT=<ID=PQ,Number=1,Type=Integer,Description="Phasing quality - GROUP 4 TEAL">
+##FORMAT=<ID=CNQ,Number=1,Type=Float,Description="Copy number quality - GROUP 4 TEAL">
+##FORMAT=<ID=NQ,Number=1,Type=Integer,Description="Novel quality - GROUP 4 TEAL">
+##FORMAT=<ID=GL,Number=G,Type=Float,Description="Genotype likelihoods - GROUP 5 BLUE">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods - GROUP 5 BLUE">
+##FORMAT=<ID=LGL,Number=LG,Type=Integer,Description="Local genotype likelihoods - GROUP 5 BLUE">
+##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local phred likelihoods - GROUP 5 BLUE">
+##FORMAT=<ID=CNL,Number=G,Type=Float,Description="Copy number likelihoods - GROUP 5 BLUE">
+##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posteriors - GROUP 6 PURPLE-BLUE">
+##FORMAT=<ID=PP,Number=G,Type=Integer,Description="Phred posteriors - GROUP 6 PURPLE-BLUE">
+##FORMAT=<ID=LGP,Number=LG,Type=Integer,Description="Local genotype posteriors - GROUP 6 PURPLE-BLUE">
+##FORMAT=<ID=LPP,Number=LG,Type=Integer,Description="Local phred posteriors - GROUP 6 PURPLE-BLUE">
+##FORMAT=<ID=CNP,Number=G,Type=Float,Description="Copy number posteriors - GROUP 6 PURPLE-BLUE">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Sample filter - GROUP 7 PINK">
+##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set - GROUP 8 YELLOW">
+##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list - GROUP 8 YELLOW">
+##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinal - GROUP 8 YELLOW">
+##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set quality - GROUP 8 YELLOW">
+##FORMAT=<ID=PGT,Number=1,Type=String,Description="Physical phasing haplotype - GROUP 8 YELLOW">
+##FORMAT=<ID=PID,Number=1,Type=String,Description="Physical phasing ID - GROUP 8 YELLOW">
+##FORMAT=<ID=EC,Number=A,Type=Integer,Description="Expected counts - GROUP 9 LIGHT CYAN">
+##FORMAT=<ID=LEC,Number=LA,Type=Integer,Description="Local expected counts - GROUP 9 LIGHT CYAN">
+##FORMAT=<ID=LA,Number=.,Type=Integer,Description="Local allele - GROUP 10 MUTED">
+##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local allele ALT - GROUP 10 MUTED">
+##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype quality - GROUP 11 LEGACY">
+##FORMAT=<ID=LEN,Number=1,Type=Integer,Description="Reference block length - GROUP 11 LEGACY">
+##FORMAT=<ID=CN,Number=1,Type=Float,Description="Copy number - GROUP 12 SV">
+##FORMAT=<ID=CICN,Number=2,Type=Float,Description="Copy number CI - GROUP 12 SV">
+##FORMAT=<ID=HAP,Number=1,Type=Integer,Description="Haplotype ID - GROUP 12 SV">
+##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description="Ancestral haplotype - GROUP 12 SV">
+##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine - GROUP 13 BASEMOD">
+##FORMAT=<ID=M6mA,Number=M,Type=Float,Description="6-methyladenine - GROUP 13 BASEMOD">
+##FORMAT=<ID=DPM5mC,Number=M,Type=Integer,Description="Depth 5mC - GROUP 14 BASEMOD DEPTH">
+##FORMAT=<ID=ADM5mC,Number=M,Type=Integer,Description="Allelic depth 5mC - GROUP 14 BASEMOD DEPTH">
+##FORMAT=<ID=CUSTOM1,Number=1,Type=Integer,Description="Custom field - NO COLOR (default text)">
+##FORMAT=<ID=MYFIELD,Number=1,Type=String,Description="Another custom - NO COLOR (default text)">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample1	Sample2
+chr1	1000	grp1	A	G	99	PASS	DP=100;GROUP=GENOTYPE	GT	0/1	1/1
+chr1	2000	grp2a	C	T	99	PASS	DP=100;GROUP=ALLELIC_DEPTH	AD	25,25	48,2
+chr1	2100	grp2b	C	T	99	PASS	DP=100;GROUP=ALLELIC_DEPTH	ADF:ADR	12,13:13,12	24,1:24,1
+chr1	2200	grp2c	C	T	99	PASS	DP=100;GROUP=ALLELIC_DEPTH	LAD:LADF:LADR	25,25:12,13:13,12	48,2:24,1:24,1
+chr1	3000	grp3	G	A	99	PASS	DP=100;GROUP=READ_DEPTH	DP:MIN_DP	50:45	48:42
+chr1	4000	grp4	T	C	99	PASS	DP=100;GROUP=QUALITY	GQ:MQ:PQ:CNQ:NQ	99:60:95:55.5:45	95:58:90:60.2:50
+chr1	5000	grp5	A	T	99	PASS	DP=100;GROUP=LIKELIHOODS	GL:PL:LGL:LPL:CNL	-50,0,-60:500,0,600:-45,0,-55:450,0,550:-20,0,-25	0,-30,-300:0,300,3000:0,-28,-280:0,280,2800:0,-30,-60
+chr1	6000	grp6	C	G	99	PASS	DP=100;GROUP=POSTERIORS	GP:PP:LGP:LPP:CNP	0.01,0.98,0.01:20,0,20:0.02,0.96,0.02:17,0,17:0.01,0.98,0.01	0.99,0.01,0:0,20,200:0.98,0.02,0:0,17,170:0.99,0.01,0
+chr1	7000	grp7	G	C	99	PASS	DP=100;GROUP=FILTER	FT	PASS	LowQual
+chr1	8000	grp8	A	G	99	PASS	DP=100;GROUP=PHASING	PS:PSL:PSO:PSQ:PGT:PID	8000:PS1,PS2:1,2:99,95:0|1:8000_A_G	8000:PS1:1:99:0|0:8000_A_G
+chr1	9000	grp9	T	A	99	PASS	DP=100;GROUP=EXPECTED	EC:LEC	5:6	0:0
+chr1	10000	grp10	C	T	99	PASS	DP=100;GROUP=LOCAL_ALLELE	LA:LAA	0,1:1	0:.
+chr1	11000	grp11	G	A	99	PASS	DP=100;GROUP=LEGACY	HQ:LEN	99,95:100	98,98:100
+chr1	12000	grp12	A	G	99	PASS	DP=100;GROUP=SV	CN:CICN:HAP:AHAP	1.5:1.2,1.8:1:0	2.0:1.9,2.1:0:0
+chr1	13000	grp13	C	T	99	PASS	DP=100;GROUP=BASEMOD	M5mC:M6mA	0.75:0.45	0.85:0.50
+chr1	14000	grp14	G	C	99	PASS	DP=100;GROUP=BASEMOD_DEPTH	DPM5mC:ADM5mC	80:60	90:77
+chr1	15000	custom	A	T	99	PASS	DP=100;GROUP=CUSTOM_NO_COLOR	CUSTOM1:MYFIELD	42:hello	99:world
+chr1	20000	combo	C	G	99	PASS	DP=100;GROUP=COMBINATION	GT:AD:DP:GQ:PL:GP:FT:PS	0/1:25,25:50:99:500,0,600:0.01,0.98,0.01:PASS:20000	1/1:2,48:50:95:1800,144,0:0,0.01,0.99:PASS:20000

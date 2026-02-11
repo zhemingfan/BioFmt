@@ -1,0 +1,7 @@
+%%MatrixMarket matrix coordinate integer general
+% A tiny 10x-style sparse count matrix (features x barcodes)
+3 3 4
+1 1 10
+2 1 2
+2 3 5
+3 2 7
