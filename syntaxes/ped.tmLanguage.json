@@ -7,7 +7,7 @@
   ],
   "repository": {
     "data-line": {
-      "match": "^([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([12])[\\t\\s]+([012-]+)(.*)$",
+      "match": "^([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([012])[\\t\\s]+(-?[0-9]+)(.*)$",
       "captures": {
         "1": { "name": "entity.name.family.ped" },
         "2": { "name": "entity.name.individual.ped" },

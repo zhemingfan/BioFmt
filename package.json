@@ -162,7 +162,7 @@
       {
         "id": "omics-mztab",
         "aliases": ["mzTab", "mzTab Format"],
-        "extensions": [".mztab"],
+        "extensions": [".mztab", ".mzTab"],
         "configuration": "./language-configuration/mztab.language-configuration.json"
       },
       {
