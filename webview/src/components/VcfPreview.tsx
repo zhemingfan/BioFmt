@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import type { DocumentMetadata, VcfHeaderInfo, ParsedVcfRow, FilterConfig, FormatDefinition, TypedSampleData, FormatRecordContext } from '../types';
 import { VcfHeaderPanel } from './VcfHeaderPanel';
@@ -21,11 +21,35 @@ const MAX_DISPLAY_ROWS = 200000;
 const ROW_HEIGHT = 32;
 const HEADER_HEIGHT = 40;
 
+const DEFAULT_COL_WIDTHS = {
+  chrom: 100, pos: 100, id: 120, ref: 80, alt: 100,
+  qual: 80, filter: 100, info: 250, format: 120, sample: 150,
+} as const;
+type ColKey = keyof typeof DEFAULT_COL_WIDTHS;
+
 export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequestRows }: VcfPreviewProps) {
   const [filter, setFilter] = useState<FilterConfig>({});
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [showAllSamples, setShowAllSamples] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(false);
+  const [colWidths, setColWidths] = useState<Record<ColKey, number>>({ ...DEFAULT_COL_WIDTHS });
+  const resizingRef = useRef<{ key: ColKey; startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!resizingRef.current) return;
+      const { key, startX, startWidth } = resizingRef.current;
+      const newWidth = Math.max(60, startWidth + (e.clientX - startX));
+      setColWidths(prev => ({ ...prev, [key]: newWidth }));
+    };
+    const onMouseUp = () => { resizingRef.current = null; };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
 
   // Parse VCF rows
   const parsedRows = useMemo(() => {
@@ -47,35 +71,16 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
   // Apply filters
   const filteredRows = useMemo(() => {
-    if (!filter.chrom && !filter.filter && filter.minQual === undefined && !filter.infoKey) {
+    if (!filter.chrom && !filter.id && !filter.filter) {
       return parsedRows;
     }
+
+    const idQuery = filter.id?.toLowerCase();
 
     return parsedRows.filter((row) => {
       if (filter.chrom && row.chrom !== filter.chrom) return false;
       if (filter.filter && row.filter !== filter.filter) return false;
-      if (filter.minQual !== undefined && (row.qual === null || row.qual < filter.minQual)) return false;
-
-      if (filter.infoKey && filter.infoValue !== undefined) {
-        const infoVal = row.info[filter.infoKey];
-        if (infoVal === undefined) return false;
-
-        const numVal = typeof infoVal === 'string' ? parseFloat(infoVal) : NaN;
-        const filterNum = parseFloat(filter.infoValue);
-
-        if (!isNaN(numVal) && !isNaN(filterNum)) {
-          switch (filter.infoOperator) {
-            case '>': if (!(numVal > filterNum)) return false; break;
-            case '<': if (!(numVal < filterNum)) return false; break;
-            case '>=': if (!(numVal >= filterNum)) return false; break;
-            case '<=': if (!(numVal <= filterNum)) return false; break;
-            default: if (String(infoVal) !== filter.infoValue) return false;
-          }
-        } else {
-          if (String(infoVal) !== filter.infoValue) return false;
-        }
-      }
-
+      if (idQuery && !row.id.toLowerCase().includes(idQuery)) return false;
       return true;
     });
   }, [parsedRows, filter]);
@@ -103,6 +108,15 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     return headerInfo.samples.slice(0, limit);
   }, [headerInfo, showAllSamples]);
 
+  // Total table width for horizontal scroll
+  const totalWidth = useMemo(() => {
+    let w = colWidths.chrom + colWidths.pos + colWidths.id + colWidths.ref +
+            colWidths.alt + colWidths.qual + colWidths.filter + colWidths.info;
+    if (parsedRows[0]?.format) w += colWidths.format;
+    w += sampleColumns.length * colWidths.sample;
+    return w;
+  }, [colWidths, parsedRows, sampleColumns]);
+
   // Row renderer for virtual list
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const row = filteredRows[index];
@@ -116,20 +130,21 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
           className={`table-row ${isExpanded ? 'expanded' : ''}`}
           onClick={() => setExpandedRow(isExpanded ? null : row.lineNumber)}
         >
-          <div className="table-cell col-chrom" title={row.chrom}>{row.chrom}</div>
-          <div className="table-cell col-pos" title={String(row.pos)}>{row.pos}</div>
-          <div className="table-cell col-id" title={row.id}>{row.id}</div>
-          <div className="table-cell col-ref" title={row.ref}>{row.ref}</div>
-          <div className="table-cell col-alt" title={row.alt}>{row.alt}</div>
-          <div className="table-cell col-qual" title={row.qual?.toString() || '.'}>{row.qual ?? '.'}</div>
-          <div className="table-cell col-filter" title={row.filter}>{row.filter}</div>
+          <div className="table-cell" style={{ width: colWidths.chrom, flexShrink: 0 }} title={row.chrom}>{row.chrom}</div>
+          <div className="table-cell" style={{ width: colWidths.pos, flexShrink: 0 }} title={String(row.pos)}>{row.pos}</div>
+          <div className="table-cell" style={{ width: colWidths.id, flexShrink: 0 }} title={row.id}>{row.id}</div>
+          <div className="table-cell" style={{ width: colWidths.ref, flexShrink: 0 }} title={row.ref}>{row.ref}</div>
+          <div className="table-cell" style={{ width: colWidths.alt, flexShrink: 0 }} title={row.alt}>{row.alt}</div>
+          <div className="table-cell" style={{ width: colWidths.qual, flexShrink: 0 }} title={row.qual?.toString() || '.'}>{row.qual ?? '.'}</div>
+          <div className="table-cell" style={{ width: colWidths.filter, flexShrink: 0 }} title={row.filter}>{row.filter}</div>
           <div
-            className={`table-cell col-info expandable ${isExpanded ? 'expanded' : ''}`}
+            className={`table-cell expandable ${isExpanded ? 'expanded' : ''}`}
+            style={{ width: colWidths.info, flexShrink: 0 }}
             title={formatInfoForDisplay(row.info)}
           >
             <ColoredInfoDisplay info={row.info} />
           </div>
-          {row.format && <div className="table-cell col-format" title={row.format}>{row.format}</div>}
+          {row.format && <div className="table-cell" style={{ width: colWidths.format, flexShrink: 0 }} title={row.format}>{row.format}</div>}
           {sampleColumns.map((sample) => {
             const alts = row.alt === '.' ? [] : row.alt.split(',');
             const typedSample = row.typedSamples?.[sample];
@@ -138,7 +153,8 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
             return (
               <div
                 key={sample}
-                className="table-cell col-sample"
+                className="table-cell"
+                style={{ width: colWidths.sample, flexShrink: 0 }}
                 title={rawSample ? Object.values(rawSample).join(':') : '.'}
               >
                 {rawSample ? (
@@ -154,15 +170,9 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
             );
           })}
         </div>
-        {isExpanded && (
-          <ExpandedInfoCell
-            row={row}
-            headerInfo={headerInfo}
-          />
-        )}
       </div>
     );
-  }, [filteredRows, expandedRow, sampleColumns, headerInfo]);
+  }, [filteredRows, expandedRow, sampleColumns, colWidths]);
 
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
@@ -216,7 +226,6 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         filter={filter}
         onFilterChange={setFilter}
         options={filterOptions}
-        infoFields={headerInfo?.infoFields || []}
         totalRows={parsedRows.length}
         filteredRows={filteredRows.length}
       />
@@ -237,33 +246,93 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
       {/* Table */}
       <div className="table-container">
-        {/* Header row */}
-        <div className="table-header">
-          <div className="table-header-cell col-chrom">CHROM</div>
-          <div className="table-header-cell col-pos">POS</div>
-          <div className="table-header-cell col-id">ID</div>
-          <div className="table-header-cell col-ref">REF</div>
-          <div className="table-header-cell col-alt">ALT</div>
-          <div className="table-header-cell col-qual">QUAL</div>
-          <div className="table-header-cell col-filter">FILTER</div>
-          <div className="table-header-cell col-info">INFO</div>
-          {parsedRows[0]?.format && <div className="table-header-cell col-format">FORMAT</div>}
-          {sampleColumns.map((sample) => (
-            <div key={sample} className="table-header-cell col-sample">{sample}</div>
-          ))}
-        </div>
+        <div style={{ overflowX: 'auto' }}>
+          {/* Header row */}
+          <div className="table-header" style={{ width: totalWidth }}>
+            {(['chrom', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info'] as ColKey[]).map((key) => (
+              <div
+                key={key}
+                className="table-header-cell"
+                style={{ width: colWidths[key], flexShrink: 0, position: 'relative' }}
+              >
+                {key.toUpperCase()}
+                <div
+                  className="col-resize-handle"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    resizingRef.current = { key, startX: e.clientX, startWidth: colWidths[key] };
+                  }}
+                />
+              </div>
+            ))}
+            {parsedRows[0]?.format && (
+              <div
+                className="table-header-cell"
+                style={{ width: colWidths.format, flexShrink: 0, position: 'relative' }}
+              >
+                FORMAT
+                <div
+                  className="col-resize-handle"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    resizingRef.current = { key: 'format', startX: e.clientX, startWidth: colWidths.format };
+                  }}
+                />
+              </div>
+            )}
+            {sampleColumns.map((sample) => (
+              <div
+                key={sample}
+                className="table-header-cell"
+                style={{ width: colWidths.sample, flexShrink: 0, position: 'relative' }}
+              >
+                {sample}
+                <div
+                  className="col-resize-handle"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    resizingRef.current = { key: 'sample', startX: e.clientX, startWidth: colWidths.sample };
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
-        {/* Virtual list */}
-        <List
-          height={window.innerHeight - 300}
-          itemCount={filteredRows.length}
-          itemSize={expandedRow !== null ? ROW_HEIGHT * 2 : ROW_HEIGHT}
-          width="100%"
-          onScroll={handleScroll}
-        >
-          {Row}
-        </List>
+          {/* Virtual list */}
+          <List
+            height={window.innerHeight - 300}
+            itemCount={filteredRows.length}
+            itemSize={ROW_HEIGHT}
+            width={totalWidth}
+            onScroll={handleScroll}
+          >
+            {Row}
+          </List>
+        </div>
       </div>
+
+      {/* Row detail panel — fixed at bottom */}
+      {expandedRow !== null && (() => {
+        const row = filteredRows.find((r) => r.lineNumber === expandedRow);
+        if (!row) return null;
+        return (
+          <div className="expanded-vcf">
+            <div className="expanded-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>
+                {row.chrom}:{row.pos}
+                {row.id !== '.' && <span style={{ marginLeft: 8, opacity: 0.7 }}>{row.id}</span>}
+                <span style={{ marginLeft: 8, opacity: 0.6 }}>{row.ref} → {row.alt}</span>
+              </span>
+              <button
+                onClick={() => setExpandedRow(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--vscode-foreground)', fontSize: '1.1em', lineHeight: 1 }}
+                title="Close"
+              >×</button>
+            </div>
+            <ExpandedInfoCell row={row} headerInfo={headerInfo} />
+          </div>
+        );
+      })()}
     </div>
   );
 }

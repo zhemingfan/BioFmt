@@ -41,6 +41,9 @@ yarn-error.log*
 .gitattributes
 
 # Documentation (keep README and CHANGELOG)
+CLAUDE.md
+SPEC.md
+TODO.md
 docs/**
 *.docx
 

@@ -162,11 +162,8 @@ export interface ParsedVcfRow {
 
 export interface FilterConfig {
   chrom?: string;
-  minQual?: number;
+  id?: string;
   filter?: string;
-  infoKey?: string;
-  infoValue?: string;
-  infoOperator?: '=' | '>' | '<' | '>=' | '<=';
 }
 
 export type MessageFromExtension =

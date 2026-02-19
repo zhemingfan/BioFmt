@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import React from 'react';
-import type { FilterConfig, InfoDefinition } from '../types';
+import type { FilterConfig } from '../types';
 
 interface VcfFilterBarProps {
   filter: FilterConfig;
@@ -10,7 +10,6 @@ interface VcfFilterBarProps {
     chroms: string[];
     filters: string[];
   };
-  infoFields: InfoDefinition[];
   totalRows: number;
   filteredRows: number;
 }
@@ -19,11 +18,10 @@ export function VcfFilterBar({
   filter,
   onFilterChange,
   options,
-  infoFields,
   totalRows,
   filteredRows,
 }: VcfFilterBarProps) {
-  const hasFilters = filter.chrom || filter.filter || filter.minQual !== undefined || filter.infoKey;
+  const hasFilters = filter.chrom || filter.id || filter.filter;
 
   return (
     <div className="filter-bar">
@@ -41,6 +39,18 @@ export function VcfFilterBar({
         </select>
       </div>
 
+      {/* ID search */}
+      <div className="filter-group">
+        <label>ID:</label>
+        <input
+          type="text"
+          value={filter.id || ''}
+          onChange={(e) => onFilterChange({ ...filter, id: e.target.value || undefined })}
+          placeholder="Search ID…"
+          style={{ width: 120 }}
+        />
+      </div>
+
       {/* FILTER filter */}
       <div className="filter-group">
         <label>FILTER:</label>
@@ -53,66 +63,6 @@ export function VcfFilterBar({
             <option key={f} value={f}>{f}</option>
           ))}
         </select>
-      </div>
-
-      {/* Min QUAL filter */}
-      <div className="filter-group">
-        <label>Min QUAL:</label>
-        <input
-          type="number"
-          value={filter.minQual ?? ''}
-          onChange={(e) => onFilterChange({
-            ...filter,
-            minQual: e.target.value ? parseFloat(e.target.value) : undefined,
-          })}
-          placeholder="e.g., 30"
-          style={{ width: 80 }}
-        />
-      </div>
-
-      {/* INFO field filter */}
-      <div className="filter-group">
-        <label>INFO:</label>
-        <select
-          value={filter.infoKey || ''}
-          onChange={(e) => onFilterChange({
-            ...filter,
-            infoKey: e.target.value || undefined,
-            infoValue: e.target.value ? filter.infoValue : undefined,
-          })}
-          style={{ width: 100 }}
-        >
-          <option value="">None</option>
-          {infoFields.map((field) => (
-            <option key={field.id} value={field.id}>{field.id}</option>
-          ))}
-        </select>
-
-        {filter.infoKey && (
-          <>
-            <select
-              value={filter.infoOperator || '='}
-              onChange={(e) => onFilterChange({
-                ...filter,
-                infoOperator: e.target.value as FilterConfig['infoOperator'],
-              })}
-              style={{ width: 50 }}
-            >
-              <option value="=">=</option>
-              <option value=">">&gt;</option>
-              <option value="<">&lt;</option>
-              <option value=">=">&gt;=</option>
-              <option value="<=">&lt;=</option>
-            </select>
-            <input
-              type="text"
-              value={filter.infoValue || ''}
-              onChange={(e) => onFilterChange({ ...filter, infoValue: e.target.value })}
-              placeholder="value"
-              style={{ width: 80 }}
-            />
-          </>
-        )}
       </div>
 
       {/* Clear filters */}

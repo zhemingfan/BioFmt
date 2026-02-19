@@ -251,17 +251,21 @@ body {
   word-break: break-all;
 }
 
-/* Column widths */
-.col-chrom { width: 100px; }
-.col-pos { width: 100px; }
-.col-id { width: 120px; }
-.col-ref { width: 80px; }
-.col-alt { width: 100px; }
-.col-qual { width: 80px; }
-.col-filter { width: 100px; }
-.col-info { width: 250px; flex: 1; }
-.col-format { width: 120px; }
-.col-sample { width: 150px; }
+/* Column resize handle */
+.col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  user-select: none;
+  z-index: 1;
+}
+.col-resize-handle:hover {
+  background: var(--vscode-focusBorder, #007acc);
+  opacity: 0.6;
+}
 
 /* Truncation Banner */
 .truncation-banner {
@@ -489,7 +493,8 @@ body {
 .expanded-attrs,
 .expanded-sam,
 .expanded-paf,
-.expanded-psl {
+.expanded-psl,
+.expanded-vcf {
   position: fixed;
   bottom: 0;
   left: 0;
