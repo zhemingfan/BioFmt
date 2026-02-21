@@ -2,7 +2,7 @@
   "name": "biofmt",
   "displayName": "BioFmt",
   "description": "View and validate genomics, transcriptomics, and proteomics text formats with syntax highlighting, LSP features, and high-performance previews",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "jfan",
   "license": "GPL-3.0",
   "icon": "images/icon.png",
@@ -72,156 +72,277 @@
     "languages": [
       {
         "id": "omics-vcf",
-        "aliases": ["VCF", "Variant Call Format"],
-        "extensions": [".vcf"],
+        "aliases": [
+          "VCF",
+          "Variant Call Format"
+        ],
+        "extensions": [
+          ".vcf"
+        ],
         "firstLine": "^##fileformat=VCF",
         "configuration": "./language-configuration/vcf.language-configuration.json"
       },
       {
         "id": "omics-sam",
-        "aliases": ["SAM", "Sequence Alignment Map"],
-        "extensions": [".sam"],
+        "aliases": [
+          "SAM",
+          "Sequence Alignment Map"
+        ],
+        "extensions": [
+          ".sam"
+        ],
         "configuration": "./language-configuration/sam.language-configuration.json"
       },
       {
         "id": "omics-bed",
-        "aliases": ["BED", "Browser Extensible Data"],
-        "extensions": [".bed"],
+        "aliases": [
+          "BED",
+          "Browser Extensible Data"
+        ],
+        "extensions": [
+          ".bed"
+        ],
         "configuration": "./language-configuration/bed.language-configuration.json"
       },
       {
         "id": "omics-bedpe",
-        "aliases": ["BEDPE", "Paired-End BED"],
-        "extensions": [".bedpe"],
+        "aliases": [
+          "BEDPE",
+          "Paired-End BED"
+        ],
+        "extensions": [
+          ".bedpe"
+        ],
         "configuration": "./language-configuration/bedpe.language-configuration.json"
       },
       {
         "id": "omics-gtf",
-        "aliases": ["GTF", "Gene Transfer Format"],
-        "extensions": [".gtf"],
+        "aliases": [
+          "GTF",
+          "Gene Transfer Format"
+        ],
+        "extensions": [
+          ".gtf"
+        ],
         "configuration": "./language-configuration/gtf.language-configuration.json"
       },
       {
         "id": "omics-gff3",
-        "aliases": ["GFF3", "General Feature Format 3"],
-        "extensions": [".gff", ".gff3"],
+        "aliases": [
+          "GFF3",
+          "General Feature Format 3"
+        ],
+        "extensions": [
+          ".gff",
+          ".gff3"
+        ],
         "firstLine": "^##gff-version",
         "configuration": "./language-configuration/gff3.language-configuration.json"
       },
       {
         "id": "omics-psl",
-        "aliases": ["PSL", "Pattern Space Layout"],
-        "extensions": [".psl"],
+        "aliases": [
+          "PSL",
+          "Pattern Space Layout"
+        ],
+        "extensions": [
+          ".psl"
+        ],
         "configuration": "./language-configuration/psl.language-configuration.json"
       },
       {
         "id": "omics-paf",
-        "aliases": ["PAF", "Pairwise mApping Format"],
-        "extensions": [".paf"],
+        "aliases": [
+          "PAF",
+          "Pairwise mApping Format"
+        ],
+        "extensions": [
+          ".paf"
+        ],
         "configuration": "./language-configuration/paf.language-configuration.json"
       },
       {
         "id": "omics-maf-alignment",
-        "aliases": ["MAF Alignment", "Multiple Alignment Format"],
-        "extensions": [".maf"],
+        "aliases": [
+          "MAF Alignment",
+          "Multiple Alignment Format"
+        ],
+        "extensions": [
+          ".maf"
+        ],
         "firstLine": "^##maf|^a\\s+score=",
         "configuration": "./language-configuration/maf.language-configuration.json"
       },
       {
         "id": "omics-maf-mutation",
-        "aliases": ["MAF Mutation", "Mutation Annotation Format"],
-        "extensions": [".maf"],
+        "aliases": [
+          "MAF Mutation",
+          "Mutation Annotation Format"
+        ],
+        "extensions": [
+          ".maf"
+        ],
         "firstLine": "^#version|^Hugo_Symbol",
         "configuration": "./language-configuration/maf.language-configuration.json"
       },
       {
         "id": "omics-ped",
-        "aliases": ["PED", "Pedigree Format"],
-        "extensions": [".ped"],
+        "aliases": [
+          "PED",
+          "Pedigree Format"
+        ],
+        "extensions": [
+          ".ped"
+        ],
         "configuration": "./language-configuration/ped.language-configuration.json"
       },
       {
         "id": "omics-map",
-        "aliases": ["MAP", "Genetic Map Format"],
-        "extensions": [".map"],
+        "aliases": [
+          "MAP",
+          "Genetic Map Format"
+        ],
+        "extensions": [
+          ".map"
+        ],
         "configuration": "./language-configuration/map.language-configuration.json"
       },
       {
         "id": "omics-gct",
-        "aliases": ["GCT", "Gene Cluster Text"],
-        "extensions": [".gct"],
+        "aliases": [
+          "GCT",
+          "Gene Cluster Text"
+        ],
+        "extensions": [
+          ".gct"
+        ],
         "firstLine": "^#1\\.2",
         "configuration": "./language-configuration/gct.language-configuration.json"
       },
       {
         "id": "omics-mtx",
-        "aliases": ["MTX", "Matrix Market"],
-        "extensions": [".mtx"],
+        "aliases": [
+          "MTX",
+          "Matrix Market"
+        ],
+        "extensions": [
+          ".mtx"
+        ],
         "firstLine": "^%%MatrixMarket",
         "configuration": "./language-configuration/mtx.language-configuration.json"
       },
       {
         "id": "omics-mztab",
-        "aliases": ["mzTab", "mzTab Format"],
-        "extensions": [".mztab", ".mzTab"],
+        "aliases": [
+          "mzTab",
+          "mzTab Format"
+        ],
+        "extensions": [
+          ".mztab",
+          ".mzTab"
+        ],
         "firstLine": "^(MTD|COM)\\t",
         "configuration": "./language-configuration/mztab.language-configuration.json"
       },
       {
         "id": "omics-mgf",
-        "aliases": ["MGF", "Mascot Generic Format"],
-        "extensions": [".mgf"],
+        "aliases": [
+          "MGF",
+          "Mascot Generic Format"
+        ],
+        "extensions": [
+          ".mgf"
+        ],
         "firstLine": "^BEGIN IONS",
         "configuration": "./language-configuration/mgf.language-configuration.json"
       },
       {
         "id": "omics-bedgraph",
-        "aliases": ["bedGraph"],
-        "extensions": [".bedGraph", ".bdg"],
+        "aliases": [
+          "bedGraph"
+        ],
+        "extensions": [
+          ".bedGraph",
+          ".bdg"
+        ],
         "configuration": "./language-configuration/bedgraph.language-configuration.json"
       },
       {
         "id": "omics-wig",
-        "aliases": ["WIG", "Wiggle Track"],
-        "extensions": [".wig"],
+        "aliases": [
+          "WIG",
+          "Wiggle Track"
+        ],
+        "extensions": [
+          ".wig"
+        ],
         "configuration": "./language-configuration/wig.language-configuration.json"
       },
       {
         "id": "omics-narrowpeak",
-        "aliases": ["narrowPeak"],
-        "extensions": [".narrowPeak"],
+        "aliases": [
+          "narrowPeak"
+        ],
+        "extensions": [
+          ".narrowPeak"
+        ],
         "configuration": "./language-configuration/bed.language-configuration.json"
       },
       {
         "id": "omics-broadpeak",
-        "aliases": ["broadPeak"],
-        "extensions": [".broadPeak"],
+        "aliases": [
+          "broadPeak"
+        ],
+        "extensions": [
+          ".broadPeak"
+        ],
         "configuration": "./language-configuration/bed.language-configuration.json"
       },
       {
         "id": "omics-genbank",
-        "aliases": ["GenBank"],
-        "extensions": [".gbk", ".gb", ".genbank"],
+        "aliases": [
+          "GenBank"
+        ],
+        "extensions": [
+          ".gbk",
+          ".gb",
+          ".genbank"
+        ],
         "firstLine": "^LOCUS",
         "configuration": "./language-configuration/genbank.language-configuration.json"
       },
       {
         "id": "omics-chain",
-        "aliases": ["Chain", "UCSC Chain"],
-        "extensions": [".chain"],
+        "aliases": [
+          "Chain",
+          "UCSC Chain"
+        ],
+        "extensions": [
+          ".chain"
+        ],
         "firstLine": "^chain\\s+",
         "configuration": "./language-configuration/chain.language-configuration.json"
       },
       {
         "id": "omics-net",
-        "aliases": ["Net", "UCSC Net"],
-        "extensions": [".net"],
+        "aliases": [
+          "Net",
+          "UCSC Net"
+        ],
+        "extensions": [
+          ".net"
+        ],
         "configuration": "./language-configuration/net.language-configuration.json"
       },
       {
         "id": "omics-gfa",
-        "aliases": ["GFA", "Graphical Fragment Assembly"],
-        "extensions": [".gfa"],
+        "aliases": [
+          "GFA",
+          "Graphical Fragment Assembly"
+        ],
+        "extensions": [
+          ".gfa"
+        ],
         "firstLine": "^H\\t|^S\\t",
         "configuration": "./language-configuration/gfa.language-configuration.json"
       }
@@ -405,7 +526,11 @@
         },
         "biofmt.validation.level": {
           "type": "string",
-          "enum": ["off", "basic", "strict"],
+          "enum": [
+            "off",
+            "basic",
+            "strict"
+          ],
           "default": "basic",
           "description": "Validation strictness level"
         },
