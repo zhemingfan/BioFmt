@@ -552,6 +552,20 @@ function validateVcf(
     if (!line.startsWith('#')) {
       const columns = line.split('\t');
 
+      // Minimum column count (VCF requires 8 fixed columns regardless of whether #CHROM was seen)
+      if (columns.length < 8) {
+        diagnostics.push({
+          severity: DiagnosticSeverity.Error,
+          range: {
+            start: { line: i, character: 0 },
+            end: { line: i, character: line.length },
+          },
+          message: `VCF data line must have at least 8 columns, found ${columns.length}`,
+          source: 'biofmt',
+        });
+        continue;
+      }
+
       // Check column count
       if (expectedColumnCount > 0 && columns.length !== expectedColumnCount) {
         diagnostics.push({

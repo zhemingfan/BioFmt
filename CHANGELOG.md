@@ -5,6 +5,18 @@ All notable changes to BioFmt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-02-21
+
+### Added
+
+- VCF preview: hover tooltip on sample cells now shows human-readable field summaries (GT allele calls, DP read depth, GQ genotype quality, AD per-allele depths, PL likelihoods) instead of raw colon-joined values
+- VCF preview: table fills full pane width when variants are few (ResizeObserver tracks container width; `Math.max(totalWidth, containerWidth)` used for List and header)
+
+### Fixed
+
+- VCF preview: `headerEndLine ?? 0` (was `|| 0`) prevents incorrect fallback when `headerEndLine` is legitimately 0
+- LSP server: VCF data lines with fewer than 8 columns now produce an error diagnostic even when no `#CHROM` header has been seen (previously the minimum-column check was skipped until `#CHROM` appeared)
+
 ## [0.1.2] - 2026-02-21
 
 ### Added

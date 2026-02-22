@@ -3,10 +3,9 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import type { DocumentMetadata, VcfHeaderInfo, ParsedVcfRow, FilterConfig, FormatDefinition, TypedSampleData, FormatRecordContext } from '../types';
-import { VcfHeaderPanel } from './VcfHeaderPanel';
 import { VcfFilterBar } from './VcfFilterBar';
 import { ExpandedInfoCell } from './ExpandedInfoCell';
-import { parseSampleFormats, renderFormatDisplay, getRenderer } from '../vcf/formatParsers';
+import { parseSampleFormats, renderFormatDisplay, getRenderer, getFormatSummaries } from '../vcf/formatParsers';
 import { sortChromosomes } from '../utils';
 
 interface VcfPreviewProps {
@@ -31,7 +30,6 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   const [filter, setFilter] = useState<FilterConfig>({});
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [showAllSamples, setShowAllSamples] = useState(false);
-  const [headerExpanded, setHeaderExpanded] = useState(false);
   const [colWidths, setColWidths] = useState<Record<ColKey, number>>({ ...DEFAULT_COL_WIDTHS });
   const resizingRef = useRef<{ key: ColKey; startX: number; startWidth: number } | null>(null);
 
@@ -46,6 +44,20 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Track container width so the table fills the pane when totalWidth < pane width
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setContainerWidth(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -67,7 +79,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   // Parse VCF rows
   const parsedRows = useMemo(() => {
     const result: ParsedVcfRow[] = [];
-    const headerEndLine = headerInfo?.headerEndLine || 0;
+    const headerEndLine = headerInfo?.headerEndLine ?? 0;
 
     for (let i = headerEndLine; i < rows.length && result.length < MAX_DISPLAY_ROWS; i++) {
       const line = rows[i];
@@ -123,6 +135,15 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     };
   }, [parsedRows]);
 
+  // Build format definition map once for tooltip generation
+  const formatDefs = useMemo(() => {
+    const map = new Map<string, FormatDefinition>();
+    for (const fd of headerInfo?.formatFields ?? []) {
+      map.set(fd.id, fd);
+    }
+    return map;
+  }, [headerInfo]);
+
   // Determine which samples to show
   const sampleColumns = useMemo(() => {
     if (!headerInfo?.samples) return [];
@@ -159,7 +180,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
   // Export visible (filtered + sorted) rows as a proper VCF file
   const exportVcf = useCallback(() => {
-    const headerEndLine = headerInfo?.headerEndLine || 0;
+    const headerEndLine = headerInfo?.headerEndLine ?? 0;
     const headerLines = rows.slice(0, headerEndLine).join('\n');
     const dataLines = sortedRows.map((r) => r.raw).join('\n');
     const content = headerLines + (headerLines && dataLines ? '\n' : '') + dataLines;
@@ -219,7 +240,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
                 key={sample}
                 className="table-cell"
                 style={{ width: colWidths.sample, flexShrink: 0 }}
-                title={rawSample ? Object.values(rawSample).join(':') : '.'}
+                title={rawSample ? buildSampleTooltip(rawSample, typedSample, formatKeys, formatDefs, row.ref, alts) : '.'}
               >
                 {rawSample ? (
                   <ColoredSampleDisplay
@@ -236,7 +257,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       </div>
     );
-  }, [sortedRows, expandedRow, sampleColumns, colWidths]);
+  }, [sortedRows, expandedRow, sampleColumns, colWidths, formatDefs]);
 
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
@@ -284,15 +305,6 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       )}
 
-      {/* Header Panel */}
-      {headerInfo && (
-        <VcfHeaderPanel
-          headerInfo={headerInfo}
-          expanded={headerExpanded}
-          onToggle={() => setHeaderExpanded(!headerExpanded)}
-        />
-      )}
-
       {/* Filter Bar */}
       <VcfFilterBar
         filter={filter}
@@ -318,9 +330,9 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
       {/* Table */}
       <div className="table-container">
-        <div style={{ overflowX: 'auto' }}>
+        <div ref={containerRef} style={{ overflowX: 'auto' }}>
           {/* Header row */}
-          <div className="table-header" style={{ width: totalWidth }}>
+          <div className="table-header" style={{ width: Math.max(totalWidth, containerWidth) }}>
             {(['chrom', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info'] as ColKey[]).map((key) => {
               const isSortable = key === 'chrom' || key === 'pos';
               const isActive = sort.col === key;
@@ -384,7 +396,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
             height={listHeight}
             itemCount={sortedRows.length}
             itemSize={ROW_HEIGHT}
-            width={totalWidth}
+            width={Math.max(totalWidth, containerWidth)}
             onScroll={handleScroll}
           >
             {Row}
@@ -604,6 +616,41 @@ function ColoredSampleDisplay({ rawSample, typedSample, formatKeys, ref_, alts }
       })}
     </span>
   );
+}
+
+function buildSampleTooltip(
+  rawSample: Record<string, string>,
+  typedSample: TypedSampleData | undefined,
+  formatKeys: string[],
+  formatDefs: Map<string, FormatDefinition>,
+  ref_: string,
+  alts: string[]
+): string {
+  if (!typedSample) return Object.values(rawSample).join(':');
+  const ctx: FormatRecordContext = {
+    ref: ref_,
+    alts,
+    nAlleles: 1 + alts.length,
+    formatKeys,
+    sampleName: '',
+  };
+  const lines: string[] = [];
+  for (const key of formatKeys) {
+    const typed = typedSample.typed[key];
+    if (!typed) {
+      lines.push(`${key}: ${rawSample[key] ?? '.'}`);
+      continue;
+    }
+    const summaries = getFormatSummaries(key, typed, formatDefs, ctx);
+    if (summaries.length === 0) {
+      lines.push(`${key}: ${rawSample[key] ?? '.'}`);
+    } else {
+      for (const s of summaries) {
+        lines.push(`${s.label}: ${s.value}`);
+      }
+    }
+  }
+  return lines.join('\n');
 }
 
 function formatSampleForDisplay(sample: Record<string, string>, typedSample?: TypedSampleData, ref?: string, alts?: string[]): string {
