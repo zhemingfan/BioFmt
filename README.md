@@ -8,6 +8,7 @@ Syntax highlighting, real-time validation, hover tooltips, and interactive previ
 
 - **Syntax highlighting** for all 25 formats
 - **Real-time diagnostics** as you edit
+- **Hover tooltips** for VCF INFO/FORMAT field definitions
 - **Interactive previews** — virtualized tables with search, filters, and TSV export, handling 200K+ rows
 
 ## Supported Formats
@@ -22,7 +23,7 @@ Search **BioFmt** in the VS Code Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X
 
 ## Usage
 
-Open any supported file, then click the preview icon in the editor title bar (or run **BioFmt: Open Preview** from the Command Palette).
+Open any supported file, then click the preview icon in the editor title bar (or run **BioFmt: Open Preview** from the Command Palette). In VCF files, hover over INFO or FORMAT keys in a data row to see their definitions.
 
 
 ## Configuration
