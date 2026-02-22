@@ -1,16 +1,14 @@
 # BioFmt
 
-**High-fidelity viewer for bioinformatics file formats in VS Code**
-
 BioFmt provides syntax highlighting, intelligent hover tooltips, real-time validation, and interactive previews for 25 genomics, transcriptomics, and proteomics file formats.
 
 ## Features
 
-- **Syntax highlighting** via TextMate grammars for all 25 formats
-- **LSP-powered diagnostics** with viewport-aware validation (~500 lines around cursor)
+- **Syntax highlighting** for all 25 formats
+- **Real-time validation** with diagnostics shown as you edit
 - **Hover tooltips** for VCF INFO/FORMAT field definitions from file headers
 - **Interactive previews** with virtualized tables handling 200K+ rows, resizable columns, text search, and TSV export
-- **Automatic format detection** via file extension and `firstLine` content matching
+- **Automatic format detection** via file extension and file content
 
 ## Supported Formats
 

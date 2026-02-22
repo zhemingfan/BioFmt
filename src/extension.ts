@@ -278,12 +278,38 @@ function registerCommands(context: vscode.ExtensionContext): void {
     }
   );
 
+  // Warn when a file is too large for VS Code to syntax-highlight.
+  // VS Code silently disables TextMate tokenization above ~20 MB
+  // (editor.largeFileOptimizations). Users see plain white text with no
+  // explanation, so we surface a one-time info message.
+  const LARGE_FILE_BYTES = 20 * 1024 * 1024; // 20 MB — VS Code's threshold
+  const warnedUris = new Set<string>();
+
+  const largFileListener = vscode.workspace.onDidOpenTextDocument(async (doc) => {
+    if (!doc.languageId.startsWith('omics-')) return;
+    const key = doc.uri.toString();
+    if (warnedUris.has(key)) return;
+    try {
+      const stat = await vscode.workspace.fs.stat(doc.uri);
+      if (stat.size > LARGE_FILE_BYTES) {
+        warnedUris.add(key);
+        const mb = (stat.size / (1024 * 1024)).toFixed(0);
+        vscode.window.showWarningMessage(
+          `BioFmt: "${doc.fileName.split('/').pop()}" is ${mb} MB — VS Code disables syntax highlighting for files over 20 MB. Open the Command Palette and run "BioFmt: Open Preview" to view the file.`
+        );
+      }
+    } catch {
+      // stat failed (e.g. unsaved buffer) — ignore
+    }
+  });
+
   context.subscriptions.push(
     openPreviewCommand,
     openFixtureCommand,
     copyRowCommand,
     copyCellCommand,
-    jumpToDefinitionCommand
+    jumpToDefinitionCommand,
+    largFileListener
   );
 }
 

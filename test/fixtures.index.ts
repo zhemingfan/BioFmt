@@ -33,6 +33,37 @@ export const FIXTURES: Record<string, FixtureInfo> = {
     description: 'VCF with FORMAT fields grouped by color category',
   },
 
+  'vcf-freebayes': {
+    path: 'vcf_freebayes.vcf',
+    languageId: 'omics-vcf',
+    description: 'FreeBayes SNP/indel calls, VCF 4.2, 1 sample',
+  },
+  'vcf-somatic-indels': {
+    path: 'vcf_somatic_indels.vcf',
+    languageId: 'omics-vcf',
+    description: 'Somatic indel calls, VCF 4.1, tumor/normal pair',
+  },
+  'vcf-somatic-snvs': {
+    path: 'vcf_somatic_snvs.vcf',
+    languageId: 'omics-vcf',
+    description: 'Somatic SNV calls, VCF 4.1, tumor/normal pair',
+  },
+  'vcf-simulated': {
+    path: 'vcf_simulated.vcf',
+    languageId: 'omics-vcf',
+    description: 'Simulated VCF 4.0 with long ALT sequences',
+  },
+  'vcf-sv-delly': {
+    path: 'vcf_sv_delly.vcf',
+    languageId: 'omics-vcf',
+    description: 'DELLY structural variant calls, VCF 4.2, symbolic alleles',
+  },
+  'vcf-somatic-sv': {
+    path: 'vcf_somatic_sv.vcf',
+    languageId: 'omics-vcf',
+    description: 'Manta somatic SV calls, VCF 4.1, BGZF-decompressed',
+  },
+
   // SAM
   'sam-toy': {
     path: 'toy.sam',

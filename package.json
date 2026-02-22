@@ -2,7 +2,7 @@
   "name": "biofmt",
   "displayName": "BioFmt",
   "description": "View and validate genomics, transcriptomics, and proteomics text formats with syntax highlighting, LSP features, and high-performance previews",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "jfan",
   "license": "GPL-3.0",
   "icon": "images/icon.png",

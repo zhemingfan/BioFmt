@@ -73,12 +73,14 @@ const gtRenderer: FormatRenderer = {
     const gt = typed.value;
     const summaries: FormatSummary[] = [];
 
-    // Show allele letters if available
+    // Show allele letters if available; show full name for symbolic SV alleles
     const alleleLetters = gt.alleles.map((idx) => {
       if (idx === null) return '.';
       if (idx === 0) return ctx.ref.charAt(0);
       const altIdx = idx - 1;
-      return altIdx < ctx.alts.length ? ctx.alts[altIdx].charAt(0) : '?';
+      if (altIdx >= ctx.alts.length) return '?';
+      const alt = ctx.alts[altIdx];
+      return alt.startsWith('<') ? alt : alt.charAt(0);
     });
     const sep = gt.isPhased ? '|' : '/';
     summaries.push({
@@ -117,12 +119,14 @@ const gtRenderer: FormatRenderer = {
     const indices = gt.alleles.map((a) => (a === null ? '.' : String(a)));
     const display = indices.join(sep);
 
-    // Add allele letters in parentheses
+    // Add allele letters in parentheses; show full name for symbolic SV alleles
     const letters = gt.alleles.map((idx) => {
       if (idx === null) return '.';
       if (idx === 0) return ctx.ref.charAt(0);
       const altIdx = idx - 1;
-      return altIdx < ctx.alts.length ? ctx.alts[altIdx].charAt(0) : '?';
+      if (altIdx >= ctx.alts.length) return '?';
+      const alt = ctx.alts[altIdx];
+      return alt.startsWith('<') ? alt : alt.charAt(0);
     });
     return `${display} (${letters.join(sep)})`;
   },

@@ -5,6 +5,23 @@ All notable changes to BioFmt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-02-21
+
+### Added
+
+- VCF preview: FILTER column now shows color-coded badges (green for PASS, amber for other values)
+- Extension: warning notification when opening files >20 MB where VS Code disables syntax highlighting, with a prompt to use the preview panel instead
+- Test fixtures: 6 real-world VCF files added (FreeBayes SNPs, Strelka somatic indels/SNVs, simulated long-ALT, DELLY SVs, Manta BND breakends)
+
+### Fixed
+
+- VCF preview: symbolic alleles (`<DEL>`, `<INS>`, `<DUP>`, etc.) were displayed as `<` in genotype cells; now show full allele name
+- README: removed jargon ("TextMate grammars", "LSP-powered", "firstLine matching") from marketplace description
+
+### Tests
+
+- Added 73 real-world VCF tests covering FreeBayes, Strelka, simulated, DELLY, and Manta VCF files (380 total, 0 failing)
+
 ## [0.1.3] - 2026-02-21
 
 ### Added

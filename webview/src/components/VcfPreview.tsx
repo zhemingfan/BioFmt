@@ -221,7 +221,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
           <div className="table-cell" style={{ width: colWidths.ref, flexShrink: 0 }} title={row.ref}>{row.ref}</div>
           <div className="table-cell" style={{ width: colWidths.alt, flexShrink: 0 }} title={row.alt}>{row.alt}</div>
           <div className="table-cell" style={{ width: colWidths.qual, flexShrink: 0 }} title={row.qual?.toString() || '.'}>{row.qual ?? '.'}</div>
-          <div className="table-cell" style={{ width: colWidths.filter, flexShrink: 0 }} title={row.filter}>{row.filter}</div>
+          <div className="table-cell" style={{ width: colWidths.filter, flexShrink: 0 }} title={row.filter}><FilterBadge value={row.filter} /></div>
           <div
             className={`table-cell expandable ${isExpanded ? 'expanded' : ''}`}
             style={{ width: colWidths.info, flexShrink: 0 }}
@@ -565,6 +565,27 @@ function ColoredInfoDisplay({ info }: ColoredInfoDisplayProps) {
           )}
         </React.Fragment>
       ))}
+    </span>
+  );
+}
+
+function FilterBadge({ value }: { value: string }) {
+  if (value === '.') {
+    return <span style={{ opacity: 0.4 }}>.</span>;
+  }
+  const isPass = value === 'PASS';
+  return (
+    <span style={{
+      display: 'inline-block',
+      padding: '1px 6px',
+      borderRadius: 3,
+      fontSize: '0.85em',
+      fontWeight: 600,
+      background: isPass ? 'rgba(0,158,115,0.20)' : 'rgba(230,159,0,0.20)',
+      color: isPass ? '#009e73' : '#e69f00',
+      border: `1px solid ${isPass ? 'rgba(0,158,115,0.4)' : 'rgba(230,159,0,0.4)'}`,
+    }}>
+      {value}
     </span>
   );
 }
