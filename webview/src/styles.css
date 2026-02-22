@@ -60,6 +60,9 @@ body {
   border-bottom: 1px solid var(--vscode-panel-border, #454545);
   background: var(--vscode-sideBar-background, #252526);
   flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .preview-header h1 {
@@ -75,6 +78,49 @@ body {
 
 .preview-header .meta span {
   margin-right: 16px;
+}
+
+.preview-header > div:first-child {
+  flex: 1;
+}
+
+/* Export VCF button */
+.export-vcf-btn {
+  padding: 4px 12px;
+  background: var(--vscode-button-secondaryBackground, #3a3d41);
+  color: var(--vscode-button-secondaryForeground, #ccc);
+  border: 1px solid var(--vscode-button-border, #3c3c3c);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+.export-vcf-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground, #45494e);
+}
+.export-vcf-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Sortable column header */
+.table-header-cell.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.table-header-cell.sortable:hover {
+  background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.sort-icon {
+  opacity: 0.4;
+  font-size: 0.75em;
+}
+.sort-icon.active {
+  opacity: 1;
+  color: var(--vscode-focusBorder, #007acc);
 }
 
 /* Filter Bar */

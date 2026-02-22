@@ -84,16 +84,18 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
   // Apply filters
   const filteredRows = useMemo(() => {
-    if (!filter.chrom && !filter.id && !filter.filter) {
+    if (!filter.chrom && !filter.id && !filter.filter && !filter.search) {
       return parsedRows;
     }
 
     const idQuery = filter.id?.toLowerCase();
+    const searchQuery = filter.search?.toLowerCase();
 
     return parsedRows.filter((row) => {
       if (filter.chrom && row.chrom !== filter.chrom) return false;
       if (filter.filter && row.filter !== filter.filter) return false;
       if (idQuery && !row.id.toLowerCase().includes(idQuery)) return false;
+      if (searchQuery && !row.raw.toLowerCase().includes(searchQuery)) return false;
       return true;
     });
   }, [parsedRows, filter]);
@@ -128,6 +130,48 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     return headerInfo.samples.slice(0, limit);
   }, [headerInfo, showAllSamples]);
 
+  // Sort state
+  const [sort, setSort] = useState<{ col: 'chrom' | 'pos' | null; dir: 'asc' | 'desc' }>({ col: null, dir: 'asc' });
+
+  const toggleSort = useCallback((col: 'chrom' | 'pos') => {
+    setSort(prev => ({
+      col,
+      dir: prev.col === col && prev.dir === 'asc' ? 'desc' : 'asc',
+    }));
+  }, []);
+
+  // Apply sort (chrom uses natural ordering; pos as tiebreaker within chrom sort)
+  const sortedRows = useMemo(() => {
+    if (!sort.col) return filteredRows;
+    return [...filteredRows].sort((a, b) => {
+      let cmp = 0;
+      if (sort.col === 'pos') {
+        cmp = a.pos - b.pos;
+      } else {
+        const aNum = parseInt(a.chrom.replace(/\D/g, ''), 10);
+        const bNum = parseInt(b.chrom.replace(/\D/g, ''), 10);
+        cmp = (!isNaN(aNum) && !isNaN(bNum)) ? aNum - bNum : a.chrom.localeCompare(b.chrom);
+        if (cmp === 0) cmp = a.pos - b.pos;
+      }
+      return sort.dir === 'asc' ? cmp : -cmp;
+    });
+  }, [filteredRows, sort]);
+
+  // Export visible (filtered + sorted) rows as a proper VCF file
+  const exportVcf = useCallback(() => {
+    const headerEndLine = headerInfo?.headerEndLine || 0;
+    const headerLines = rows.slice(0, headerEndLine).join('\n');
+    const dataLines = sortedRows.map((r) => r.raw).join('\n');
+    const content = headerLines + (headerLines && dataLines ? '\n' : '') + dataLines;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = metadata.fileName.replace(/\.vcf(\.gz)?$/i, '') + '_filtered.vcf';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [rows, headerInfo, sortedRows, metadata.fileName]);
+
   // Total table width for horizontal scroll
   const totalWidth = useMemo(() => {
     let w = colWidths.chrom + colWidths.pos + colWidths.id + colWidths.ref +
@@ -139,7 +183,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
   // Row renderer for virtual list
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const row = filteredRows[index];
+    const row = sortedRows[index];
     if (!row) return null;
 
     const isExpanded = expandedRow === row.lineNumber;
@@ -192,7 +236,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       </div>
     );
-  }, [filteredRows, expandedRow, sampleColumns, colWidths]);
+  }, [sortedRows, expandedRow, sampleColumns, colWidths]);
 
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
@@ -217,9 +261,17 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         <h1>{metadata.fileName}</h1>
         <div className="meta">
           <span>Format: VCF {headerInfo?.fileformat?.replace('VCF', '') || ''}</span>
-          <span>Variants: {filteredRows.length.toLocaleString()}</span>
+          <span>Variants: {sortedRows.length.toLocaleString()}</span>
           {headerInfo?.samples && <span>Samples: {headerInfo.samples.length}</span>}
         </div>
+        <button
+          className="export-vcf-btn"
+          onClick={exportVcf}
+          title="Export filtered rows as VCF"
+          disabled={sortedRows.length === 0}
+        >
+          Export VCF
+        </button>
       </div>
 
       {/* Truncation Warning */}
@@ -269,22 +321,31 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         <div style={{ overflowX: 'auto' }}>
           {/* Header row */}
           <div className="table-header" style={{ width: totalWidth }}>
-            {(['chrom', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info'] as ColKey[]).map((key) => (
-              <div
-                key={key}
-                className="table-header-cell"
-                style={{ width: colWidths[key], flexShrink: 0, position: 'relative' }}
-              >
-                {key.toUpperCase()}
+            {(['chrom', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info'] as ColKey[]).map((key) => {
+              const isSortable = key === 'chrom' || key === 'pos';
+              const isActive = sort.col === key;
+              const sortIcon = isActive ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : (isSortable ? ' ↕' : '');
+              return (
                 <div
-                  className="col-resize-handle"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    resizingRef.current = { key, startX: e.clientX, startWidth: colWidths[key] };
-                  }}
-                />
-              </div>
-            ))}
+                  key={key}
+                  className={`table-header-cell${isSortable ? ' sortable' : ''}`}
+                  style={{ width: colWidths[key], flexShrink: 0, position: 'relative' }}
+                  onClick={isSortable ? () => toggleSort(key as 'chrom' | 'pos') : undefined}
+                  title={isSortable ? `Sort by ${key.toUpperCase()}` : undefined}
+                >
+                  {key.toUpperCase()}
+                  <span className={`sort-icon${isActive ? ' active' : ''}`}>{sortIcon}</span>
+                  <div
+                    className="col-resize-handle"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      resizingRef.current = { key, startX: e.clientX, startWidth: colWidths[key] };
+                    }}
+                  />
+                </div>
+              );
+            })}
             {parsedRows[0]?.format && (
               <div
                 className="table-header-cell"
@@ -321,7 +382,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
           {/* Virtual list */}
           <List
             height={listHeight}
-            itemCount={filteredRows.length}
+            itemCount={sortedRows.length}
             itemSize={ROW_HEIGHT}
             width={totalWidth}
             onScroll={handleScroll}
@@ -333,7 +394,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
       {/* Row detail panel — fixed at bottom */}
       {expandedRow !== null && (() => {
-        const row = filteredRows.find((r) => r.lineNumber === expandedRow);
+        const row = sortedRows.find((r) => r.lineNumber === expandedRow);
         if (!row) return null;
         return (
           <div className="expanded-vcf">

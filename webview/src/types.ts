@@ -164,6 +164,7 @@ export interface FilterConfig {
   chrom?: string;
   id?: string;
   filter?: string;
+  search?: string;
 }
 
 export type MessageFromExtension =

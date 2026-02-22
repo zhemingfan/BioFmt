@@ -21,7 +21,7 @@ export function VcfFilterBar({
   totalRows,
   filteredRows,
 }: VcfFilterBarProps) {
-  const hasFilters = filter.chrom || filter.id || filter.filter;
+  const hasFilters = filter.chrom || filter.id || filter.filter || filter.search;
 
   return (
     <div className="filter-bar">
@@ -63,6 +63,18 @@ export function VcfFilterBar({
             <option key={f} value={f}>{f}</option>
           ))}
         </select>
+      </div>
+
+      {/* Global search */}
+      <div className="filter-group">
+        <label>Search:</label>
+        <input
+          type="text"
+          value={filter.search || ''}
+          onChange={(e) => onFilterChange({ ...filter, search: e.target.value || undefined })}
+          placeholder="Search all fields…"
+          style={{ width: 160 }}
+        />
       </div>
 
       {/* Clear filters */}

@@ -5,6 +5,22 @@ All notable changes to BioFmt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-02-21
+
+### Added
+
+- VCF preview: click CHROM or POS column header to sort ascending/descending (▲/▼ indicator); CHROM uses natural chromosome ordering (chr1 < chr2 < chr10 < chrX) with POS as tiebreaker
+- VCF preview: global "Search all fields" text input searches the raw VCF line, covering INFO values, sample data, and every column at once
+- VCF preview: "Export VCF" button reconstructs a valid VCF file (original header + filtered/sorted rows) and downloads it as `_filtered.vcf`
+
+### Fixed
+
+- VCF export: no trailing newline when exporting header-only (no matching rows)
+
+### Tests
+
+- Added 56 new unit tests covering sort, filter (including global search), export, and the NaN-POS guard (307 total, 0 failing)
+
 ## [0.1.1] - 2026-02-20
 
 ### Changed
