@@ -1,0 +1,79 @@
+name: Feature Request
+description: Suggest a new feature or improvement for BioFmt
+labels: ["enhancement"]
+body:
+  - type: checkboxes
+    id: duplicate-check
+    attributes:
+      label: Duplicate check
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+
+  - type: textarea
+    id: problem-motivation
+    attributes:
+      label: Problem / motivation
+      description: What frustration or gap prompted this request?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-feature
+    attributes:
+      label: Proposed feature
+      description: What should the feature do? Be as specific as possible.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: format-affected
+    attributes:
+      label: Format affected
+      description: Which format(s) does this feature relate to?
+      options:
+        - General / all formats
+        - VCF
+        - SAM
+        - BED
+        - BEDPE
+        - GTF
+        - GFF3
+        - PSL
+        - PAF
+        - MAF (alignment)
+        - MAF (mutation)
+        - WIG
+        - bedGraph
+        - narrowPeak
+        - broadPeak
+        - MTX
+        - mzTab
+        - MGF
+        - GenBank
+        - PED
+        - MAP
+        - GCT
+        - chain
+        - net
+        - GFA
+        - HTSeq / Salmon / Kallisto
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you've tried, or alternative approaches you considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Links, references, screenshots, or anything else relevant.
+    validations:
+      required: false

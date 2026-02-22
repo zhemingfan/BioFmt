@@ -1,0 +1,66 @@
+name: Format Support Request
+description: Request support for a new bioinformatics file format
+labels: ["format-request"]
+body:
+  - type: checkboxes
+    id: duplicate-check
+    attributes:
+      label: Duplicate check
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+
+  - type: input
+    id: format-name
+    attributes:
+      label: Format name
+      placeholder: "e.g., FASTA, CRAM, BCF"
+    validations:
+      required: true
+
+  - type: textarea
+    id: format-description
+    attributes:
+      label: Format description
+      description: What data does this format store, and who/what produces it?
+    validations:
+      required: true
+
+  - type: input
+    id: specification-link
+    attributes:
+      label: Specification link
+      description: Link to the official spec, reference implementation, or documentation.
+      placeholder: "https://..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: How would you use BioFmt's support for this format in your workflow?
+    validations:
+      required: true
+
+  - type: textarea
+    id: sample-data
+    attributes:
+      label: Sample data
+      description: >
+        5–10 representative lines from a real or synthetic file.
+        **Do not paste files containing personal or patient data — use
+        synthetic/anonymised data only.**
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: tooling-ecosystem
+    attributes:
+      label: Tooling ecosystem
+      description: >
+        What tools produce or consume this format?
+        (e.g., samtools, GATK, Picard, custom scripts)
+    validations:
+      required: false

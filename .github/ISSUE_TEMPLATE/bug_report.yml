@@ -1,0 +1,142 @@
+name: Bug Report
+description: Report a bug or unexpected behaviour in BioFmt
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: duplicate-check
+    attributes:
+      label: Duplicate check
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A brief one-paragraph summary of the bug.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: file-format
+    attributes:
+      label: File format
+      description: Which format does this bug affect?
+      options:
+        - VCF
+        - SAM
+        - BED
+        - BEDPE
+        - GTF
+        - GFF3
+        - PSL
+        - PAF
+        - MAF (alignment)
+        - MAF (mutation)
+        - WIG
+        - bedGraph
+        - narrowPeak
+        - broadPeak
+        - MTX
+        - mzTab
+        - MGF
+        - GenBank
+        - PED
+        - MAP
+        - GCT
+        - chain
+        - net
+        - GFA
+        - HTSeq / Salmon / Kallisto
+        - Not format-specific
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected behaviour
+      description: What should happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behaviour
+    attributes:
+      label: Actual behaviour
+      description: What actually happens?
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: >
+        Drag and drop images here — include both the editor view and the preview
+        panel if relevant.
+    validations:
+      required: false
+
+  - type: textarea
+    id: sample-data
+    attributes:
+      label: Minimal sample data
+      description: >
+        A few lines of the file that trigger the bug.
+        **Do not paste files containing personal or patient data — use
+        synthetic/anonymised data only.**
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: biofmt-version
+    attributes:
+      label: BioFmt version
+      placeholder: "0.1.4 — check Extensions panel"
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code version
+      placeholder: "1.90.0 — Help → About"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: >
+        Error messages from the Output panel (BioFmt channel), stack traces,
+        or any other context that might help.
+    validations:
+      required: false
