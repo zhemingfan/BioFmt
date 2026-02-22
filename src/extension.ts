@@ -143,12 +143,13 @@ function registerCommands(context: vscode.ExtensionContext): void {
         context.subscriptions
       );
 
-      // Close preview when document closes
+      // Close preview when document closes; dispose listener when panel closes
       const closeListener = vscode.workspace.onDidCloseTextDocument((doc) => {
         if (doc === document) {
           panel.dispose();
         }
       });
+      panel.onDidDispose(() => closeListener.dispose());
       context.subscriptions.push(closeListener);
     }
   );

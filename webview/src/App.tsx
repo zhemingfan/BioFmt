@@ -84,6 +84,15 @@ export function App() {
             rowCache.current.set(message.startLine + idx, row);
           });
 
+          // Evict oldest entries to prevent unbounded memory growth
+          if (rowCache.current.size > 50000) {
+            const keys = Array.from(rowCache.current.keys()).sort((a, b) => a - b);
+            const evictCount = rowCache.current.size - 50000;
+            for (let i = 0; i < evictCount; i++) {
+              rowCache.current.delete(keys[i]);
+            }
+          }
+
           flushContiguousRows();
 
           // Clear pending request

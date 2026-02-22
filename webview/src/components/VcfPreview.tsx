@@ -35,6 +35,19 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   const [colWidths, setColWidths] = useState<Record<ColKey, number>>({ ...DEFAULT_COL_WIDTHS });
   const resizingRef = useRef<{ key: ColKey; startX: number; startWidth: number } | null>(null);
 
+  // Reactive list height — updates when the webview pane is resized
+  const [listHeight, setListHeight] = useState(() => Math.max(200, window.innerHeight - 300));
+  const listHeightRef = useRef(listHeight);
+  useEffect(() => {
+    const onResize = () => {
+      const h = Math.max(200, window.innerHeight - 300);
+      listHeightRef.current = h;
+      setListHeight(h);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!resizingRef.current) return;
@@ -84,6 +97,13 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       return true;
     });
   }, [parsedRows, filter]);
+
+  // Clear expanded row if it's been filtered out
+  useEffect(() => {
+    if (expandedRow !== null && !filteredRows.find((r) => r.lineNumber === expandedRow)) {
+      setExpandedRow(null);
+    }
+  }, [filteredRows, expandedRow]);
 
   // Get unique values for filter dropdowns
   const filterOptions = useMemo(() => {
@@ -177,7 +197,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
     const visibleStart = Math.floor(scrollOffset / ROW_HEIGHT);
-    const visibleEnd = visibleStart + Math.ceil(window.innerHeight / ROW_HEIGHT) + 10;
+    const visibleEnd = visibleStart + Math.ceil(listHeightRef.current / ROW_HEIGHT) + 10;
 
     // Request rows if needed
     const headerEnd = headerInfo?.headerEndLine || 0;
@@ -300,7 +320,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
           {/* Virtual list */}
           <List
-            height={window.innerHeight - 300}
+            height={listHeight}
             itemCount={filteredRows.length}
             itemSize={ROW_HEIGHT}
             width={totalWidth}
@@ -341,6 +361,9 @@ function parseVcfLine(line: string, lineNumber: number, headerInfo: VcfHeaderInf
   const columns = line.split('\t');
   if (columns.length < 8) return null;
 
+  const pos = parseInt(columns[1], 10);
+  if (isNaN(pos)) return null;
+
   const info: Record<string, string | boolean> = {};
   if (columns[7] !== '.') {
     const infoPairs = columns[7].split(';');
@@ -373,9 +396,11 @@ function parseVcfLine(line: string, lineNumber: number, headerInfo: VcfHeaderInf
       formatDefs.set(fd.id, fd);
     }
 
-    for (let i = 0; i < headerInfo.samples.length && i + 9 < columns.length; i++) {
+    for (let i = 0; i < headerInfo.samples.length && 9 + i < columns.length; i++) {
+      const sampleCol = columns[9 + i];
+      if (!sampleCol) break;
       const sampleName = headerInfo.samples[i];
-      const sampleValues = columns[9 + i].split(':');
+      const sampleValues = sampleCol.split(':');
       const rawData: Record<string, string> = {};
 
       for (let j = 0; j < formatKeys.length; j++) {
@@ -402,7 +427,7 @@ function parseVcfLine(line: string, lineNumber: number, headerInfo: VcfHeaderInf
   return {
     lineNumber,
     chrom: columns[0],
-    pos: parseInt(columns[1], 10),
+    pos,
     id: columns[2],
     ref,
     alt,
