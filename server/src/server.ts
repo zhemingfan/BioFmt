@@ -427,7 +427,7 @@ function getWordRangeAtPosition(
     const start = match.index;
     const end = start + match[0].length;
 
-    if (character >= start && character <= end) {
+    if (character >= start && character < end) {
       return { start, end };
     }
   }

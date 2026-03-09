@@ -504,7 +504,7 @@ function parseVcfLine(line: string, lineNumber: number, headerInfo: VcfHeaderInf
     id: columns[2],
     ref,
     alt,
-    qual: columns[5] === '.' ? null : parseFloat(columns[5]),
+    qual: (() => { const q = parseFloat(columns[5]); return (columns[5] === '.' || isNaN(q)) ? null : q; })(),
     filter: columns[6],
     info,
     format: columns[8],
