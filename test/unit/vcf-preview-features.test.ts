@@ -72,7 +72,7 @@ function parseVcfLine(line: string, lineNumber = 0): ParsedVcfRow | null {
     id: columns[2],
     ref: columns[3],
     alt: columns[4],
-    qual: columns[5] === '.' ? null : parseFloat(columns[5]),
+    qual: (() => { const q = parseFloat(columns[5]); return (columns[5] === '.' || isNaN(q)) ? null : q; })(),
     filter: columns[6],
     info,
     format: columns[8],
@@ -208,6 +208,47 @@ describe('parseVcfLine', () => {
     const row = parseVcfLine(line, 42);
     assert.ok(row !== null);
     assert.strictEqual(row.lineNumber, 42);
+  });
+
+  // QUAL parsing — regression tests for NaN handling fix
+  describe('QUAL parsing', () => {
+    const make = (qual: string) => `chr1\t100\t.\tA\tT\t${qual}\tPASS\t.`;
+
+    it('parses a numeric QUAL as a number', () => {
+      const row = parseVcfLine(make('50'));
+      assert.ok(row !== null);
+      assert.strictEqual(row.qual, 50);
+    });
+
+    it('parses QUAL of 0 as the number 0, not null', () => {
+      const row = parseVcfLine(make('0'));
+      assert.ok(row !== null);
+      assert.strictEqual(row.qual, 0);
+    });
+
+    it('parses QUAL of "." as null', () => {
+      const row = parseVcfLine(make('.'));
+      assert.ok(row !== null);
+      assert.strictEqual(row.qual, null);
+    });
+
+    it('parses a non-numeric QUAL string as null (not NaN)', () => {
+      const row = parseVcfLine(make('N/A'));
+      assert.ok(row !== null);
+      assert.strictEqual(row.qual, null);
+    });
+
+    it('parses an empty QUAL column as null', () => {
+      const row = parseVcfLine(make(''));
+      assert.ok(row !== null);
+      assert.strictEqual(row.qual, null);
+    });
+
+    it('parses a float QUAL correctly', () => {
+      const row = parseVcfLine(make('99.5'));
+      assert.ok(row !== null);
+      assert.strictEqual(row.qual, 99.5);
+    });
   });
 });
 
