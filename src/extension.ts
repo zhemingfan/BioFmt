@@ -80,6 +80,24 @@ function registerCommands(context: vscode.ExtensionContext): void {
         return;
       }
 
+      // Check file size against configured maxBytes
+      const config = vscode.workspace.getConfiguration('biofmt.preview');
+      const maxBytes = config.get<number>('maxBytes', 52428800);
+      try {
+        const stat = await vscode.workspace.fs.stat(document.uri);
+        if (stat.size > maxBytes) {
+          const sizeMB = (stat.size / (1024 * 1024)).toFixed(1);
+          const limitMB = (maxBytes / (1024 * 1024)).toFixed(0);
+          const choice = await vscode.window.showWarningMessage(
+            `File is ${sizeMB} MB, which exceeds the configured limit of ${limitMB} MB. Preview may be slow.`,
+            'Open Anyway', 'Cancel'
+          );
+          if (choice !== 'Open Anyway') return;
+        }
+      } catch {
+        // stat may fail for untitled docs — proceed anyway
+      }
+
       // Create and show preview panel
       const panel = vscode.window.createWebviewPanel(
         'biofmtPreview',
@@ -345,6 +363,20 @@ async function startLanguageServer(
   );
 
   await client.start();
+
+  // Send visible range to the LSP server for viewport-aware validation
+  const visibleRangeDisposable = vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
+    if (client && OMICS_LANGUAGES.includes(event.textEditor.document.languageId)) {
+      client.sendNotification('biofmt/visibleRange', {
+        uri: event.textEditor.document.uri.toString(),
+        ranges: event.visibleRanges.map(r => ({
+          startLine: r.start.line,
+          endLine: r.end.line,
+        })),
+      });
+    }
+  });
+  context.subscriptions.push(visibleRangeDisposable);
 }
 
 // VCF Header types
@@ -660,12 +692,20 @@ function getDocumentMetadata(
   languageId: string;
   fileName: string;
   headerInfo?: VcfHeaderInfo;
+  previewSettings: { maxLines: number; maxBytes: number; downsampleLimit: number; sampleColumnLimit: number };
 } {
+  const config = vscode.workspace.getConfiguration('biofmt.preview');
   return {
     lineCount: document.lineCount,
     languageId: document.languageId,
     fileName: path.basename(document.fileName),
     headerInfo,
+    previewSettings: {
+      maxLines: config.get<number>('maxLines', 200000),
+      maxBytes: config.get<number>('maxBytes', 52428800),
+      downsampleLimit: config.get<number>('downsampleLimit', 200000),
+      sampleColumnLimit: config.get<number>('sampleColumnLimit', 10),
+    },
   };
 }
 

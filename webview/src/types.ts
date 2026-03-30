@@ -10,11 +10,19 @@ declare global {
   function acquireVsCodeApi(): VsCodeApi;
 }
 
+export interface PreviewSettings {
+  maxLines: number;
+  maxBytes: number;
+  downsampleLimit: number;
+  sampleColumnLimit: number;
+}
+
 export interface DocumentMetadata {
   lineCount: number;
   languageId: string;
   fileName: string;
   headerInfo?: VcfHeaderInfo;
+  previewSettings?: PreviewSettings;
 }
 
 export interface VcfHeaderInfo {

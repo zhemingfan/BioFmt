@@ -6,7 +6,7 @@ import type { DocumentMetadata, VcfHeaderInfo, ParsedVcfRow, FilterConfig, Forma
 import { VcfFilterBar } from './VcfFilterBar';
 import { ExpandedInfoCell } from './ExpandedInfoCell';
 import { parseSampleFormats, renderFormatDisplay, getRenderer, getFormatSummaries } from '../vcf/formatParsers';
-import { sortChromosomes } from '../utils';
+import { sortChromosomes, compareChromosomes } from '../utils';
 
 interface VcfPreviewProps {
   metadata: DocumentMetadata;
@@ -76,12 +76,18 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     };
   }, []);
 
-  // Parse VCF rows
+  // Parse VCF rows incrementally — only parse newly appended rows
+  const parsedCache = useRef<{ count: number; rows: ParsedVcfRow[] }>({ count: 0, rows: [] });
   const parsedRows = useMemo(() => {
-    const result: ParsedVcfRow[] = [];
     const headerEndLine = headerInfo?.headerEndLine ?? 0;
+    const maxRows = metadata.previewSettings?.maxLines ?? MAX_DISPLAY_ROWS;
+    const prev = parsedCache.current;
 
-    for (let i = headerEndLine; i < rows.length && result.length < MAX_DISPLAY_ROWS; i++) {
+    // If headerInfo changed (e.g. re-parsed), start over
+    const startFrom = prev.count < headerEndLine ? headerEndLine : prev.count;
+    const result = prev.count >= headerEndLine ? [...prev.rows] : [];
+
+    for (let i = startFrom; i < rows.length && result.length < maxRows; i++) {
       const line = rows[i];
       if (!line || line.startsWith('#')) continue;
 
@@ -91,8 +97,9 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       }
     }
 
+    parsedCache.current = { count: rows.length, rows: result };
     return result;
-  }, [rows, headerInfo]);
+  }, [rows, headerInfo, metadata]);
 
   // Apply filters
   const filteredRows = useMemo(() => {
@@ -147,7 +154,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   // Determine which samples to show
   const sampleColumns = useMemo(() => {
     if (!headerInfo?.samples) return [];
-    const limit = showAllSamples ? headerInfo.samples.length : 10;
+    const limit = showAllSamples ? headerInfo.samples.length : (metadata.previewSettings?.sampleColumnLimit ?? 10);
     return headerInfo.samples.slice(0, limit);
   }, [headerInfo, showAllSamples]);
 
@@ -169,9 +176,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       if (sort.col === 'pos') {
         cmp = a.pos - b.pos;
       } else {
-        const aNum = parseInt(a.chrom.replace(/\D/g, ''), 10);
-        const bNum = parseInt(b.chrom.replace(/\D/g, ''), 10);
-        cmp = (!isNaN(aNum) && !isNaN(bNum)) ? aNum - bNum : a.chrom.localeCompare(b.chrom);
+        cmp = compareChromosomes(a.chrom, b.chrom);
         if (cmp === 0) cmp = a.pos - b.pos;
       }
       return sort.dir === 'asc' ? cmp : -cmp;
@@ -315,7 +320,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       />
 
       {/* Sample toggle */}
-      {headerInfo && headerInfo.samples.length > 10 && (
+      {headerInfo && headerInfo.samples.length > (metadata.previewSettings?.sampleColumnLimit ?? 10) && (
         <div className="filter-bar">
           <label>
             <input

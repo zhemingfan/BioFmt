@@ -81,6 +81,9 @@ interface ContigDefinition {
 
 const headerCache = new Map<string, HeaderCache>();
 
+// Track visible editor ranges per document for viewport-aware validation
+const visibleRanges = new Map<string, { startLine: number; endLine: number }[]>();
+
 // Settings
 interface BioFmtSettings {
   validation: {
@@ -147,10 +150,18 @@ connection.onInitialized(() => {
   }
 });
 
+// Receive visible range updates from the client for viewport-aware validation
+connection.onNotification('biofmt/visibleRange', (params: { uri: string; ranges: { startLine: number; endLine: number }[] }) => {
+  visibleRanges.set(params.uri, params.ranges);
+  const doc = documents.get(params.uri);
+  if (doc) validateDocument(doc);
+});
+
 // Document events
 documents.onDidClose((e) => {
   documentSettings.delete(e.document.uri);
   headerCache.delete(e.document.uri);
+  visibleRanges.delete(e.document.uri);
 });
 
 documents.onDidOpen((e) => {
@@ -233,7 +244,7 @@ function parseVcfHeader(document: TextDocument): ParsedHeader {
       header.fileformat = line.substring('##fileformat='.length).trim();
     } else if (line.startsWith('##INFO=<')) {
       const info = parseStructuredField(line, '##INFO=<');
-      if (info) {
+      if (info && info.ID) {
         header.info.set(info.ID, {
           id: info.ID,
           number: info.Number || '.',
@@ -244,7 +255,7 @@ function parseVcfHeader(document: TextDocument): ParsedHeader {
       }
     } else if (line.startsWith('##FORMAT=<')) {
       const format = parseStructuredField(line, '##FORMAT=<');
-      if (format) {
+      if (format && format.ID) {
         header.format.set(format.ID, {
           id: format.ID,
           number: format.Number || '.',
@@ -255,7 +266,7 @@ function parseVcfHeader(document: TextDocument): ParsedHeader {
       }
     } else if (line.startsWith('##FILTER=<')) {
       const filter = parseStructuredField(line, '##FILTER=<');
-      if (filter) {
+      if (filter && filter.ID) {
         header.filter.set(filter.ID, {
           id: filter.ID,
           description: filter.Description || '',
@@ -264,7 +275,7 @@ function parseVcfHeader(document: TextDocument): ParsedHeader {
       }
     } else if (line.startsWith('##contig=<')) {
       const contig = parseStructuredField(line, '##contig=<');
-      if (contig) {
+      if (contig && contig.ID) {
         header.contigs.set(contig.ID, {
           id: contig.ID,
           length: contig.length ? parseInt(contig.length, 10) : undefined,
@@ -435,6 +446,36 @@ function getWordRangeAtPosition(
   return null;
 }
 
+/**
+ * Return true if line `i` should be validated, based on visible editor ranges.
+ * Always validates lines before `headerEndLine`. For data lines, validates a
+ * buffer around the visible viewport. Falls back to validating the first
+ * `bufferLines` data lines when no visible range information is available.
+ */
+function shouldValidateLine(
+  uri: string,
+  lineIndex: number,
+  lineCount: number,
+  headerEndLine: number,
+  bufferLines: number
+): boolean {
+  // Always validate header
+  if (lineIndex < headerEndLine) return true;
+
+  const ranges = visibleRanges.get(uri);
+  if (ranges && ranges.length > 0) {
+    for (const r of ranges) {
+      const start = Math.max(headerEndLine, r.startLine - bufferLines);
+      const end = Math.min(lineCount, r.endLine + bufferLines);
+      if (lineIndex >= start && lineIndex <= end) return true;
+    }
+    return false;
+  }
+
+  // Fallback: validate first bufferLines data lines from header
+  return lineIndex < headerEndLine + bufferLines;
+}
+
 // Document validation
 async function validateDocument(document: TextDocument): Promise<void> {
   const settings = await getDocumentSettings(document.uri);
@@ -499,15 +540,10 @@ function validateVcf(
   const text = document.getText();
   const lines = text.split('\n');
 
-  // Validate only lines around the visible area (simplified - validates first N lines)
-  const maxLines = Math.min(
-    lines.length,
-    header.headerEndLine + settings.lsp.viewportBufferLines
-  );
-
   let expectedColumnCount = 0;
 
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, header.headerEndLine, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines
@@ -640,9 +676,8 @@ function validateBed(
   const diagnostics: Diagnostic[] = [];
   const text = document.getText();
   const lines = text.split('\n');
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
-
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
     if (shouldSkipLine(line, ['track', 'browser'])) continue;
 
@@ -681,9 +716,8 @@ function validateBedpe(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
-
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines, comments, and header lines
@@ -800,9 +834,8 @@ function validateSam(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
-
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines and header lines
@@ -886,11 +919,11 @@ function validateGtf(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
   const validStrands = new Set(['+', '-', '.']);
   const validFrames = new Set(['0', '1', '2', '.']);
 
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines and comments
@@ -991,11 +1024,11 @@ function validateGff3(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
   const validStrands = new Set(['+', '-', '.', '?']);
   const validPhases = new Set(['0', '1', '2', '.']);
 
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines and comments
@@ -1108,10 +1141,10 @@ function validatePaf(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
   const pafValidStrands = new Set(['+', '-']);
 
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines and comments
@@ -1198,9 +1231,8 @@ function validatePsl(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
-
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
 
     // Skip empty lines, header lines
@@ -1322,13 +1354,13 @@ function validateWig(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
   let inFixedStep = false;
   let inVariableStep = false;
   let currentSpan = 1;
   let currentStep = 0;
 
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
     const trimmed = line.trim();
 
@@ -1524,9 +1556,8 @@ function validateBedGraph(
   const text = document.getText();
   const lines = text.split('\n');
 
-  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
-
-  for (let i = 0; i < maxLines; i++) {
+  for (let i = 0; i < lines.length; i++) {
+    if (!shouldValidateLine(document.uri, i, lines.length, 0, settings.lsp.viewportBufferLines)) continue;
     const line = lines[i];
     const trimmed = line.trim();
 

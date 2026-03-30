@@ -8,11 +8,11 @@ suite('BioFmt Extension', () => {
   const fixturesPath = path.join(__dirname, '..', 'fixtures');
 
   test('Extension should be present', () => {
-    assert.ok(vscode.extensions.getExtension('biofmt.biofmt'));
+    assert.ok(vscode.extensions.getExtension('jfan.biofmt'));
   });
 
   test('Should register BioFmt commands', async () => {
-    const extension = vscode.extensions.getExtension('biofmt.biofmt');
+    const extension = vscode.extensions.getExtension('jfan.biofmt');
     assert.ok(extension, 'Extension should be available');
     await extension.activate();
 

@@ -70,20 +70,33 @@ function parseWig(rows: string[]): Track[] {
       const stepMatch = trimmed.match(/step=(\d+)/);
 
       if (chromMatch) {
-        currentChrom = chromMatch[1];
-        if (currentTrack) {
-          currentTrack.chrom = currentChrom;
+        const newChrom = chromMatch[1];
+        if (currentTrack && currentTrack.chrom && currentTrack.chrom !== newChrom) {
+          // Different chromosome — finalize current track, start a new one
+          if (currentTrack.points.length > 0) {
+            tracks.push(currentTrack);
+          }
+          currentTrack = {
+            id: `track-${tracks.length}`,
+            name: `Track (${newChrom})`,
+            chrom: newChrom,
+            points: [],
+            minValue: Infinity,
+            maxValue: -Infinity,
+          };
+        } else if (currentTrack) {
+          currentTrack.chrom = newChrom;
         }
+        currentChrom = newChrom;
       }
       currentSpan = spanMatch ? parseInt(spanMatch[1], 10) : 1;
       currentStart = startMatch ? parseInt(startMatch[1], 10) : 0;
       currentStep = stepMatch ? parseInt(stepMatch[1], 10) : 0;
 
-      // Create new track for each chrom section if we don't have one
       if (!currentTrack) {
         currentTrack = {
           id: `track-${tracks.length}`,
-          name: `Track ${tracks.length + 1}`,
+          name: `Track (${currentChrom})`,
           chrom: currentChrom,
           points: [],
           minValue: Infinity,
@@ -184,8 +197,25 @@ function parseBedGraph(rows: string[]): Track[] {
       const value = parseFloat(parts[3]);
 
       if (!isNaN(start) && !isNaN(end) && !isNaN(value)) {
+        // Split into a new track when chromosome changes
+        if (currentTrack.chrom && currentTrack.chrom !== chrom) {
+          if (currentTrack.points.length > 0) {
+            tracks.push(currentTrack);
+          }
+          currentTrack = {
+            id: `bedgraph-${tracks.length}`,
+            name: `bedGraph (${chrom})`,
+            chrom,
+            points: [],
+            minValue: Infinity,
+            maxValue: -Infinity,
+          };
+        } else if (!currentTrack.chrom) {
+          currentTrack.chrom = chrom;
+          currentTrack.name = `bedGraph (${chrom})`;
+        }
+
         const midpoint = Math.floor((start + end) / 2);
-        currentTrack.chrom = chrom;
         currentTrack.points.push({
           chrom,
           position: midpoint,
@@ -264,12 +294,13 @@ export function TrackPlot({ metadata, rows, loadedLineCount, onRequestRows }: Tr
   }, [tracks, selectedTrack]);
 
   // Downsample points for display
+  const downsampleLimit = metadata.previewSettings?.downsampleLimit ?? DOWNSAMPLE_THRESHOLD;
   const displayPoints = useMemo(() => {
     if (!currentTrack) return [];
-    return currentTrack.points.length > DOWNSAMPLE_THRESHOLD
-      ? downsample(currentTrack.points, DOWNSAMPLE_THRESHOLD)
+    return currentTrack.points.length > downsampleLimit
+      ? downsample(currentTrack.points, downsampleLimit)
       : currentTrack.points;
-  }, [currentTrack]);
+  }, [currentTrack, downsampleLimit]);
 
   // Draw the plot
   useEffect(() => {
@@ -425,7 +456,7 @@ export function TrackPlot({ metadata, rows, loadedLineCount, onRequestRows }: Tr
   }, [rows.length]);
 
   const totalPoints = currentTrack?.points.length || 0;
-  const isDownsampled = totalPoints > DOWNSAMPLE_THRESHOLD;
+  const isDownsampled = totalPoints > downsampleLimit;
 
   return (
     <div className="track-plot-preview">
@@ -484,7 +515,7 @@ export function TrackPlot({ metadata, rows, loadedLineCount, onRequestRows }: Tr
 
         {isDownsampled && (
           <span className="filter-info">
-            Displaying downsampled data ({DOWNSAMPLE_THRESHOLD.toLocaleString()} points)
+            Displaying downsampled data ({downsampleLimit.toLocaleString()} points)
           </span>
         )}
       </div>

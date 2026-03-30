@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { VirtualTable, ColumnDefinition } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
@@ -97,13 +97,17 @@ export function BedPreview({ metadata, rows, loadedLineCount, onRequestRows }: B
 
   const variant = getVariant(metadata.languageId);
 
-  // Parse rows
+  // Parse rows incrementally — only parse newly appended rows
+  const parsedCache = useRef<{ count: number; rows: Record<string, string>[]; maxCols: number; chroms: Set<string> }>({
+    count: 0, rows: [], maxCols: 0, chroms: new Set(),
+  });
   const { parsedRows, maxColumns, chromosomes } = useMemo(() => {
-    const parsed: Record<string, string>[] = [];
-    let maxCols = 0;
-    const chroms = new Set<string>();
+    const prev = parsedCache.current;
+    const parsed = [...prev.rows];
+    let maxCols = prev.maxCols;
+    const chroms = new Set(prev.chroms);
 
-    for (let i = 0; i < rows.length; i++) {
+    for (let i = prev.count; i < rows.length; i++) {
       const line = rows[i];
       if (!line.trim() || line.startsWith('track') || line.startsWith('browser') || line.startsWith('#')) {
         continue;
@@ -123,19 +127,14 @@ export function BedPreview({ metadata, rows, loadedLineCount, onRequestRows }: B
       }
 
       // Collect chromosomes (BEDPE has chrom1/chrom2, others have chrom)
-      if (row.chrom) {
-        chroms.add(row.chrom);
-      }
-      if (row.chrom1) {
-        chroms.add(row.chrom1);
-      }
-      if (row.chrom2) {
-        chroms.add(row.chrom2);
-      }
+      if (row.chrom) chroms.add(row.chrom);
+      if (row.chrom1) chroms.add(row.chrom1);
+      if (row.chrom2) chroms.add(row.chrom2);
 
       parsed.push(row);
     }
 
+    parsedCache.current = { count: rows.length, rows: parsed, maxCols, chroms };
     return {
       parsedRows: parsed,
       maxColumns: maxCols,
