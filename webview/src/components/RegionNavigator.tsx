@@ -15,8 +15,7 @@ interface RegionNavigatorProps {
 
 /**
  * Shared region navigation bar for indexed/binary file previews.
- * Provides chromosome selector, start/end inputs, and a text input for
- * `chr:start-end` notation.
+ * Accepts `chr:start-end` for a range or `chr:position` for a 10kb window.
  */
 export function RegionNavigator({
   references,
@@ -27,70 +26,80 @@ export function RegionNavigator({
   error,
   currentQuery,
 }: RegionNavigatorProps) {
-  const [chrom, setChrom] = useState(references[0]?.name || '');
-  const [startPos, setStartPos] = useState('1');
-  const [endPos, setEndPos] = useState('1000000');
   const [regionText, setRegionText] = useState('');
 
-  // Update default chrom when references arrive
-  React.useEffect(() => {
-    if (references.length > 0 && !chrom) {
-      setChrom(references[0].name);
-    }
-  }, [references, chrom]);
-
-  const formatNumber = (n: string) => {
-    const num = parseInt(n.replace(/,/g, ''), 10);
-    return isNaN(num) ? n : num.toLocaleString();
-  };
-
   const handleGo = useCallback(() => {
-    if (!chrom) return;
-    const start = parseInt(startPos.replace(/,/g, ''), 10);
-    const end = parseInt(endPos.replace(/,/g, ''), 10);
-    if (isNaN(start) || isNaN(end) || start < 0 || end <= start) return;
-    onNavigate(chrom, start, end);
-  }, [chrom, startPos, endPos, onNavigate]);
+    const trimmed = regionText.trim();
+    if (!trimmed) return;
 
-  const handleTextGo = useCallback(() => {
-    // Parse "chr1:1000000-2000000" or "chr1:1,000,000-2,000,000"
-    const match = regionText.match(/^(\S+):([0-9,]+)-([0-9,]+)$/);
-    if (!match) return;
-    const c = match[1];
-    const s = parseInt(match[2].replace(/,/g, ''), 10);
-    const e = parseInt(match[3].replace(/,/g, ''), 10);
-    if (isNaN(s) || isNaN(e) || s < 0 || e <= s) return;
+    // Try "chr1:1000000-2000000" or "chr1:1,000,000-2,000,000"
+    const rangeMatch = trimmed.match(/^(\S+):([0-9,]+)-([0-9,]+)$/);
+    if (rangeMatch) {
+      const c = rangeMatch[1];
+      const s = parseInt(rangeMatch[2].replace(/,/g, ''), 10);
+      const e = parseInt(rangeMatch[3].replace(/,/g, ''), 10);
+      if (isNaN(s) || isNaN(e) || s < 0 || e <= s) return;
+      onNavigate(c, s, e);
+      return;
+    }
 
-    setChrom(c);
-    setStartPos(String(s));
-    setEndPos(String(e));
-    onNavigate(c, s, e);
-  }, [regionText, onNavigate]);
+    // Try "chr1:1000000" — single position, create 10kb window
+    const posMatch = trimmed.match(/^(\S+):([0-9,]+)$/);
+    if (posMatch) {
+      const c = posMatch[1];
+      const pos = parseInt(posMatch[2].replace(/,/g, ''), 10);
+      if (isNaN(pos) || pos < 0) return;
+      const s = Math.max(0, pos - 5000);
+      const e = pos + 5000;
+      onNavigate(c, s, e);
+      return;
+    }
+
+    // Try bare chromosome name (e.g. "chr1") — query first 1Mb
+    const ref = references.find((r) => r.name === trimmed);
+    if (ref) {
+      onNavigate(ref.name, 0, 1000000);
+    }
+  }, [regionText, onNavigate, references]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
-        if (regionText.includes(':')) {
-          handleTextGo();
-        } else {
-          handleGo();
-        }
+        handleGo();
       }
     },
-    [handleGo, handleTextGo, regionText]
+    [handleGo]
   );
 
   return (
     <div className="region-navigator">
       <div className="region-navigator-row">
-        <label>
-          Chrom:
+        <input
+          type="text"
+          className="region-text-input"
+          placeholder="chr1:1000000-2000000 or chr1:500000"
+          value={regionText}
+          onChange={(e) => setRegionText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={loading}
+        />
+
+        <button onClick={handleGo} disabled={loading || !regionText.trim()}>
+          {loading ? 'Loading...' : 'Go'}
+        </button>
+
+        {references.length > 0 && (
           <select
-            value={chrom}
-            onChange={(e) => setChrom(e.target.value)}
+            className="region-chrom-select"
+            value=""
+            onChange={(e) => {
+              if (e.target.value) {
+                setRegionText(e.target.value + ':0-1000000');
+              }
+            }}
             disabled={loading}
           >
-            {references.length === 0 && <option value="">--</option>}
+            <option value="">Jump to chrom...</option>
             {references.map((ref) => (
               <option key={ref.name} value={ref.name}>
                 {ref.name}
@@ -98,53 +107,7 @@ export function RegionNavigator({
               </option>
             ))}
           </select>
-        </label>
-
-        <label>
-          Start:
-          <input
-            type="text"
-            value={startPos}
-            onChange={(e) => setStartPos(e.target.value)}
-            onBlur={() => setStartPos(formatNumber(startPos))}
-            onKeyDown={handleKeyDown}
-            disabled={loading}
-            style={{ width: '120px' }}
-          />
-        </label>
-
-        <label>
-          End:
-          <input
-            type="text"
-            value={endPos}
-            onChange={(e) => setEndPos(e.target.value)}
-            onBlur={() => setEndPos(formatNumber(endPos))}
-            onKeyDown={handleKeyDown}
-            disabled={loading}
-            style={{ width: '120px' }}
-          />
-        </label>
-
-        <button onClick={handleGo} disabled={loading || !chrom}>
-          {loading ? 'Loading...' : 'Go'}
-        </button>
-
-        <span className="region-separator">|</span>
-
-        <input
-          type="text"
-          className="region-text-input"
-          placeholder="chr1:1000000-2000000"
-          value={regionText}
-          onChange={(e) => setRegionText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={loading}
-        />
-
-        <button onClick={handleTextGo} disabled={loading || !regionText}>
-          Jump
-        </button>
+        )}
       </div>
 
       {currentQuery && resultCount != null && !loading && (

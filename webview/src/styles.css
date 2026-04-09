@@ -1329,14 +1329,6 @@ body {
   flex-wrap: wrap;
 }
 
-.region-navigator label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.85em;
-  color: var(--vscode-descriptionForeground, #858585);
-}
-
 .region-navigator select,
 .region-navigator input {
   background: var(--vscode-input-background, #3c3c3c);
@@ -1372,13 +1364,13 @@ body {
   cursor: default;
 }
 
-.region-separator {
-  color: var(--vscode-panel-border, #2d2d2d);
-  margin: 0 4px;
+.region-text-input {
+  flex: 1;
+  min-width: 200px;
 }
 
-.region-text-input {
-  width: 200px;
+.region-chrom-select {
+  max-width: 200px;
 }
 
 .region-navigator-status {
