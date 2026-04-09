@@ -67,7 +67,8 @@
     "onLanguage:omics-net",
     "onLanguage:omics-gfa",
     "onLanguage:omics-fasta",
-    "onLanguage:omics-fastq"
+    "onLanguage:omics-fastq",
+    "onCustomEditor:biofmt.indexedPreview"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -541,6 +542,24 @@
         }
       ]
     },
+    "customEditors": [
+      {
+        "viewType": "biofmt.indexedPreview",
+        "displayName": "BioFmt Indexed Preview",
+        "selector": [
+          { "filenamePattern": "*.vcf.gz" },
+          { "filenamePattern": "*.bed.gz" },
+          { "filenamePattern": "*.gff3.gz" },
+          { "filenamePattern": "*.gff.gz" },
+          { "filenamePattern": "*.bam" },
+          { "filenamePattern": "*.fasta.gz" },
+          { "filenamePattern": "*.fa.gz" },
+          { "filenamePattern": "*.fastq.gz" },
+          { "filenamePattern": "*.fq.gz" }
+        ],
+        "priority": "default"
+      }
+    ],
     "configuration": {
       "title": "BioFmt",
       "properties": {
@@ -616,6 +635,8 @@
     "typescript": "^5.3.2"
   },
   "dependencies": {
+    "@gmod/bgzf-filehandle": "^6.0.18",
+    "generic-filehandle": "^3.4.0",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.11"

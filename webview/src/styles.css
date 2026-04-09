@@ -56,17 +56,18 @@ body {
 
 /* Header */
 .preview-header {
-  padding: 12px 16px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--vscode-panel-border, #454545);
   background: var(--vscode-sideBar-background, #252526);
   flex-shrink: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .preview-header h1 {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 1.2em;
   font-weight: 600;
 }
@@ -74,14 +75,14 @@ body {
 .preview-header .meta {
   color: var(--vscode-descriptionForeground, #858585);
   font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
 }
 
 .preview-header .meta span {
-  margin-right: 16px;
-}
-
-.preview-header > div:first-child {
-  flex: 1;
+  margin-right: 0;
 }
 
 /* Export VCF button */
@@ -1270,4 +1271,128 @@ body {
 .sequence-more {
   color: var(--vscode-descriptionForeground, #858585);
   font-style: italic;
+}
+
+/* ============================================================================
+   Region Navigator & Indexed Preview
+   ============================================================================ */
+
+.indexed-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.indexed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border, #2d2d2d);
+}
+
+.indexed-header h2 {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.indexed-badge {
+  font-size: 0.75em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--vscode-badge-background, #4d4d4d);
+  color: var(--vscode-badge-foreground, #ffffff);
+}
+
+.indexed-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--vscode-descriptionForeground, #858585);
+  padding: 40px;
+  text-align: center;
+}
+
+.region-navigator {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border, #2d2d2d);
+  background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 255, 0.04));
+}
+
+.region-navigator-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.region-navigator label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground, #858585);
+}
+
+.region-navigator select,
+.region-navigator input {
+  background: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #cccccc);
+  border: 1px solid var(--vscode-input-border, #3c3c3c);
+  padding: 3px 6px;
+  font-size: 0.85em;
+  border-radius: 2px;
+}
+
+.region-navigator select:focus,
+.region-navigator input:focus {
+  outline: 1px solid var(--vscode-focusBorder, #007fd4);
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.region-navigator button {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #ffffff);
+  border: none;
+  padding: 3px 10px;
+  font-size: 0.85em;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.region-navigator button:hover:not(:disabled) {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+.region-navigator button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.region-separator {
+  color: var(--vscode-panel-border, #2d2d2d);
+  margin: 0 4px;
+}
+
+.region-text-input {
+  width: 200px;
+}
+
+.region-navigator-status {
+  margin-top: 4px;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground, #858585);
+}
+
+.region-truncated {
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.region-navigator-error {
+  margin-top: 4px;
+  font-size: 0.8em;
+  color: var(--vscode-errorForeground, #f48771);
 }

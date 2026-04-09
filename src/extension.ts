@@ -9,6 +9,7 @@ import {
   ServerOptions,
   TransportKind,
 } from 'vscode-languageclient/node';
+import { IndexedEditorProvider } from './providers/IndexedEditorProvider';
 
 let client: LanguageClient | undefined;
 
@@ -47,6 +48,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Register commands
   registerCommands(context);
+
+  // Register custom editor for indexed/binary files
+  context.subscriptions.push(
+    vscode.window.registerCustomEditorProvider(
+      IndexedEditorProvider.viewType,
+      new IndexedEditorProvider(context),
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
 
   // Start LSP server
   await startLanguageServer(context);

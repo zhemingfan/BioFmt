@@ -293,10 +293,10 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         <button
           className="export-vcf-btn"
           onClick={exportVcf}
-          title="Export filtered rows as VCF"
+          title="Save displayed rows as a plain-text VCF file"
           disabled={sortedRows.length === 0}
         >
-          Export VCF
+          Save as VCF
         </button>
       </div>
 
