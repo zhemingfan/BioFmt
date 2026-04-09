@@ -607,6 +607,7 @@
     }
   },
   "scripts": {
+    "postinstall": "git config core.hooksPath scripts",
     "vscode:prepublish": "npm run build",
     "build": "npm run build:extension && npm run build:server && npm run build:webview",
     "build:extension": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs",

@@ -1,0 +1,24 @@
+#!/bin/sh
+# Pre-push hook: runs the same checks as CI before allowing a push.
+# Mirrors .github/workflows/ci.yml steps.
+#
+# Install: git config core.hooksPath scripts
+
+set -e
+
+echo "=== Pre-push: Type-check extension and server ==="
+npx tsc --noEmit
+
+echo "=== Pre-push: Type-check webview ==="
+cd webview && npx tsc --noEmit && cd ..
+
+echo "=== Pre-push: Lint ==="
+npm run lint
+
+echo "=== Pre-push: Build ==="
+npm run build
+
+echo "=== Pre-push: Unit tests ==="
+npm run test:unit
+
+echo "=== Pre-push: All checks passed ==="
