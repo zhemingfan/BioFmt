@@ -20,8 +20,6 @@ import { NetPreview } from './components/NetPreview';
 import { GfaPreview } from './components/GfaPreview';
 import { FastaPreview } from './components/FastaPreview';
 import { FastqPreview } from './components/FastqPreview';
-import { RegionNavigator } from './components/RegionNavigator';
-import { useRegionProvider } from './hooks/useRegionProvider';
 import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
 import './styles.css';
 
@@ -380,9 +378,15 @@ export function App() {
  * Wrapper for indexed/binary file previews.
  * Renders RegionNavigator above the format-specific preview,
  * feeding region query results as rows.
+ *
+ * Imports useRegionProvider and RegionNavigator only when actually needed
+ * (indexed/binary files) to avoid overhead for text previews.
  */
 function IndexedPreviewWrapper({ metadata }: { metadata: DocumentMetadata }) {
-  const { regionState, references, requestRegion } = useRegionProvider();
+  // Lazy-require to avoid module-level side effects for text previews
+  const { useRegionProvider } = require('./hooks/useRegionProvider');
+  const { RegionNavigator } = require('./components/RegionNavigator');
+  const { regionState, references, requestRegion } = useRegionProvider(vscode);
 
   // Merge metadata references with dynamically fetched ones
   const refs = references.length > 0 ? references : metadata.references || [];

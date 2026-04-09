@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { ReferenceInfo, MessageFromExtension } from '../types';
-
-const vscode = acquireVsCodeApi();
+import type { ReferenceInfo, MessageFromExtension, VsCodeApi } from '../types';
 
 export interface RegionQuery {
   chrom: string;
@@ -25,7 +23,12 @@ export interface UseRegionProviderResult {
   requestRegion: (chrom: string, start: number, end: number) => void;
 }
 
-export function useRegionProvider(): UseRegionProviderResult {
+/**
+ * Hook for region-based data fetching from indexed/binary file providers.
+ * Only call this from components that actually need region queries (IndexedPreviewWrapper).
+ * Accepts the shared vscode API instance to avoid duplicate acquireVsCodeApi() calls.
+ */
+export function useRegionProvider(vscode: VsCodeApi): UseRegionProviderResult {
   const [references, setReferences] = useState<ReferenceInfo[]>([]);
   const [regionState, setRegionState] = useState<RegionState>({
     rows: [],
@@ -39,7 +42,7 @@ export function useRegionProvider(): UseRegionProviderResult {
   // Request references on mount
   useEffect(() => {
     vscode.postMessage({ command: 'requestReferences' });
-  }, []);
+  }, [vscode]);
 
   // Listen for region data and references messages
   useEffect(() => {
@@ -48,7 +51,6 @@ export function useRegionProvider(): UseRegionProviderResult {
 
       if (message.command === 'regionData') {
         setRegionState((prev) => {
-          // Only accept responses matching our latest request
           if (prev.query &&
               message.chrom === prev.query.chrom &&
               message.start === prev.query.start &&
@@ -91,7 +93,7 @@ export function useRegionProvider(): UseRegionProviderResult {
       end,
       requestId,
     });
-  }, []);
+  }, [vscode]);
 
   return { regionState, references, requestRegion };
 }

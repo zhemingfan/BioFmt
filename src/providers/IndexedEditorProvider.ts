@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import type { FileProvider, ProviderMetadata } from './types';
 import { discoverIndex } from './indexDiscovery';
+import { BgzfTextProvider } from './BgzfTextProvider';
 
 /**
  * Format detection from file extension for indexed/binary files.
@@ -185,12 +186,17 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
    * Phase 3 will add TabixProvider, Phase 4 will add BamProvider.
    */
   private async createProvider(
-    _uri: vscode.Uri,
-    _formatId: string,
+    uri: vscode.Uri,
+    formatId: string,
     _indexInfo: { type: string; uri: vscode.Uri } | null,
   ): Promise<FileProvider | null> {
-    // Placeholder — actual provider creation will be added in Phase 3/4
-    // For now, show a message that indexed preview is not yet available
+    // Phase 2: decompress bgzf files fully and serve as text lines.
+    // Phase 3 will add TabixProvider for region-based random access.
+    // Phase 4 will add BamProvider for BAM files.
+    const fileName = path.basename(uri.fsPath).toLowerCase();
+    if (fileName.endsWith('.gz')) {
+      return BgzfTextProvider.create(uri, formatId);
+    }
     return null;
   }
 

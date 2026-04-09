@@ -56,17 +56,18 @@ body {
 
 /* Header */
 .preview-header {
-  padding: 12px 16px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--vscode-panel-border, #454545);
   background: var(--vscode-sideBar-background, #252526);
   flex-shrink: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .preview-header h1 {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 1.2em;
   font-weight: 600;
 }
@@ -74,14 +75,14 @@ body {
 .preview-header .meta {
   color: var(--vscode-descriptionForeground, #858585);
   font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
 }
 
 .preview-header .meta span {
-  margin-right: 16px;
-}
-
-.preview-header > div:first-child {
-  flex: 1;
+  margin-right: 0;
 }
 
 /* Export VCF button */
