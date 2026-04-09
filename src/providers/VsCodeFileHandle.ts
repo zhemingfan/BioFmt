@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { Buffer } from 'buffer';
-import type { GenericFilehandle, Stats } from 'generic-filehandle';
+import type { GenericFilehandle, FilehandleOptions, Stats } from 'generic-filehandle';
 
 /**
  * Implements the generic-filehandle interface using Node.js fs for local files.
@@ -52,6 +52,8 @@ export class VsCodeFileHandle implements GenericFilehandle {
 
   async readFile(): Promise<Buffer>;
   async readFile(options: BufferEncoding): Promise<string>;
+  async readFile<T extends undefined>(options: Omit<FilehandleOptions, 'encoding'> | (Omit<FilehandleOptions, 'encoding'> & { encoding: T })): Promise<Buffer>;
+  async readFile<T extends BufferEncoding>(options: Omit<FilehandleOptions, 'encoding'> & { encoding: T }): Promise<string>;
   async readFile(options?: any): Promise<Buffer | string> {
     return new Promise((resolve, reject) => {
       const encoding = typeof options === 'string' ? options : options?.encoding;
