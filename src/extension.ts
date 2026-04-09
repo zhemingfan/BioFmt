@@ -38,6 +38,8 @@ const OMICS_LANGUAGES = [
   'omics-chain',
   'omics-net',
   'omics-gfa',
+  'omics-fasta',
+  'omics-fastq',
 ];
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {

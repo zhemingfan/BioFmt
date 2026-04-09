@@ -18,6 +18,8 @@ import { GenericPreview } from './components/GenericPreview';
 import { ChainPreview } from './components/ChainPreview';
 import { NetPreview } from './components/NetPreview';
 import { GfaPreview } from './components/GfaPreview';
+import { FastaPreview } from './components/FastaPreview';
+import { FastqPreview } from './components/FastqPreview';
 import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
 import './styles.css';
 
@@ -320,6 +322,26 @@ export function App() {
     case 'omics-gfa':
       return (
         <GfaPreview
+          metadata={metadata}
+          rows={rows}
+          loadedLineCount={loadedCount}
+          onRequestRows={requestRows}
+        />
+      );
+
+    case 'omics-fasta':
+      return (
+        <FastaPreview
+          metadata={metadata}
+          rows={rows}
+          loadedLineCount={loadedCount}
+          onRequestRows={requestRows}
+        />
+      );
+
+    case 'omics-fastq':
+      return (
+        <FastqPreview
           metadata={metadata}
           rows={rows}
           loadedLineCount={loadedCount}

@@ -238,6 +238,20 @@ export const FIXTURES: Record<string, FixtureInfo> = {
     description: 'GFA assembly graph',
   },
 
+  // FASTA
+  'fasta-example': {
+    path: 'example.fasta',
+    languageId: 'omics-fasta',
+    description: 'Multi-sequence FASTA with chr1, chr2, chrX, chrM, scaffold',
+  },
+
+  // FASTQ
+  'fastq-example': {
+    path: 'example.fastq',
+    languageId: 'omics-fastq',
+    description: 'FASTQ with 8 reads and varied quality scores',
+  },
+
 };
 
 /**

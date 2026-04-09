@@ -521,6 +521,12 @@ async function validateDocument(document: TextDocument): Promise<void> {
     case 'omics-bedgraph':
       diagnostics = validateBedGraph(document, settings);
       break;
+    case 'omics-fasta':
+      diagnostics = validateFasta(document, settings);
+      break;
+    case 'omics-fastq':
+      diagnostics = validateFastq(document, settings);
+      break;
   }
 
   // Limit diagnostics
@@ -1794,6 +1800,107 @@ function getVcfSymbols(document: TextDocument): DocumentSymbol[] {
 }
 
 // Utility to get language ID from document
+function validateFasta(
+  document: TextDocument,
+  settings: BioFmtSettings
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const text = document.getText();
+  const lines = text.split('\n');
+  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
+  const validBases = /^[ACGTUNRYSWKMBDHVacgtunryswkmbdhv.*\-\s]+$/;
+  let sawHeader = false;
+
+  for (let i = 0; i < maxLines; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith(';')) continue;
+
+    if (trimmed.startsWith('>')) {
+      sawHeader = true;
+      if (trimmed.length < 2) {
+        diagnostics.push({
+          severity: DiagnosticSeverity.Warning,
+          range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
+          message: 'FASTA header is empty (expected >sequence_id)',
+          source: 'biofmt',
+        });
+      }
+      continue;
+    }
+
+    if (!sawHeader && i === 0) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Warning,
+        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
+        message: 'FASTA file should start with a header line (>)',
+        source: 'biofmt',
+      });
+    }
+
+    if (!validBases.test(trimmed)) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Warning,
+        range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
+        message: 'Line contains invalid base characters for FASTA',
+        source: 'biofmt',
+      });
+    }
+  }
+
+  return diagnostics;
+}
+
+function validateFastq(
+  document: TextDocument,
+  settings: BioFmtSettings
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const text = document.getText();
+  const lines = text.split('\n');
+  const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
+
+  for (let i = 0; i + 3 < maxLines; i += 4) {
+    const headerLine = lines[i].trim();
+    const seqLine = lines[i + 1]?.trim();
+    const plusLine = lines[i + 2]?.trim();
+    const qualLine = lines[i + 3]?.trim();
+
+    if (!headerLine) { i -= 3; continue; } // skip blank lines
+
+    if (!headerLine.startsWith('@')) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        range: { start: { line: i, character: 0 }, end: { line: i, character: lines[i].length } },
+        message: 'FASTQ record should start with @ header line',
+        source: 'biofmt',
+      });
+      break; // Stop — alignment is off
+    }
+
+    if (!plusLine || !plusLine.startsWith('+')) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        range: { start: { line: i + 2, character: 0 }, end: { line: i + 2, character: (lines[i + 2] || '').length } },
+        message: 'Expected + separator on line 3 of FASTQ record',
+        source: 'biofmt',
+      });
+    }
+
+    if (seqLine && qualLine && seqLine.length !== qualLine.length) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        range: { start: { line: i + 3, character: 0 }, end: { line: i + 3, character: (lines[i + 3] || '').length } },
+        message: `Quality line length (${qualLine.length}) does not match sequence length (${seqLine.length})`,
+        source: 'biofmt',
+      });
+    }
+  }
+
+  return diagnostics;
+}
+
 function getLanguageId(document: TextDocument): string {
   // The languageId should be set by VS Code based on file extension/content
   // Prefer the languageId from the client when available.
@@ -1827,6 +1934,8 @@ function getLanguageId(document: TextDocument): string {
   if (uri.endsWith('.chain')) return 'omics-chain';
   if (uri.endsWith('.net')) return 'omics-net';
   if (uri.endsWith('.gfa')) return 'omics-gfa';
+  if (uri.endsWith('.fasta') || uri.endsWith('.fa') || uri.endsWith('.fna') || uri.endsWith('.ffn') || uri.endsWith('.faa') || uri.endsWith('.frn')) return 'omics-fasta';
+  if (uri.endsWith('.fastq') || uri.endsWith('.fq')) return 'omics-fastq';
 
   return 'unknown';
 }
