@@ -20,6 +20,8 @@ import { NetPreview } from './components/NetPreview';
 import { GfaPreview } from './components/GfaPreview';
 import { FastaPreview } from './components/FastaPreview';
 import { FastqPreview } from './components/FastqPreview';
+import { RegionNavigator } from './components/RegionNavigator';
+import { useRegionProvider } from './hooks/useRegionProvider';
 import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
 import './styles.css';
 
@@ -73,6 +75,10 @@ export function App() {
             languageId: message.languageId,
             fileName: message.fileName,
             headerInfo: message.headerInfo,
+            providerType: message.providerType,
+            references: message.references,
+            previewSettings: message.previewSettings,
+            error: message.error,
           });
           if (message.headerInfo) {
             setHeaderInfo(message.headerInfo);
@@ -161,7 +167,14 @@ export function App() {
     );
   }
 
-  // Route to format-specific preview
+  // Indexed/binary mode: show RegionNavigator + format preview using region data
+  if (metadata.providerType === 'indexed' || metadata.providerType === 'binary') {
+    return (
+      <IndexedPreviewWrapper metadata={metadata} />
+    );
+  }
+
+  // Route to format-specific preview (text mode)
   switch (metadata.languageId) {
     case 'omics-vcf':
       return (
@@ -361,4 +374,152 @@ export function App() {
         />
       );
   }
+}
+
+/**
+ * Wrapper for indexed/binary file previews.
+ * Renders RegionNavigator above the format-specific preview,
+ * feeding region query results as rows.
+ */
+function IndexedPreviewWrapper({ metadata }: { metadata: DocumentMetadata }) {
+  const { regionState, references, requestRegion } = useRegionProvider();
+
+  // Merge metadata references with dynamically fetched ones
+  const refs = references.length > 0 ? references : metadata.references || [];
+
+  // Build a pseudo metadata with loaded line count for the format preview
+  const regionRows = regionState.rows;
+  const noop = useCallback(() => {}, []);
+
+  // Route region rows to the appropriate format preview
+  const renderFormatPreview = () => {
+    if (regionState.loading) {
+      return (
+        <div className="loading">
+          <div className="spinner"></div>
+          <div>Loading region...</div>
+        </div>
+      );
+    }
+
+    if (!regionState.query) {
+      return (
+        <div className="indexed-placeholder">
+          <p>Select a region above to view records.</p>
+          {metadata.error && (
+            <p className="region-navigator-error">{metadata.error}</p>
+          )}
+        </div>
+      );
+    }
+
+    if (regionRows.length === 0 && !regionState.error) {
+      return (
+        <div className="indexed-placeholder">
+          <p>No records found in this region.</p>
+        </div>
+      );
+    }
+
+    // Use the same format-specific preview components with region rows
+    switch (metadata.languageId) {
+      case 'omics-vcf':
+        return (
+          <VcfPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+
+      case 'omics-bed':
+      case 'omics-bedpe':
+      case 'omics-narrowpeak':
+      case 'omics-broadpeak':
+        return (
+          <BedPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+
+      case 'omics-gtf':
+      case 'omics-gff3':
+        return (
+          <GtfGffPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+
+      case 'omics-sam':
+      case 'omics-bam':
+        return (
+          <SamPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+
+      case 'omics-fasta':
+        return (
+          <FastaPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+
+      case 'omics-fastq':
+        return (
+          <FastqPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+
+      default:
+        return (
+          <GenericPreview
+            metadata={metadata}
+            rows={regionRows}
+            loadedLineCount={regionRows.length}
+            getRow={(line: number) => regionRows[line]}
+            isLineLoaded={(line: number) => line < regionRows.length}
+            onRequestRows={noop}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="indexed-preview">
+      <div className="indexed-header">
+        <h2>{metadata.fileName}</h2>
+        <span className="indexed-badge">
+          {metadata.providerType === 'binary' ? 'Binary' : 'Indexed'}
+        </span>
+      </div>
+      <RegionNavigator
+        references={refs}
+        onNavigate={requestRegion}
+        loading={regionState.loading}
+        resultCount={regionState.query ? regionRows.length : undefined}
+        hasMore={regionState.hasMore}
+        error={regionState.error}
+        currentQuery={regionState.query}
+      />
+      {renderFormatPreview()}
+    </div>
+  );
 }

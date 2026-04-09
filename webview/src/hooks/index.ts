@@ -1,3 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 export { useScrollHandler } from './useScrollHandler';
+export { useRegionProvider } from './useRegionProvider';

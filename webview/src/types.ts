@@ -17,12 +17,23 @@ export interface PreviewSettings {
   sampleColumnLimit: number;
 }
 
+export interface ReferenceInfo {
+  name: string;
+  length?: number;
+}
+
 export interface DocumentMetadata {
   lineCount: number;
   languageId: string;
   fileName: string;
   headerInfo?: VcfHeaderInfo;
   previewSettings?: PreviewSettings;
+  /** 'text' for line-based, 'indexed' for tabix/fai, 'binary' for BAM */
+  providerType?: 'text' | 'indexed' | 'binary';
+  /** Reference sequences for indexed/binary files */
+  references?: ReferenceInfo[];
+  /** Error message if provider could not be created */
+  error?: string;
 }
 
 export interface VcfHeaderInfo {
@@ -176,11 +187,15 @@ export interface FilterConfig {
 }
 
 export type MessageFromExtension =
-  | { command: 'metadata'; lineCount: number; languageId: string; fileName: string; headerInfo?: VcfHeaderInfo }
+  | { command: 'metadata'; lineCount: number; languageId: string; fileName: string; headerInfo?: VcfHeaderInfo; providerType?: 'text' | 'indexed' | 'binary'; references?: ReferenceInfo[]; previewSettings?: PreviewSettings; error?: string }
   | { command: 'rowData'; rows: string[]; startLine: number }
-  | { command: 'headerInfo'; headerInfo: VcfHeaderInfo };
+  | { command: 'headerInfo'; headerInfo: VcfHeaderInfo }
+  | { command: 'regionData'; rows: string[]; chrom: string; start: number; end: number; requestId: string; hasMore: boolean; error?: string }
+  | { command: 'references'; refs: ReferenceInfo[] };
 
 export type MessageToExtension =
   | { command: 'getMetadata' }
   | { command: 'requestRows'; startLine: number; endLine: number }
-  | { command: 'requestHeader' };
+  | { command: 'requestHeader' }
+  | { command: 'requestRegion'; chrom: string; start: number; end: number; requestId: string }
+  | { command: 'requestReferences' };
