@@ -654,6 +654,7 @@
     "typescript": "^5.3.2"
   },
   "dependencies": {
+    "@gmod/bam": "^7.1.20",
     "@gmod/bgzf-filehandle": "^6.0.18",
     "@gmod/tabix": "^3.3.1",
     "generic-filehandle": "^3.4.0",

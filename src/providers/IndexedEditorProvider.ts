@@ -7,6 +7,7 @@ import type { FileProvider } from './types';
 import { discoverIndex } from './indexDiscovery';
 import { BgzfTextProvider } from './BgzfTextProvider';
 import { TabixProvider } from './TabixProvider';
+import { BamProvider } from './BamProvider';
 
 /**
  * Format detection from file extension for indexed/binary files.
@@ -182,9 +183,7 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
   }
 
   /**
-   * Create a FileProvider for the given file.
-   * Phase 2 returns null (no actual providers yet).
-   * Phase 3 will add TabixProvider, Phase 4 will add BamProvider.
+   * Create a FileProvider for the given file based on format and available index.
    */
   private async createProvider(
     uri: vscode.Uri,
@@ -203,7 +202,11 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
       return BgzfTextProvider.create(uri, formatId);
     }
 
-    // Phase 4 will add BamProvider for BAM files
+    // BAM files with .bai or .csi index
+    if (fileName.endsWith('.bam') && indexInfo && (indexInfo.type === 'bai' || indexInfo.type === 'csi')) {
+      return BamProvider.create(uri, indexInfo as { type: 'bai' | 'csi'; uri: vscode.Uri });
+    }
+
     return null;
   }
 
