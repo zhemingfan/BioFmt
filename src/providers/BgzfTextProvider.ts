@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as zlib from 'zlib';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import type { FileProvider, ProviderMetadata, ReferenceInfo, RegionResult } from './types';
+import type { FileProvider, ProviderMetadata } from './types';
 
 /**
  * Decompresses an entire BGZF file by parsing and inflating each gzip block.
