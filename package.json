@@ -547,15 +547,33 @@
         "viewType": "biofmt.indexedPreview",
         "displayName": "BioFmt Indexed Preview",
         "selector": [
-          { "filenamePattern": "*.vcf.gz" },
-          { "filenamePattern": "*.bed.gz" },
-          { "filenamePattern": "*.gff3.gz" },
-          { "filenamePattern": "*.gff.gz" },
-          { "filenamePattern": "*.bam" },
-          { "filenamePattern": "*.fasta.gz" },
-          { "filenamePattern": "*.fa.gz" },
-          { "filenamePattern": "*.fastq.gz" },
-          { "filenamePattern": "*.fq.gz" }
+          {
+            "filenamePattern": "*.vcf.gz"
+          },
+          {
+            "filenamePattern": "*.bed.gz"
+          },
+          {
+            "filenamePattern": "*.gff3.gz"
+          },
+          {
+            "filenamePattern": "*.gff.gz"
+          },
+          {
+            "filenamePattern": "*.bam"
+          },
+          {
+            "filenamePattern": "*.fasta.gz"
+          },
+          {
+            "filenamePattern": "*.fa.gz"
+          },
+          {
+            "filenamePattern": "*.fastq.gz"
+          },
+          {
+            "filenamePattern": "*.fq.gz"
+          }
         ],
         "priority": "default"
       }
@@ -637,6 +655,7 @@
   },
   "dependencies": {
     "@gmod/bgzf-filehandle": "^6.0.18",
+    "@gmod/tabix": "^3.3.1",
     "generic-filehandle": "^3.4.0",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1",

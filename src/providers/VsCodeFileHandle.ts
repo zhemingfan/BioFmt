@@ -54,13 +54,21 @@ export class VsCodeFileHandle implements GenericFilehandle {
   async readFile(options: BufferEncoding): Promise<string>;
   async readFile<T extends undefined>(options: Omit<FilehandleOptions, 'encoding'> | (Omit<FilehandleOptions, 'encoding'> & { encoding: T })): Promise<Buffer>;
   async readFile<T extends BufferEncoding>(options: Omit<FilehandleOptions, 'encoding'> & { encoding: T }): Promise<string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async readFile(options?: any): Promise<Buffer | string> {
     return new Promise((resolve, reject) => {
-      const encoding = typeof options === 'string' ? options : options?.encoding;
-      fs.readFile(this.filePath, encoding, (err, data) => {
-        if (err) reject(err);
-        else resolve(data as Buffer | string);
-      });
+      const encoding = (typeof options === 'string' ? options : (options as Record<string, unknown>)?.encoding) as BufferEncoding | undefined;
+      if (encoding) {
+        fs.readFile(this.filePath, encoding as BufferEncoding, (err: NodeJS.ErrnoException | null, data: string) => {
+          if (err) reject(err);
+          else resolve(data);
+        });
+      } else {
+        fs.readFile(this.filePath, (err: NodeJS.ErrnoException | null, data: Buffer) => {
+          if (err) reject(err);
+          else resolve(data);
+        });
+      }
     });
   }
 

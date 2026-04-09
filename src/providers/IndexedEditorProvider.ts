@@ -3,9 +3,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import type { FileProvider, ProviderMetadata } from './types';
+import type { FileProvider } from './types';
 import { discoverIndex } from './indexDiscovery';
 import { BgzfTextProvider } from './BgzfTextProvider';
+import { TabixProvider } from './TabixProvider';
 
 /**
  * Format detection from file extension for indexed/binary files.
@@ -188,15 +189,21 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
   private async createProvider(
     uri: vscode.Uri,
     formatId: string,
-    _indexInfo: { type: string; uri: vscode.Uri } | null,
+    indexInfo: { type: string; uri: vscode.Uri } | null,
   ): Promise<FileProvider | null> {
-    // Phase 2: decompress bgzf files fully and serve as text lines.
-    // Phase 3 will add TabixProvider for region-based random access.
-    // Phase 4 will add BamProvider for BAM files.
     const fileName = path.basename(uri.fsPath).toLowerCase();
+
+    // Tabix-indexed bgzipped files: use region-based random access
+    if (fileName.endsWith('.gz') && indexInfo && (indexInfo.type === 'tbi' || indexInfo.type === 'csi')) {
+      return TabixProvider.create(uri, formatId, indexInfo as { type: 'tbi' | 'csi'; uri: vscode.Uri });
+    }
+
+    // Bgzipped files without index: decompress fully
     if (fileName.endsWith('.gz')) {
       return BgzfTextProvider.create(uri, formatId);
     }
+
+    // Phase 4 will add BamProvider for BAM files
     return null;
   }
 
