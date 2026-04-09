@@ -657,6 +657,7 @@
     "@gmod/bam": "^7.1.20",
     "@gmod/bgzf-filehandle": "^6.0.18",
     "@gmod/tabix": "^3.3.1",
+    "buffer": "^6.0.3",
     "generic-filehandle": "^3.4.0",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1",
