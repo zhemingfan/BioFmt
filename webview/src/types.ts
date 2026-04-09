@@ -15,6 +15,7 @@ export interface PreviewSettings {
   maxBytes: number;
   downsampleLimit: number;
   sampleColumnLimit: number;
+  maxRegionRecords?: number;
 }
 
 export interface ReferenceInfo {

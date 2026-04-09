@@ -39,6 +39,11 @@ export function RegionNavigator({
     }
   }, [references, chrom]);
 
+  const formatNumber = (n: string) => {
+    const num = parseInt(n.replace(/,/g, ''), 10);
+    return isNaN(num) ? n : num.toLocaleString();
+  };
+
   const handleGo = useCallback(() => {
     if (!chrom) return;
     const start = parseInt(startPos.replace(/,/g, ''), 10);
@@ -101,9 +106,10 @@ export function RegionNavigator({
             type="text"
             value={startPos}
             onChange={(e) => setStartPos(e.target.value)}
+            onBlur={() => setStartPos(formatNumber(startPos))}
             onKeyDown={handleKeyDown}
             disabled={loading}
-            style={{ width: '100px' }}
+            style={{ width: '120px' }}
           />
         </label>
 
@@ -113,9 +119,10 @@ export function RegionNavigator({
             type="text"
             value={endPos}
             onChange={(e) => setEndPos(e.target.value)}
+            onBlur={() => setEndPos(formatNumber(endPos))}
             onKeyDown={handleKeyDown}
             disabled={loading}
-            style={{ width: '100px' }}
+            style={{ width: '120px' }}
           />
         </label>
 

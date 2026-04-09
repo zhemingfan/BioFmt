@@ -91,9 +91,10 @@ export function App() {
           });
 
           // Evict oldest entries to prevent unbounded memory growth
-          if (rowCache.current.size > 50000) {
+          const cacheLimit = metadata?.providerType === 'indexed' || metadata?.providerType === 'binary' ? 20000 : 50000;
+          if (rowCache.current.size > cacheLimit) {
             const keys = Array.from(rowCache.current.keys()).sort((a, b) => a - b);
-            const evictCount = rowCache.current.size - 50000;
+            const evictCount = rowCache.current.size - cacheLimit;
             for (let i = 0; i < evictCount; i++) {
               rowCache.current.delete(keys[i]);
             }

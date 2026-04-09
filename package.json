@@ -601,6 +601,11 @@
           "default": 10,
           "description": "Number of VCF sample columns to show initially"
         },
+        "biofmt.preview.maxRegionRecords": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum records returned per region query for indexed/binary files"
+        },
         "biofmt.validation.level": {
           "type": "string",
           "enum": [
