@@ -95,6 +95,7 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
                   maxBytes: config.get<number>('maxBytes', 52428800),
                   downsampleLimit: config.get<number>('downsampleLimit', 200000),
                   sampleColumnLimit: config.get<number>('sampleColumnLimit', 10),
+                  maxRegionRecords: config.get<number>('maxRegionRecords', 10000),
                 },
               });
             } else {
