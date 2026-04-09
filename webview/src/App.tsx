@@ -432,6 +432,7 @@ function IndexedPreviewWrapper({ metadata }: { metadata: DocumentMetadata }) {
           <VcfPreview
             metadata={metadata}
             rows={regionRows}
+            headerInfo={metadata.headerInfo || null}
             loadedLineCount={regionRows.length}
             onRequestRows={noop}
           />
