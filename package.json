@@ -65,7 +65,9 @@
     "onLanguage:omics-genbank",
     "onLanguage:omics-chain",
     "onLanguage:omics-net",
-    "onLanguage:omics-gfa"
+    "onLanguage:omics-gfa",
+    "onLanguage:omics-fasta",
+    "onLanguage:omics-fastq"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -345,6 +347,34 @@
         ],
         "firstLine": "^H\\t|^S\\t",
         "configuration": "./language-configuration/gfa.language-configuration.json"
+      },
+      {
+        "id": "omics-fasta",
+        "aliases": [
+          "FASTA"
+        ],
+        "extensions": [
+          ".fasta",
+          ".fa",
+          ".fna",
+          ".ffn",
+          ".faa",
+          ".frn"
+        ],
+        "firstLine": "^>",
+        "configuration": "./language-configuration/fasta.language-configuration.json"
+      },
+      {
+        "id": "omics-fastq",
+        "aliases": [
+          "FASTQ"
+        ],
+        "extensions": [
+          ".fastq",
+          ".fq"
+        ],
+        "firstLine": "^@[A-Za-z0-9]",
+        "configuration": "./language-configuration/fastq.language-configuration.json"
       }
     ],
     "grammars": [
@@ -467,6 +497,16 @@
         "language": "omics-gfa",
         "scopeName": "source.gfa",
         "path": "./syntaxes/gfa.tmLanguage.json"
+      },
+      {
+        "language": "omics-fasta",
+        "scopeName": "source.fasta",
+        "path": "./syntaxes/fasta.tmLanguage.json"
+      },
+      {
+        "language": "omics-fastq",
+        "scopeName": "source.fastq",
+        "path": "./syntaxes/fastq.tmLanguage.json"
       }
     ],
     "commands": [
