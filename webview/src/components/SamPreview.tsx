@@ -227,7 +227,7 @@ export function SamPreview({ metadata, rows, loadedLineCount, onRequestRows }: S
       <div className="preview-header">
         <h1>{metadata.fileName}</h1>
         <div className="meta">
-          <span>Format: SAM</span>
+          <span>Format: {metadata.languageId === 'omics-bam' ? 'BAM' : 'SAM'}</span>
           <span>Lines: {metadata.lineCount.toLocaleString()}</span>
           <span>Alignments: {parsedRows.length.toLocaleString()}</span>
           <span>References: {references.length}</span>
