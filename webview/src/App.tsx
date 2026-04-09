@@ -391,6 +391,15 @@ function IndexedPreviewWrapper({ metadata }: { metadata: DocumentMetadata }) {
   // Merge metadata references with dynamically fetched ones
   const refs = references.length > 0 ? references : metadata.references || [];
 
+  // Auto-query first reference on load so data appears immediately
+  const autoQueried = useRef(false);
+  useEffect(() => {
+    if (refs.length > 0 && !autoQueried.current && !regionState.query) {
+      autoQueried.current = true;
+      requestRegion(refs[0].name, 0, 1000000);
+    }
+  }, [refs, regionState.query, requestRegion]);
+
   // Build a pseudo metadata with loaded line count for the format preview
   const regionRows = regionState.rows;
   const noop = useCallback(() => {}, []);
