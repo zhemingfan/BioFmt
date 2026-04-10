@@ -625,6 +625,21 @@
           "type": "number",
           "default": 500,
           "description": "Number of lines around cursor to validate"
+        },
+        "biofmt.workspace.enableLint": {
+          "type": "boolean",
+          "default": false,
+          "description": "Validate all bioinformatics files in the workspace (not just open ones)"
+        },
+        "biofmt.workspace.maxFiles": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of workspace files to validate"
+        },
+        "biofmt.workspace.maxFileSizeMB": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum file size in MB for workspace-wide validation"
         }
       }
     }

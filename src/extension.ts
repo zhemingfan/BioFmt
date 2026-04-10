@@ -389,6 +389,106 @@ async function startLanguageServer(
     }
   });
   context.subscriptions.push(visibleRangeDisposable);
+
+  // Workspace-wide lint
+  const workspaceConfig = vscode.workspace.getConfiguration('biofmt.workspace');
+  if (workspaceConfig.get<boolean>('enableLint', false)) {
+    startWorkspaceLint(context);
+  }
+
+  // Re-trigger workspace lint when config changes
+  const configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration('biofmt.workspace.enableLint')) {
+      const enabled = vscode.workspace.getConfiguration('biofmt.workspace').get<boolean>('enableLint', false);
+      if (enabled) {
+        startWorkspaceLint(context);
+      } else if (client) {
+        client.sendNotification('biofmt/workspaceCancel');
+      }
+    }
+  });
+  context.subscriptions.push(configDisposable);
+}
+
+const BIO_FILE_PATTERNS = [
+  '**/*.vcf', '**/*.sam', '**/*.bed', '**/*.bedpe',
+  '**/*.gtf', '**/*.gff', '**/*.gff3',
+  '**/*.paf', '**/*.psl',
+  '**/*.wig', '**/*.bedGraph', '**/*.bdg',
+  '**/*.narrowPeak', '**/*.broadPeak',
+  '**/*.fasta', '**/*.fa', '**/*.fna', '**/*.fastq', '**/*.fq',
+  '**/*.maf', '**/*.ped', '**/*.map', '**/*.gct',
+  '**/*.mtx', '**/*.mztab', '**/*.mgf',
+  '**/*.gbk', '**/*.gb', '**/*.genbank',
+  '**/*.chain', '**/*.net', '**/*.gfa',
+];
+
+function inferLanguageId(fsPath: string): string {
+  const lower = fsPath.toLowerCase();
+  if (lower.endsWith('.vcf')) return 'omics-vcf';
+  if (lower.endsWith('.sam')) return 'omics-sam';
+  if (lower.endsWith('.bed')) return 'omics-bed';
+  if (lower.endsWith('.bedpe')) return 'omics-bedpe';
+  if (lower.endsWith('.gtf')) return 'omics-gtf';
+  if (lower.endsWith('.gff') || lower.endsWith('.gff3')) return 'omics-gff3';
+  if (lower.endsWith('.psl')) return 'omics-psl';
+  if (lower.endsWith('.paf')) return 'omics-paf';
+  if (lower.endsWith('.wig')) return 'omics-wig';
+  if (lower.endsWith('.bedgraph') || lower.endsWith('.bdg')) return 'omics-bedgraph';
+  if (lower.endsWith('.narrowpeak')) return 'omics-narrowpeak';
+  if (lower.endsWith('.broadpeak')) return 'omics-broadpeak';
+  if (lower.endsWith('.fasta') || lower.endsWith('.fa') || lower.endsWith('.fna')) return 'omics-fasta';
+  if (lower.endsWith('.fastq') || lower.endsWith('.fq')) return 'omics-fastq';
+  if (lower.endsWith('.maf')) return 'omics-maf-alignment';
+  if (lower.endsWith('.ped')) return 'omics-ped';
+  if (lower.endsWith('.map')) return 'omics-map';
+  if (lower.endsWith('.gct')) return 'omics-gct';
+  if (lower.endsWith('.mtx')) return 'omics-mtx';
+  if (lower.endsWith('.mztab')) return 'omics-mztab';
+  if (lower.endsWith('.mgf')) return 'omics-mgf';
+  if (lower.endsWith('.gbk') || lower.endsWith('.gb') || lower.endsWith('.genbank')) return 'omics-genbank';
+  if (lower.endsWith('.chain')) return 'omics-chain';
+  if (lower.endsWith('.net')) return 'omics-net';
+  if (lower.endsWith('.gfa')) return 'omics-gfa';
+  return 'unknown';
+}
+
+let workspaceScanTimeout: ReturnType<typeof setTimeout> | undefined;
+
+async function startWorkspaceLint(context: vscode.ExtensionContext): Promise<void> {
+  if (!client) return;
+
+  const config = vscode.workspace.getConfiguration('biofmt.workspace');
+  const maxFiles = config.get<number>('maxFiles', 100);
+  const maxFileSizeMB = config.get<number>('maxFileSizeMB', 10);
+
+  const files: Array<{ uri: string; languageId: string }> = [];
+
+  for (const pattern of BIO_FILE_PATTERNS) {
+    if (files.length >= maxFiles) break;
+    const uris = await vscode.workspace.findFiles(pattern, '**/node_modules/**', maxFiles - files.length);
+    for (const uri of uris) {
+      const languageId = inferLanguageId(uri.fsPath);
+      if (languageId !== 'unknown') {
+        files.push({ uri: uri.toString(), languageId });
+      }
+    }
+  }
+
+  client.sendNotification('biofmt/workspaceFiles', { files, maxFileSizeMB });
+
+  // Watch for file changes and re-scan (debounced)
+  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{vcf,sam,bed,bedpe,gtf,gff,gff3,paf,psl,wig,bedGraph,narrowPeak,broadPeak,fasta,fa,fastq,fq}');
+
+  const debouncedRescan = () => {
+    if (workspaceScanTimeout) clearTimeout(workspaceScanTimeout);
+    workspaceScanTimeout = setTimeout(() => startWorkspaceLint(context), 2000);
+  };
+
+  watcher.onDidCreate(debouncedRescan);
+  watcher.onDidChange(debouncedRescan);
+  watcher.onDidDelete(debouncedRescan);
+  context.subscriptions.push(watcher);
 }
 
 // VCF Header types
