@@ -22,6 +22,7 @@ import { getValidator } from './validators';
 import { getVcfHover, getVcfSymbols, getVcfHeader, clearHeaderCache } from './validators/vcf';
 import type { BioFmtSettings, ValidatorContext } from './validators/types';
 import { defaultSettings } from './validators/types';
+import { WorkspaceScanner } from './workspace/workspaceScanner';
 
 // Create connection using all proposed features
 const connection = createConnection(ProposedFeatures.all);
@@ -83,6 +84,37 @@ connection.onNotification('biofmt/visibleRange', (params: { uri: string; ranges:
   visibleRanges.set(params.uri, params.ranges);
   const doc = documents.get(params.uri);
   if (doc) validateDocument(doc);
+});
+
+// Workspace-wide lint
+const workspaceScanner = new WorkspaceScanner();
+let lastWorkspaceUris = new Set<string>();
+
+connection.onNotification('biofmt/workspaceFiles', async (params: { files: Array<{ uri: string; languageId: string }>; maxFileSizeMB?: number }) => {
+  const openUris = new Set(documents.all().map(d => d.uri));
+  const currentUris = new Set(params.files.map(f => f.uri));
+
+  // Clear diagnostics for files no longer in workspace
+  workspaceScanner.clearStale(currentUris, lastWorkspaceUris, connection);
+  lastWorkspaceUris = currentUris;
+
+  // Get settings from first file or use defaults
+  const settings = params.files.length > 0
+    ? await getDocumentSettings(params.files[0].uri)
+    : globalSettings;
+
+  workspaceScanner.cancel();
+  await workspaceScanner.scanFiles(
+    params.files,
+    connection,
+    settings,
+    params.maxFileSizeMB ?? 10,
+    openUris,
+  );
+});
+
+connection.onNotification('biofmt/workspaceCancel', () => {
+  workspaceScanner.cancel();
 });
 
 // Document events
