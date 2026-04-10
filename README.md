@@ -44,6 +44,8 @@ Virtualized tables handle 200K+ rows with search, column sorting, drag-resizable
 - **FASTA**: per-base coloring (A/T/G/C/N)
 - **FASTQ**: quality heatmap with Phred score color gradient
 
+![FASTQ preview showing expanded read with per-base quality heatmap colored by Phred score](docs/fastq-heatmap.png)
+
 ### Indexed & Binary File Support
 
 Open compressed and indexed files directly — no decompression needed:
