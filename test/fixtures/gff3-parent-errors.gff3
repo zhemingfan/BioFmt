@@ -1,0 +1,8 @@
+##gff-version 3
+chr1	test	gene	1000	9000	.	+	.	ID=gene1;Name=TestGene
+chr1	test	mRNA	1000	9000	.	+	.	ID=mRNA1;Parent=gene1
+chr1	test	exon	1000	2000	.	+	.	ID=exon1;Parent=mRNA1
+chr1	test	exon	3000	4000	.	+	.	Parent=mRNA_missing
+chr1	test	CDS	1000	2000	.	+	0	Parent=mRNA1
+chr1	test	gene	10000	20000	.	+	.	ID=gene1;Name=DuplicateGene
+chr1	test	mRNA	10000	20000	.	+	.	ID=mRNA2;Parent=nonexistent_gene

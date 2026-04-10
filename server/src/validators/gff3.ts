@@ -16,6 +16,10 @@ export function validateGff3(
   const validStrands = new Set(['+', '-', '.', '?']);
   const validPhases = new Set(['0', '1', '2', '.']);
 
+  // Cross-field state (populated during pass 1, resolved in pass 2)
+  const allIds = new Set<string>();
+  const parentRefs: Array<{ parent: string; line: number; lineText: string; attrsStart: number; attrsLen: number }> = [];
+
   // Strict: first line must be ##gff-version 3
   if (settings.validation.level === 'strict' && lines.length > 0) {
     const firstLine = lines[0].trim();
@@ -114,10 +118,58 @@ export function validateGff3(
           source: 'biofmt',
         }, 'GFF3-S002'));
       }
+
+      // Cross-field: collect IDs and Parents for resolution
+      if (attrs && attrs !== '.') {
+        const parsedAttrs = parseGff3Attributes(attrs);
+        if (parsedAttrs.ID) {
+          if (allIds.has(parsedAttrs.ID)) {
+            const attrsStart = columns.slice(0, 8).join('\t').length + 1;
+            diagnostics.push(withSpecRef({
+              severity: DiagnosticSeverity.Warning,
+              range: { start: { line: i, character: attrsStart }, end: { line: i, character: attrsStart + attrs.length } },
+              message: `Duplicate feature ID: "${parsedAttrs.ID}"`,
+              source: 'biofmt',
+            }, 'GFF3-X002'));
+          }
+          allIds.add(parsedAttrs.ID);
+        }
+        if (parsedAttrs.Parent) {
+          for (const p of parsedAttrs.Parent.split(',')) {
+            parentRefs.push({ parent: p, line: i, lineText: line, attrsStart: columns.slice(0, 8).join('\t').length + 1, attrsLen: attrs.length });
+          }
+        }
+      }
     }
 
     if (diagnostics.length >= settings.validation.maxDiagnostics) break;
   }
 
+  // Pass 2: resolve Parent references (strict only)
+  if (settings.validation.level === 'strict') {
+    for (const ref of parentRefs) {
+      if (!allIds.has(ref.parent)) {
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Warning,
+          range: { start: { line: ref.line, character: ref.attrsStart }, end: { line: ref.line, character: ref.attrsStart + ref.attrsLen } },
+          message: `Parent "${ref.parent}" references non-existent ID`,
+          source: 'biofmt',
+        }, 'GFF3-X001'));
+        if (diagnostics.length >= settings.validation.maxDiagnostics) break;
+      }
+    }
+  }
+
   return diagnostics;
+}
+
+function parseGff3Attributes(attrs: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const pair of attrs.split(';')) {
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx > 0) {
+      result[pair.substring(0, eqIdx)] = pair.substring(eqIdx + 1);
+    }
+  }
+  return result;
 }

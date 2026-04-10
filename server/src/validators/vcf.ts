@@ -340,6 +340,67 @@ export function validateVcf(
             }
           }
         }
+
+        // Cross-field: FORMAT key count vs sample value count
+        if (columns.length >= 10) {
+          const formatKeys = columns[8].split(':');
+          const altCount = columns[4] === '.' ? 0 : columns[4].split(',').length;
+
+          for (let s = 9; s < columns.length; s++) {
+            const sampleVals = columns[s].split(':');
+            if (sampleVals.length !== formatKeys.length && columns[s] !== '.') {
+              const sampleStart = columns.slice(0, s).join('\t').length + 1;
+              diagnostics.push(withSpecRef({
+                severity: DiagnosticSeverity.Warning,
+                range: { start: { line: i, character: sampleStart }, end: { line: i, character: sampleStart + columns[s].length } },
+                message: `Sample has ${sampleVals.length} values but FORMAT has ${formatKeys.length} keys`,
+                source: 'biofmt',
+              }, 'VCF-X001'));
+              break;
+            }
+
+            // Cross-field: GT allele indices must be <= altCount
+            const gtIdx = formatKeys.indexOf('GT');
+            if (gtIdx >= 0 && gtIdx < sampleVals.length) {
+              const gt = sampleVals[gtIdx];
+              const alleles = gt.split(/[/|]/);
+              for (const a of alleles) {
+                if (a !== '.') {
+                  const idx = parseInt(a, 10);
+                  if (!isNaN(idx) && idx > altCount) {
+                    const sampleStart = columns.slice(0, s).join('\t').length + 1;
+                    diagnostics.push(withSpecRef({
+                      severity: DiagnosticSeverity.Error,
+                      range: { start: { line: i, character: sampleStart }, end: { line: i, character: sampleStart + columns[s].length } },
+                      message: `Genotype allele index ${idx} exceeds ALT count ${altCount}`,
+                      source: 'biofmt',
+                    }, 'VCF-X002'));
+                    break;
+                  }
+                }
+              }
+            }
+
+            // Cross-field: AD length must match allele count (REF + ALTs)
+            const adIdx = formatKeys.indexOf('AD');
+            if (adIdx >= 0 && adIdx < sampleVals.length) {
+              const ad = sampleVals[adIdx];
+              if (ad !== '.') {
+                const adValues = ad.split(',');
+                const expectedAd = altCount + 1; // REF + ALTs
+                if (adValues.length !== expectedAd) {
+                  const sampleStart = columns.slice(0, s).join('\t').length + 1;
+                  diagnostics.push(withSpecRef({
+                    severity: DiagnosticSeverity.Warning,
+                    range: { start: { line: i, character: sampleStart }, end: { line: i, character: sampleStart + columns[s].length } },
+                    message: `AD has ${adValues.length} values but expected ${expectedAd} (REF + ${altCount} ALTs)`,
+                    source: 'biofmt',
+                  }, 'VCF-X003'));
+                }
+              }
+            }
+          }
+        }
       }
 
       if (diagnostics.length >= settings.validation.maxDiagnostics) break;
