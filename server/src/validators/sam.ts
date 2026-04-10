@@ -103,10 +103,65 @@ export function validateSam(
           source: 'biofmt',
         }, 'SAM-S003'));
       }
+
+      // Cross-field: CIGAR query length must match SEQ length
+      if (cigar !== '*' && seq !== '*') {
+        const queryLen = sumCigarQueryBases(cigar);
+        if (queryLen > 0 && queryLen !== seq.length) {
+          const cigarStart = columns.slice(0, 5).join('\t').length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Error,
+            range: { start: { line: i, character: cigarStart }, end: { line: i, character: cigarStart + cigar.length } },
+            message: `CIGAR query length (${queryLen}) does not match SEQ length (${seq.length})`,
+            source: 'biofmt',
+          }, 'SAM-X001'));
+        }
+      }
+
+      // Cross-field: FLAG bit conflicts
+      if (!isNaN(flag)) {
+        const paired = (flag & 0x1) !== 0;
+        const properlyPaired = (flag & 0x2) !== 0;
+        const unmapped = (flag & 0x4) !== 0;
+        const mateUnmapped = (flag & 0x8) !== 0;
+        const mateReversed = (flag & 0x20) !== 0;
+        const first = (flag & 0x40) !== 0;
+        const second = (flag & 0x80) !== 0;
+
+        // Unmapped + properly paired is contradictory
+        if (unmapped && properlyPaired) {
+          const flagStart = columns[0].length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Warning,
+            range: { start: { line: i, character: flagStart }, end: { line: i, character: flagStart + columns[1].length } },
+            message: 'FLAG conflict: unmapped (0x4) and properly paired (0x2) are both set',
+            source: 'biofmt',
+          }, 'SAM-X002'));
+        }
+
+        // Paired-end bits require the paired flag
+        if (!paired && (mateUnmapped || mateReversed || first || second)) {
+          const flagStart = columns[0].length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Warning,
+            range: { start: { line: i, character: flagStart }, end: { line: i, character: flagStart + columns[1].length } },
+            message: 'Paired-end FLAG bits set but paired flag (0x1) is not set',
+            source: 'biofmt',
+          }, 'SAM-X003'));
+        }
+      }
     }
 
     if (diagnostics.length >= settings.validation.maxDiagnostics) break;
   }
 
   return diagnostics;
+}
+
+function sumCigarQueryBases(cigar: string): number {
+  let sum = 0;
+  for (const m of cigar.matchAll(/(\d+)([MIDNSHP=X])/g)) {
+    if ('MIS=X'.includes(m[2])) sum += parseInt(m[1], 10);
+  }
+  return sum;
 }

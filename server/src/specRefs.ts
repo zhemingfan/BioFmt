@@ -142,6 +142,22 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   // FASTQ strict
   ['FASTQ-S001', { code: 'FASTQ-S001', href: FASTQ_SPEC, summary: 'Quality scores must be in Phred range (ASCII 33-126)' }],
   ['FASTQ-S002', { code: 'FASTQ-S002', href: FASTQ_SPEC, summary: 'Sequence must contain only valid bases' }],
+
+  // === Cross-field validation rules (strict mode) ===
+
+  // VCF cross-field
+  ['VCF-X001', { code: 'VCF-X001', href: VCF_SPEC, summary: 'FORMAT key count must match sample value count' }],
+  ['VCF-X002', { code: 'VCF-X002', href: VCF_SPEC, summary: 'Genotype allele index out of range' }],
+  ['VCF-X003', { code: 'VCF-X003', href: VCF_SPEC, summary: 'AD field length must match allele count' }],
+
+  // SAM cross-field
+  ['SAM-X001', { code: 'SAM-X001', href: SAM_SPEC, summary: 'CIGAR query length must match SEQ length' }],
+  ['SAM-X002', { code: 'SAM-X002', href: SAM_SPEC, summary: 'FLAG bit conflict: unmapped + properly paired' }],
+  ['SAM-X003', { code: 'SAM-X003', href: SAM_SPEC, summary: 'Paired-end FLAG bits require paired flag (0x1)' }],
+
+  // GFF3 cross-field
+  ['GFF3-X001', { code: 'GFF3-X001', href: GFF3_SPEC, summary: 'Parent attribute references non-existent ID' }],
+  ['GFF3-X002', { code: 'GFF3-X002', href: GFF3_SPEC, summary: 'Duplicate feature ID' }],
 ]);
 
 /**
