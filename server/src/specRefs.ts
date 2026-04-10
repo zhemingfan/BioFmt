@@ -1,0 +1,123 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+import type { Diagnostic } from 'vscode-languageserver/node';
+
+export interface SpecRef {
+  code: string;
+  href: string;
+  summary: string;
+}
+
+const VCF_SPEC = 'https://samtools.github.io/hts-specs/VCFv4.4.pdf';
+const SAM_SPEC = 'https://samtools.github.io/hts-specs/SAMv1.pdf';
+const BED_SPEC = 'https://genome.ucsc.edu/FAQ/FAQformat.html#format1';
+const BEDPE_SPEC = 'https://bedtools.readthedocs.io/en/latest/content/general-usage.html#bedpe-format';
+const GTF_SPEC = 'https://www.ensembl.org/info/website/upload/gff.html';
+const GFF3_SPEC = 'https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md';
+const PAF_SPEC = 'https://lh3.github.io/minimap2/minimap2.html#10';
+const PSL_SPEC = 'https://genome.ucsc.edu/FAQ/FAQformat.html#format2';
+const WIG_SPEC = 'https://genome.ucsc.edu/goldenPath/help/wiggle.html';
+const BEDGRAPH_SPEC = 'https://genome.ucsc.edu/goldenPath/help/bedgraph.html';
+const FASTA_SPEC = 'https://www.ncbi.nlm.nih.gov/genbank/fastaformat/';
+const FASTQ_SPEC = 'https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#fastq-files';
+
+export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
+  // VCF rules
+  ['VCF-001', { code: 'VCF-001', href: VCF_SPEC, summary: 'VCF file must start with ##fileformat=' }],
+  ['VCF-002', { code: 'VCF-002', href: VCF_SPEC, summary: 'VCF header must have at least 8 columns' }],
+  ['VCF-003', { code: 'VCF-003', href: VCF_SPEC, summary: 'VCF data line must have at least 8 columns' }],
+  ['VCF-004', { code: 'VCF-004', href: VCF_SPEC, summary: 'Data line column count must match header' }],
+  ['VCF-005', { code: 'VCF-005', href: VCF_SPEC, summary: 'QUAL must be numeric or "."' }],
+  ['VCF-006', { code: 'VCF-006', href: VCF_SPEC, summary: 'INFO key must be declared in header' }],
+
+  // BED rules
+  ['BED-001', { code: 'BED-001', href: BED_SPEC, summary: 'BED requires at least 3 columns' }],
+  ['BED-002', { code: 'BED-002', href: BED_SPEC, summary: 'Start and end must be integers' }],
+  ['BED-003', { code: 'BED-003', href: BED_SPEC, summary: 'Start position cannot be negative' }],
+  ['BED-004', { code: 'BED-004', href: BED_SPEC, summary: 'Start must be less than end' }],
+
+  // BEDPE rules
+  ['BEDPE-001', { code: 'BEDPE-001', href: BEDPE_SPEC, summary: 'BEDPE requires at least 6 columns' }],
+  ['BEDPE-002', { code: 'BEDPE-002', href: BEDPE_SPEC, summary: 'Coordinate pair 1 must be integers' }],
+  ['BEDPE-003', { code: 'BEDPE-003', href: BEDPE_SPEC, summary: 'Coordinate pair 2 must be integers' }],
+  ['BEDPE-004', { code: 'BEDPE-004', href: BEDPE_SPEC, summary: 'Start positions cannot be negative' }],
+  ['BEDPE-005', { code: 'BEDPE-005', href: BEDPE_SPEC, summary: 'End must be >= start' }],
+  ['BEDPE-006', { code: 'BEDPE-006', href: BEDPE_SPEC, summary: 'Strand fields should be +, -, or .' }],
+
+  // SAM rules
+  ['SAM-001', { code: 'SAM-001', href: SAM_SPEC, summary: 'SAM requires at least 11 columns' }],
+  ['SAM-002', { code: 'SAM-002', href: SAM_SPEC, summary: 'FLAG must be a non-negative integer' }],
+  ['SAM-003', { code: 'SAM-003', href: SAM_SPEC, summary: 'POS must be a non-negative integer' }],
+  ['SAM-004', { code: 'SAM-004', href: SAM_SPEC, summary: 'MAPQ should be between 0 and 255' }],
+
+  // GTF rules
+  ['GTF-001', { code: 'GTF-001', href: GTF_SPEC, summary: 'GTF requires 9 columns' }],
+  ['GTF-002', { code: 'GTF-002', href: GTF_SPEC, summary: 'Start and end must be integers' }],
+  ['GTF-003', { code: 'GTF-003', href: GTF_SPEC, summary: 'Start cannot be greater than end' }],
+  ['GTF-004', { code: 'GTF-004', href: GTF_SPEC, summary: 'Strand must be +, -, or .' }],
+  ['GTF-005', { code: 'GTF-005', href: GTF_SPEC, summary: 'Frame must be 0, 1, 2, or .' }],
+  ['GTF-006', { code: 'GTF-006', href: GTF_SPEC, summary: 'Attributes should use key "value"; format' }],
+
+  // GFF3 rules
+  ['GFF3-001', { code: 'GFF3-001', href: GFF3_SPEC, summary: 'GFF3 requires 9 columns' }],
+  ['GFF3-002', { code: 'GFF3-002', href: GFF3_SPEC, summary: 'Start and end must be integers' }],
+  ['GFF3-003', { code: 'GFF3-003', href: GFF3_SPEC, summary: 'Start cannot be greater than end' }],
+  ['GFF3-004', { code: 'GFF3-004', href: GFF3_SPEC, summary: 'Strand must be +, -, ., or ?' }],
+  ['GFF3-005', { code: 'GFF3-005', href: GFF3_SPEC, summary: 'Phase must be 0, 1, 2, or .' }],
+  ['GFF3-006', { code: 'GFF3-006', href: GFF3_SPEC, summary: 'Attributes should use key=value format' }],
+
+  // PAF rules
+  ['PAF-001', { code: 'PAF-001', href: PAF_SPEC, summary: 'PAF requires at least 12 columns' }],
+  ['PAF-002', { code: 'PAF-002', href: PAF_SPEC, summary: 'Numeric columns must be non-negative integers' }],
+  ['PAF-003', { code: 'PAF-003', href: PAF_SPEC, summary: 'Strand must be + or -' }],
+  ['PAF-004', { code: 'PAF-004', href: PAF_SPEC, summary: 'Query start should be less than query end' }],
+  ['PAF-005', { code: 'PAF-005', href: PAF_SPEC, summary: 'Target start should be less than target end' }],
+
+  // PSL rules
+  ['PSL-001', { code: 'PSL-001', href: PSL_SPEC, summary: 'PSL requires 21 columns' }],
+  ['PSL-002', { code: 'PSL-002', href: PSL_SPEC, summary: 'Numeric columns must be non-negative integers' }],
+  ['PSL-003', { code: 'PSL-003', href: PSL_SPEC, summary: 'Invalid strand value' }],
+  ['PSL-004', { code: 'PSL-004', href: PSL_SPEC, summary: 'Query start should be less than query end' }],
+  ['PSL-005', { code: 'PSL-005', href: PSL_SPEC, summary: 'Target start should be less than target end' }],
+
+  // WIG rules
+  ['WIG-001', { code: 'WIG-001', href: WIG_SPEC, summary: 'fixedStep requires chrom parameter' }],
+  ['WIG-002', { code: 'WIG-002', href: WIG_SPEC, summary: 'fixedStep requires start parameter' }],
+  ['WIG-003', { code: 'WIG-003', href: WIG_SPEC, summary: 'fixedStep requires step parameter' }],
+  ['WIG-004', { code: 'WIG-004', href: WIG_SPEC, summary: 'step must be a positive integer' }],
+  ['WIG-005', { code: 'WIG-005', href: WIG_SPEC, summary: 'span should be a positive integer' }],
+  ['WIG-006', { code: 'WIG-006', href: WIG_SPEC, summary: 'variableStep requires chrom parameter' }],
+  ['WIG-007', { code: 'WIG-007', href: WIG_SPEC, summary: 'fixedStep data lines should have one value' }],
+  ['WIG-008', { code: 'WIG-008', href: WIG_SPEC, summary: 'Invalid numeric value' }],
+  ['WIG-009', { code: 'WIG-009', href: WIG_SPEC, summary: 'variableStep data lines require position and value' }],
+  ['WIG-010', { code: 'WIG-010', href: WIG_SPEC, summary: 'Position must be a non-negative integer' }],
+
+  // bedGraph rules
+  ['BDG-001', { code: 'BDG-001', href: BEDGRAPH_SPEC, summary: 'bedGraph requires 4 columns' }],
+  ['BDG-002', { code: 'BDG-002', href: BEDGRAPH_SPEC, summary: 'Start must be a non-negative integer' }],
+  ['BDG-003', { code: 'BDG-003', href: BEDGRAPH_SPEC, summary: 'End must be a non-negative integer' }],
+  ['BDG-004', { code: 'BDG-004', href: BEDGRAPH_SPEC, summary: 'Start must be less than end' }],
+  ['BDG-005', { code: 'BDG-005', href: BEDGRAPH_SPEC, summary: 'Value must be a number' }],
+
+  // FASTA rules
+  ['FASTA-001', { code: 'FASTA-001', href: FASTA_SPEC, summary: 'FASTA file should start with > header' }],
+  ['FASTA-002', { code: 'FASTA-002', href: FASTA_SPEC, summary: 'FASTA header is empty' }],
+  ['FASTA-003', { code: 'FASTA-003', href: FASTA_SPEC, summary: 'Invalid base characters for FASTA' }],
+
+  // FASTQ rules
+  ['FASTQ-001', { code: 'FASTQ-001', href: FASTQ_SPEC, summary: 'FASTQ record should start with @ header' }],
+  ['FASTQ-002', { code: 'FASTQ-002', href: FASTQ_SPEC, summary: 'Expected + separator on line 3' }],
+  ['FASTQ-003', { code: 'FASTQ-003', href: FASTQ_SPEC, summary: 'Quality length must match sequence length' }],
+]);
+
+/**
+ * Attach spec reference to a diagnostic. Returns the diagnostic for chaining.
+ */
+export function withSpecRef(diagnostic: Diagnostic, ruleCode: string): Diagnostic {
+  const ref = SPEC_REFS.get(ruleCode);
+  if (ref) {
+    diagnostic.code = ruleCode;
+    diagnostic.codeDescription = { href: ref.href };
+  }
+  return diagnostic;
+}
