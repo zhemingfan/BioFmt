@@ -2,7 +2,7 @@
 
 Syntax highlighting, spec-referenced validation, and interactive previews for **27 genomics, transcriptomics, and proteomics formats** in VS Code — including indexed and binary files.
 
-![VCF preview panel showing a sortable, filterable table of somatic structural variants](docs/VCF_preview.png)
+<img src="docs/VCF_preview.png" alt="VCF preview panel showing a sortable, filterable table of somatic structural variants" width="800">
 
 ## Features
 
@@ -14,7 +14,7 @@ TextMate grammars for all 27 formats with distinct coloring for field types, hea
 
 Every diagnostic carries a rule code and a clickable link to the relevant format specification. Hover a squiggle to see which rule was violated and jump directly to the VCF v4.4, SAM v1, GFF3, or BED spec.
 
-![Hovering a diagnostic squiggle shows the rule code with a clickable link to the format specification](docs/spec-validation.png)
+<img src="docs/spec-validation.png" alt="Hovering a diagnostic squiggle shows the rule code with a clickable link to the format specification" width="800">
 
 Three validation levels:
 
@@ -42,7 +42,7 @@ Virtualized tables handle 200K+ rows with search, column sorting, drag-resizable
 - **FASTA**: per-base coloring (A/T/G/C/N)
 - **FASTQ**: quality heatmap with Phred score color gradient
 
-![FASTQ preview showing expanded read with per-base quality heatmap colored by Phred score](docs/fastq-heatmap.png)
+<img src="docs/fastq-heatmap.png" alt="FASTQ preview showing expanded read with per-base quality heatmap colored by Phred score" width="800">
 
 ### Indexed & Binary File Support
 
@@ -55,13 +55,13 @@ Open compressed and indexed files directly — no decompression needed:
 
 Navigate by genomic region with the built-in region bar. Type `chr1:1000000-2000000` for a range, `chr1:500000` for a 10kb window around a position, or select a chromosome from the dropdown.
 
-![Region navigator showing genomic coordinate input and record count for an indexed VCF file](docs/region-navigator.png)
+<img src="docs/region-navigator.png" alt="Region navigator showing genomic coordinate input and record count for an indexed VCF file" width="800">
 
 ### Workspace-Wide Lint
 
 Validate all bioinformatics files across your workspace — not just the ones you have open. Diagnostics appear in the VS Code **Problems** panel, making it easy to clean up datasets or audit file collections.
 
-![Problems panel showing diagnostics for multiple bioinformatics files across the workspace](docs/workspace-lint.png)
+<img src="docs/workspace-lint.png" alt="Problems panel showing diagnostics for multiple bioinformatics files across the workspace" width="800">
 
 Enable with `biofmt.workspace.enableLint`. Off by default.
 
