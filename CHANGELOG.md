@@ -5,6 +5,62 @@ All notable changes to BioFmt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-04-09
+
+### Added
+
+#### New Formats
+- FASTA support with per-base coloring (A/T/G/C/N) and sequence list preview
+- FASTQ support with quality heatmap (Phred+33 color gradient)
+
+#### Indexed & Binary File Support
+- Bgzipped files (.vcf.gz, .bed.gz, .gff3.gz) with tabix (.tbi/.csi) region queries
+- BAM files with .bai/.csi index support
+- Region navigator: type `chr:start-end` or `chr:position` to query genomic regions
+- Auto-query on open (loads first reference automatically)
+- BgzfTextProvider for sequential decompression of unindexed .gz files
+
+#### Spec-Referenced Diagnostics
+- Every diagnostic now carries a rule code (e.g., VCF-005, SAM-X001) with a clickable link to the relevant format specification
+- 83 spec reference rules across 12 validated formats
+- Covers VCF v4.4, SAM v1, BED, BEDPE, GTF, GFF3, PAF, PSL, WIG, bedGraph, FASTA, FASTQ
+
+#### Strict Mode Enforcement
+- Expanded strict mode from VCF-only to all validated formats
+- VCF: REF/ALT format, POS >= 1, FILTER/FORMAT/INFO header declarations
+- SAM: CIGAR pattern validation, FLAG 0-65535 range, SEQ base characters
+- GTF: gene_id/transcript_id required in attributes, score validation
+- GFF3: version directive, score validation
+- FASTA: blank lines within sequence blocks
+- FASTQ: Phred quality range (ASCII 33-126), sequence base validation
+- Default validation level changed from `basic` to `strict`
+
+#### Cross-Field Validation
+- VCF: FORMAT key count vs sample values, genotype allele index bounds, AD length vs allele count
+- SAM: CIGAR query-consuming ops must sum to SEQ length, FLAG bit conflict detection
+- GFF3: two-pass Parent attribute resolution, duplicate ID detection
+
+#### Workspace-Wide Lint
+- Validate all bioinformatics files in the workspace, not just open ones
+- Diagnostics appear in the VS Code Problems panel
+- Off by default (`biofmt.workspace.enableLint`)
+- Configurable max files (100) and max file size (10 MB)
+- File watcher re-scans on create/change/delete
+
+### Changed
+
+- LSP server decomposed from 1945-line monolith into 12 modular validator modules
+- Validators are now pure functions, directly unit-testable
+- RegionNavigator simplified to single text input (accepts ranges, positions, or chromosome names)
+- Row cache eviction tightened: 20K for indexed/binary, 50K for text
+
+### New Configuration
+
+- `biofmt.preview.maxRegionRecords` — max records per region query (default: 10000)
+- `biofmt.workspace.enableLint` — validate all workspace bio files (default: false)
+- `biofmt.workspace.maxFiles` — max workspace files to validate (default: 100)
+- `biofmt.workspace.maxFileSizeMB` — max file size for workspace lint (default: 10)
+
 ## [0.1.4] - 2026-02-21
 
 ### Added
