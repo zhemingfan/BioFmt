@@ -14,6 +14,8 @@ TextMate grammars for all 27 formats with distinct coloring for field types, hea
 
 Every diagnostic carries a rule code and a clickable link to the relevant format specification. Hover a squiggle to see which rule was violated and jump directly to the VCF v4.4, SAM v1, GFF3, or BED spec.
 
+![Hovering a diagnostic squiggle shows the rule code with a clickable link to the format specification](docs/spec-validation.png)
+
 ![Strict mode diagnostics showing rule codes and squiggles on a VCF file with cross-field errors](docs/strict-validation.png)
 
 Three validation levels:
