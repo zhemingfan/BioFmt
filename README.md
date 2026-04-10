@@ -4,6 +4,8 @@ Syntax highlighting, spec-referenced validation, and interactive previews for **
 
 <img src="docs/VCF_preview.png" alt="VCF preview panel showing a sortable, filterable table of somatic structural variants" width="800">
 
+*Shown: `test/fixtures/vcf_somatic_sv.vcf`*
+
 ## Features
 
 ### Syntax Highlighting
@@ -15,6 +17,8 @@ TextMate grammars for all 27 formats with distinct coloring for field types, hea
 Every diagnostic carries a rule code and a clickable link to the relevant format specification. Hover a squiggle to see which rule was violated and jump directly to the VCF v4.4, SAM v1, GFF3, or BED spec.
 
 <img src="docs/spec-validation.png" alt="Hovering a diagnostic squiggle shows the rule code with a clickable link to the format specification" width="800">
+
+*Shown: `test/fixtures/vcf-errors-demo.vcf`*
 
 Three validation levels:
 
@@ -44,6 +48,8 @@ Virtualized tables handle 200K+ rows with search, column sorting, drag-resizable
 
 <img src="docs/fastq-heatmap.png" alt="FASTQ preview showing expanded read with per-base quality heatmap colored by Phred score" width="800">
 
+*Shown: `test/fixtures/example.fastq`*
+
 ### Indexed & Binary File Support
 
 Open compressed and indexed files directly — no decompression needed:
@@ -56,6 +62,8 @@ Open compressed and indexed files directly — no decompression needed:
 Navigate by genomic region with the built-in region bar. Type `chr1:1000000-2000000` for a range, `chr1:500000` for a 10kb window around a position, or select a chromosome from the dropdown.
 
 <img src="docs/region-navigator.png" alt="Region navigator showing genomic coordinate input and record count for an indexed VCF file" width="800">
+
+*Shown: `test/fixtures/example.vcf.gz`*
 
 ### Workspace-Wide Lint
 
