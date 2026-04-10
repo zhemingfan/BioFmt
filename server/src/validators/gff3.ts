@@ -16,6 +16,19 @@ export function validateGff3(
   const validStrands = new Set(['+', '-', '.', '?']);
   const validPhases = new Set(['0', '1', '2', '.']);
 
+  // Strict: first line must be ##gff-version 3
+  if (settings.validation.level === 'strict' && lines.length > 0) {
+    const firstLine = lines[0].trim();
+    if (!firstLine.startsWith('##gff-version')) {
+      diagnostics.push(withSpecRef({
+        severity: DiagnosticSeverity.Warning,
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: lines[0].length } },
+        message: 'GFF3 file should start with ##gff-version 3',
+        source: 'biofmt',
+      }, 'GFF3-S001'));
+    }
+  }
+
   for (let i = 0; i < lines.length; i++) {
     if (!shouldValidateLine(context, i)) continue;
     const line = lines[i];
@@ -85,6 +98,21 @@ export function validateGff3(
           message: 'GFF3 attributes should be in format: key=value;key=value',
           source: 'biofmt',
         }, 'GFF3-006'));
+      }
+    }
+
+    // Strict-mode checks
+    if (settings.validation.level === 'strict') {
+      // Score (col 6) must be numeric or .
+      const score = columns[5];
+      if (score !== '.' && isNaN(parseFloat(score))) {
+        const scoreStart = columns.slice(0, 5).join('\t').length + 1;
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Warning,
+          range: { start: { line: i, character: scoreStart }, end: { line: i, character: scoreStart + score.length } },
+          message: `Score must be numeric or ".", found "${score}"`,
+          source: 'biofmt',
+        }, 'GFF3-S002'));
       }
     }
 

@@ -67,6 +67,44 @@ export function validateSam(
       }, 'SAM-004'));
     }
 
+    // Strict-mode checks
+    if (settings.validation.level === 'strict') {
+      // FLAG must be 0-65535
+      if (!isNaN(flag) && flag > 65535) {
+        const flagStart = columns[0].length + 1;
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Error,
+          range: { start: { line: i, character: flagStart }, end: { line: i, character: flagStart + columns[1].length } },
+          message: `FLAG must be 0-65535, found ${flag}`,
+          source: 'biofmt',
+        }, 'SAM-S002'));
+      }
+
+      // CIGAR must match valid pattern
+      const cigar = columns[5];
+      if (cigar !== '*' && !/^([0-9]+[MIDNSHP=X])+$/.test(cigar)) {
+        const cigarStart = columns.slice(0, 5).join('\t').length + 1;
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Error,
+          range: { start: { line: i, character: cigarStart }, end: { line: i, character: cigarStart + cigar.length } },
+          message: 'CIGAR must match pattern [0-9]+[MIDNSHP=X]',
+          source: 'biofmt',
+        }, 'SAM-S001'));
+      }
+
+      // SEQ must contain only valid bases or *
+      const seq = columns[9];
+      if (seq !== '*' && !/^[ACGTNacgtn=.]+$/.test(seq)) {
+        const seqStart = columns.slice(0, 9).join('\t').length + 1;
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Warning,
+          range: { start: { line: i, character: seqStart }, end: { line: i, character: seqStart + seq.length } },
+          message: 'SEQ contains non-standard characters',
+          source: 'biofmt',
+        }, 'SAM-S003'));
+      }
+    }
+
     if (diagnostics.length >= settings.validation.maxDiagnostics) break;
   }
 
