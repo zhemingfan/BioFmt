@@ -613,7 +613,7 @@
             "basic",
             "strict"
           ],
-          "default": "basic",
+          "default": "strict",
           "description": "Validation strictness level"
         },
         "biofmt.validation.maxDiagnostics": {

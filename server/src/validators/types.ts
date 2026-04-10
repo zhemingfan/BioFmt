@@ -28,7 +28,7 @@ export interface BioFmtSettings {
 
 export const defaultSettings: BioFmtSettings = {
   validation: {
-    level: 'basic',
+    level: 'strict',
     maxDiagnostics: 2000,
   },
   lsp: {
