@@ -108,6 +108,40 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   ['FASTQ-001', { code: 'FASTQ-001', href: FASTQ_SPEC, summary: 'FASTQ record should start with @ header' }],
   ['FASTQ-002', { code: 'FASTQ-002', href: FASTQ_SPEC, summary: 'Expected + separator on line 3' }],
   ['FASTQ-003', { code: 'FASTQ-003', href: FASTQ_SPEC, summary: 'Quality length must match sequence length' }],
+
+  // === Strict-mode rules ===
+
+  // VCF strict
+  ['VCF-S001', { code: 'VCF-S001', href: VCF_SPEC, summary: 'REF must contain only A, C, G, T, N' }],
+  ['VCF-S002', { code: 'VCF-S002', href: VCF_SPEC, summary: 'ALT must match VCF spec patterns' }],
+  ['VCF-S003', { code: 'VCF-S003', href: VCF_SPEC, summary: 'FILTER value must be declared in header' }],
+  ['VCF-S004', { code: 'VCF-S004', href: VCF_SPEC, summary: 'FORMAT key must be declared in header' }],
+  ['VCF-S005', { code: 'VCF-S005', href: VCF_SPEC, summary: 'POS must be >= 1 (1-based coordinate)' }],
+
+  // BED strict
+  ['BED-S001', { code: 'BED-S001', href: BED_SPEC, summary: 'Score must be 0-1000' }],
+  ['BED-S002', { code: 'BED-S002', href: BED_SPEC, summary: 'Strand must be +, -, or .' }],
+
+  // SAM strict
+  ['SAM-S001', { code: 'SAM-S001', href: SAM_SPEC, summary: 'CIGAR must match valid operation pattern' }],
+  ['SAM-S002', { code: 'SAM-S002', href: SAM_SPEC, summary: 'FLAG must be 0-65535' }],
+  ['SAM-S003', { code: 'SAM-S003', href: SAM_SPEC, summary: 'SEQ must contain only valid bases or *' }],
+
+  // GTF strict
+  ['GTF-S001', { code: 'GTF-S001', href: GTF_SPEC, summary: 'Score must be numeric or .' }],
+  ['GTF-S002', { code: 'GTF-S002', href: GTF_SPEC, summary: 'Attributes must contain gene_id' }],
+  ['GTF-S003', { code: 'GTF-S003', href: GTF_SPEC, summary: 'Attributes must contain transcript_id' }],
+
+  // GFF3 strict
+  ['GFF3-S001', { code: 'GFF3-S001', href: GFF3_SPEC, summary: 'First line must be ##gff-version 3' }],
+  ['GFF3-S002', { code: 'GFF3-S002', href: GFF3_SPEC, summary: 'Score must be numeric or .' }],
+
+  // FASTA strict
+  ['FASTA-S001', { code: 'FASTA-S001', href: FASTA_SPEC, summary: 'Blank line within sequence block' }],
+
+  // FASTQ strict
+  ['FASTQ-S001', { code: 'FASTQ-S001', href: FASTQ_SPEC, summary: 'Quality scores must be in Phred range (ASCII 33-126)' }],
+  ['FASTQ-S002', { code: 'FASTQ-S002', href: FASTQ_SPEC, summary: 'Sequence must contain only valid bases' }],
 ]);
 
 /**

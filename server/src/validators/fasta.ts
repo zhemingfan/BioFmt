@@ -14,15 +14,30 @@ export function validateFasta(
   const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
   const validBases = /^[ACGTUNRYSWKMBDHVacgtunryswkmbdhv.*\-\s]+$/;
   let sawHeader = false;
+  let inSequence = false;
 
   for (let i = 0; i < maxLines; i++) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    if (!trimmed || trimmed.startsWith(';')) continue;
+    if (trimmed.startsWith(';')) continue;
+
+    // Strict: blank lines within sequence blocks
+    if (!trimmed) {
+      if (settings.validation.level === 'strict' && inSequence) {
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Warning,
+          range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
+          message: 'Blank line within sequence block',
+          source: 'biofmt',
+        }, 'FASTA-S001'));
+      }
+      continue;
+    }
 
     if (trimmed.startsWith('>')) {
       sawHeader = true;
+      inSequence = false;
       if (trimmed.length < 2) {
         diagnostics.push(withSpecRef({
           severity: DiagnosticSeverity.Warning,
@@ -42,6 +57,8 @@ export function validateFasta(
         source: 'biofmt',
       }, 'FASTA-001'));
     }
+
+    inSequence = true;
 
     if (!validBases.test(trimmed)) {
       diagnostics.push(withSpecRef({

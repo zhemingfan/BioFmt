@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import type { Diagnostic } from 'vscode-languageserver/node';
+import { DiagnosticSeverity } from 'vscode-languageserver/node';
 import { withSpecRef } from '../specRefs';
 import { shouldSkipLine, createLineDiagnostic, createColumnDiagnostic, validateCoordinatePair } from '../validationUtils';
 import type { BioFmtSettings, ValidatorContext } from './types';
@@ -48,6 +49,31 @@ export function validateBed(
     }
 
     validateCoordinatePair(i, line, columns, 1, 2, 'Start', 'End', diagnostics);
+
+    // Strict-mode checks
+    if (settings.validation.level === 'strict') {
+      // Score (col 5) must be 0-1000
+      if (columns.length >= 5 && columns[4] !== '.') {
+        const score = parseInt(columns[4], 10);
+        if (!isNaN(score) && (score < 0 || score > 1000)) {
+          diagnostics.push(withSpecRef(
+            createColumnDiagnostic(i, columns, 4, `Score must be 0-1000, found ${score}`, DiagnosticSeverity.Warning),
+            'BED-S001'
+          ));
+        }
+      }
+
+      // Strand (col 6) must be +, -, or .
+      if (columns.length >= 6) {
+        const strand = columns[5];
+        if (strand !== '+' && strand !== '-' && strand !== '.') {
+          diagnostics.push(withSpecRef(
+            createColumnDiagnostic(i, columns, 5, `Invalid strand "${strand}" (expected +, -, or .)`, DiagnosticSeverity.Warning),
+            'BED-S002'
+          ));
+        }
+      }
+    }
 
     if (diagnostics.length >= settings.validation.maxDiagnostics) break;
   }

@@ -80,6 +80,44 @@ export function validateGtf(
       }
     }
 
+    // Strict-mode checks
+    if (settings.validation.level === 'strict') {
+      // Score (col 6) must be numeric or .
+      const score = columns[5];
+      if (score !== '.' && isNaN(parseFloat(score))) {
+        const scoreStart = columns.slice(0, 5).join('\t').length + 1;
+        diagnostics.push(withSpecRef({
+          severity: DiagnosticSeverity.Warning,
+          range: { start: { line: i, character: scoreStart }, end: { line: i, character: scoreStart + score.length } },
+          message: `Score must be numeric or ".", found "${score}"`,
+          source: 'biofmt',
+        }, 'GTF-S001'));
+      }
+
+      // Attributes must contain gene_id and transcript_id
+      const attrs = columns[8];
+      if (attrs && attrs !== '.') {
+        if (!attrs.includes('gene_id')) {
+          const attrsStart = columns.slice(0, 8).join('\t').length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Warning,
+            range: { start: { line: i, character: attrsStart }, end: { line: i, character: attrsStart + attrs.length } },
+            message: 'GTF attributes must contain gene_id',
+            source: 'biofmt',
+          }, 'GTF-S002'));
+        }
+        if (!attrs.includes('transcript_id')) {
+          const attrsStart = columns.slice(0, 8).join('\t').length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Warning,
+            range: { start: { line: i, character: attrsStart }, end: { line: i, character: attrsStart + attrs.length } },
+            message: 'GTF attributes must contain transcript_id',
+            source: 'biofmt',
+          }, 'GTF-S003'));
+        }
+      }
+    }
+
     if (diagnostics.length >= settings.validation.maxDiagnostics) break;
   }
 

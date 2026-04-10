@@ -237,26 +237,107 @@ export function validateVcf(
         }
       }
 
-      // Validate INFO keys (strict only)
-      if (columns.length >= 8 && settings.validation.level === 'strict') {
-        const infoColumn = columns[7];
-        const infoStart = columns.slice(0, 7).join('\t').length + 1;
+      // Strict-mode checks
+      if (settings.validation.level === 'strict') {
+        // POS must be >= 1
+        const pos = parseInt(columns[1], 10);
+        if (!isNaN(pos) && pos < 1) {
+          const posStart = columns[0].length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Error,
+            range: { start: { line: i, character: posStart }, end: { line: i, character: posStart + columns[1].length } },
+            message: `POS must be >= 1 (1-based coordinate), found ${pos}`,
+            source: 'biofmt',
+          }, 'VCF-S005'));
+        }
 
-        if (infoColumn !== '.') {
-          const infoPairs = infoColumn.split(';');
-          let offset = 0;
+        // REF must be A/C/G/T/N
+        const ref = columns[3];
+        if (ref !== '.' && !/^[ACGTNacgtn]+$/.test(ref)) {
+          const refStart = columns.slice(0, 3).join('\t').length + 1;
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Warning,
+            range: { start: { line: i, character: refStart }, end: { line: i, character: refStart + ref.length } },
+            message: `REF "${ref}" contains non-standard bases (expected A, C, G, T, N)`,
+            source: 'biofmt',
+          }, 'VCF-S001'));
+        }
 
-          for (const pair of infoPairs) {
-            const key = pair.split('=')[0];
-            if (key && !header.info.has(key) && key !== '.') {
+        // ALT must match spec patterns
+        const alt = columns[4];
+        if (alt !== '.' && alt !== '*') {
+          for (const allele of alt.split(',')) {
+            // Valid: bases, <ID>, *, ., or breakend notation []
+            if (!/^[ACGTNacgtn]+$/.test(allele) && !/^<.+>$/.test(allele) && allele !== '*' &&
+                !/[[\]]/.test(allele)) {
+              const altStart = columns.slice(0, 4).join('\t').length + 1;
               diagnostics.push(withSpecRef({
                 severity: DiagnosticSeverity.Warning,
-                range: { start: { line: i, character: infoStart + offset }, end: { line: i, character: infoStart + offset + key.length } },
-                message: `Unknown INFO key: "${key}"`,
+                range: { start: { line: i, character: altStart }, end: { line: i, character: altStart + alt.length } },
+                message: `ALT allele "${allele}" does not match VCF spec patterns`,
                 source: 'biofmt',
-              }, 'VCF-006'));
+              }, 'VCF-S002'));
+              break;
             }
-            offset += pair.length + 1;
+          }
+        }
+
+        // FILTER values must be declared in header
+        const filter = columns[6];
+        if (filter !== '.' && filter !== 'PASS' && header.filter.size > 0) {
+          for (const f of filter.split(';')) {
+            if (f !== 'PASS' && !header.filter.has(f)) {
+              const filterStart = columns.slice(0, 6).join('\t').length + 1;
+              diagnostics.push(withSpecRef({
+                severity: DiagnosticSeverity.Warning,
+                range: { start: { line: i, character: filterStart }, end: { line: i, character: filterStart + filter.length } },
+                message: `FILTER "${f}" not declared in header`,
+                source: 'biofmt',
+              }, 'VCF-S003'));
+              break;
+            }
+          }
+        }
+
+        // INFO keys must be declared
+        if (columns.length >= 8) {
+          const infoColumn = columns[7];
+          const infoStart = columns.slice(0, 7).join('\t').length + 1;
+
+          if (infoColumn !== '.') {
+            const infoPairs = infoColumn.split(';');
+            let offset = 0;
+
+            for (const pair of infoPairs) {
+              const key = pair.split('=')[0];
+              if (key && !header.info.has(key) && key !== '.') {
+                diagnostics.push(withSpecRef({
+                  severity: DiagnosticSeverity.Warning,
+                  range: { start: { line: i, character: infoStart + offset }, end: { line: i, character: infoStart + offset + key.length } },
+                  message: `Unknown INFO key: "${key}"`,
+                  source: 'biofmt',
+                }, 'VCF-006'));
+              }
+              offset += pair.length + 1;
+            }
+          }
+        }
+
+        // FORMAT keys must be declared
+        if (columns.length >= 9) {
+          const formatColumn = columns[8];
+          const formatStart = columns.slice(0, 8).join('\t').length + 1;
+
+          for (const key of formatColumn.split(':')) {
+            if (key && !header.format.has(key)) {
+              diagnostics.push(withSpecRef({
+                severity: DiagnosticSeverity.Warning,
+                range: { start: { line: i, character: formatStart }, end: { line: i, character: formatStart + formatColumn.length } },
+                message: `Unknown FORMAT key: "${key}"`,
+                source: 'biofmt',
+              }, 'VCF-S004'));
+              break;
+            }
           }
         }
       }
