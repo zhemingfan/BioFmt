@@ -5,6 +5,7 @@ import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 import { parseTags } from '../utils';
+import { navigateToRegion } from '../vscodeApi';
 
 interface PafPreviewProps {
   metadata: DocumentMetadata;
@@ -21,7 +22,29 @@ const PAF_COLUMNS: ColumnDefinition[] = [
   { key: 'strand', label: 'Strand', width: 60 },
   { key: 'targetName', label: 'Target', width: 150 },
   { key: 'targetLen', label: 'TLen', width: 80 },
-  { key: 'targetStart', label: 'TStart', width: 80 },
+  {
+    key: 'targetStart',
+    label: 'TStart',
+    width: 80,
+    render: (value: string, row: Record<string, unknown>) => {
+      const target = row.targetName as string | undefined;
+      const start = parseInt(value, 10);
+      const end = parseInt(row.targetEnd as string, 10);
+      if (!target || isNaN(start) || isNaN(end)) return value;
+      return (
+        <span
+          className="nav-link"
+          title={`Go to ${target}:${start}-${end}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateToRegion(target, start, end);
+          }}
+        >
+          {value}
+        </span>
+      );
+    },
+  },
   { key: 'targetEnd', label: 'TEnd', width: 80 },
   { key: 'matches', label: 'Matches', width: 80 },
   { key: 'alnLen', label: 'AlnLen', width: 80 },
@@ -107,7 +130,7 @@ export function PafPreview({ metadata, rows, loadedLineCount, onRequestRows }: P
   });
 
   // Handle row click
-  const handleRowClick = useCallback((row: Record<string, string>, index: number) => {
+  const handleRowClick = useCallback((_row: Record<string, string>, index: number) => {
     setExpandedRow(prev => prev === index ? null : index);
   }, []);
 

@@ -6,7 +6,6 @@ import type {
   ParsedGenotype,
   ParsedAD,
   ParsedPL,
-  ParsedPS,
   ParsedFT,
   FormatSummary,
   FormatRecordContext,
@@ -230,8 +229,8 @@ const dpRenderer: FormatRenderer = {
 const adRenderer: FormatRenderer = {
   id: 'AD',
 
-  parse(raw: string, _def: FormatDefinition | null, ctx: FormatRecordContext): TypedFormatValue {
-    const ad = parseAllelicDepth(raw, ctx);
+  parse(raw: string, _def: FormatDefinition | null, _ctx: FormatRecordContext): TypedFormatValue {
+    const ad = parseAllelicDepth(raw);
     return { type: 'AD', value: ad };
   },
 
@@ -289,7 +288,7 @@ const adRenderer: FormatRenderer = {
   },
 };
 
-function parseAllelicDepth(raw: string, ctx: FormatRecordContext): ParsedAD {
+function parseAllelicDepth(raw: string): ParsedAD {
   if (raw === '.' || raw === '') {
     return {
       values: [],
@@ -614,18 +613,6 @@ export function getFormatSummaries(
   const def = formatDefs.get(formatKey) || null;
   const renderer = getRenderer(formatKey);
   return renderer.summarize(typed, def, ctx);
-}
-
-/**
- * Render a typed FORMAT value for display
- */
-export function renderFormatDisplay(
-  formatKey: string,
-  typed: TypedFormatValue,
-  ctx: FormatRecordContext
-): string {
-  const renderer = getRenderer(formatKey);
-  return renderer.renderDisplay(typed, ctx);
 }
 
 // ============================================================================

@@ -4,6 +4,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
+import { StatsPanel, StatItem } from './StatsPanel';
+import { Histogram } from './Histogram';
+import { BarChart } from './BarChart';
+import { mean } from '../utils/stats';
+import { navigateToRegion } from '../vscodeApi';
 
 interface SamPreviewProps {
   metadata: DocumentMetadata;
@@ -59,11 +64,45 @@ function parseTags(tagFields: string[]): Record<string, { type: string; value: s
   return tags;
 }
 
+function samCigarRefLength(cigar: string): number {
+  if (!cigar || cigar === '*') return 1;
+  let s = 0;
+  for (const m of cigar.matchAll(/(\d+)([MIDNSHP=X])/g)) {
+    if ('MDN=X'.includes(m[2])) s += parseInt(m[1], 10);
+  }
+  return s || 1;
+}
+
 const SAM_COLUMNS: ColumnDefinition[] = [
   { key: 'qname', label: 'QNAME', width: 150 },
   { key: 'flag', label: 'FLAG', width: 60 },
   { key: 'rname', label: 'RNAME', width: 100 },
-  { key: 'pos', label: 'POS', width: 80 },
+  {
+    key: 'pos',
+    label: 'POS',
+    width: 80,
+    render: (value: string, row: Record<string, unknown>) => {
+      const pos = parseInt(value, 10);
+      const rname = row.rname as string | undefined;
+      if (isNaN(pos) || pos === 0 || !rname || rname === '*') return value;
+      const cigar = (row.cigar as string) || '*';
+      const refLen = samCigarRefLength(cigar);
+      const start = pos - 1;
+      const end = start + refLen;
+      return (
+        <span
+          className="nav-link"
+          title={`Go to ${rname}:${start}-${end}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateToRegion(rname, start, end);
+          }}
+        >
+          {value}
+        </span>
+      );
+    },
+  },
   { key: 'mapq', label: 'MAPQ', width: 60 },
   { key: 'cigar', label: 'CIGAR', width: 120 },
   { key: 'rnext', label: 'RNEXT', width: 80 },
@@ -136,6 +175,46 @@ export function SamPreview({ metadata, rows, loadedLineCount, onRequestRows }: S
     };
   }, [rows]);
 
+  // SAM statistics
+  const samStats = useMemo(() => {
+    const readLengths: number[] = [];
+    const mapqs: number[] = [];
+    let mapped = 0, unmapped = 0, paired = 0, properPair = 0, duplicate = 0, supplementary = 0;
+
+    for (const row of parsedRows) {
+      // Read length from SEQ
+      if (row.seq && row.seq !== '*') readLengths.push(row.seq.length);
+
+      // MAPQ
+      const mapq = parseInt(row.mapq, 10);
+      if (!isNaN(mapq)) mapqs.push(mapq);
+
+      // Flag breakdown
+      const flag = row._flagNum;
+      if (flag & FLAG_UNMAPPED) unmapped++;
+      else mapped++;
+      if (flag & FLAG_PAIRED) paired++;
+      if (flag & FLAG_PROPER_PAIR) properPair++;
+      if (flag & FLAG_DUPLICATE) duplicate++;
+      if (flag & FLAG_SUPPLEMENTARY) supplementary++;
+    }
+
+    const total = parsedRows.length;
+    const mappedRate = total > 0 ? ((mapped / total) * 100).toFixed(1) + '%' : 'N/A';
+    const avgMapq = mapqs.length > 0 ? mean(mapqs).toFixed(1) : 'N/A';
+
+    const flagBreakdown = [
+      { label: 'Mapped', value: mapped },
+      { label: 'Unmapped', value: unmapped },
+      { label: 'Paired', value: paired },
+      { label: 'Proper pair', value: properPair },
+      { label: 'Duplicate', value: duplicate },
+      { label: 'Supplementary', value: supplementary },
+    ].filter(d => d.value > 0);
+
+    return { readLengths, mapqs, mappedRate, avgMapq, flagBreakdown };
+  }, [parsedRows]);
+
   // Filter rows
   const filteredRows = useMemo(() => {
     let filtered = parsedRows;
@@ -176,7 +255,7 @@ export function SamPreview({ metadata, rows, loadedLineCount, onRequestRows }: S
   });
 
   // Handle row click
-  const handleRowClick = useCallback((row: Record<string, string>, index: number) => {
+  const handleRowClick = useCallback((_row: Record<string, string>, index: number) => {
     setExpandedRow(prev => prev === index ? null : index);
   }, []);
 
@@ -272,6 +351,20 @@ export function SamPreview({ metadata, rows, loadedLineCount, onRequestRows }: S
           </span>
         )}
       </div>
+
+      {/* Statistics Panel */}
+      {parsedRows.length > 0 && (
+        <StatsPanel>
+          <div className="stats-summary">
+            <StatItem label="Mapped Rate" value={samStats.mappedRate} />
+            <StatItem label="Avg MAPQ" value={samStats.avgMapq} />
+            <StatItem label="Alignments" value={parsedRows.length} />
+          </div>
+          {samStats.readLengths.length > 0 && <Histogram data={samStats.readLengths} label="Read Length Distribution" />}
+          {samStats.mapqs.length > 0 && <Histogram data={samStats.mapqs} label="MAPQ Distribution" bins={25} />}
+          {samStats.flagBreakdown.length > 0 && <BarChart data={samStats.flagBreakdown} label="Flag Breakdown" height={Math.max(80, samStats.flagBreakdown.length * 22 + 20)} />}
+        </StatsPanel>
+      )}
 
       {/* Tip */}
       <div className="tip">

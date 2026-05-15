@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React from 'react';
 import type { FilterConfig } from '../types';
 
 interface VcfFilterBarProps {

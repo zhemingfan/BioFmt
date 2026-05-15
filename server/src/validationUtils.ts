@@ -148,3 +148,26 @@ export function shouldSkipLine(line: string, additionalPrefixes: string[] = []):
 
   return false;
 }
+
+/**
+ * Find the word range at a given character position in a line.
+ * Words consist of [A-Za-z0-9_] characters.
+ */
+export function getWordRangeAtPosition(
+  line: string,
+  character: number
+): { start: number; end: number } | null {
+  const wordPattern = /[A-Za-z0-9_]+/g;
+  let match;
+
+  while ((match = wordPattern.exec(line)) !== null) {
+    const start = match.index;
+    const end = start + match[0].length;
+
+    if (character >= start && character < end) {
+      return { start, end };
+    }
+  }
+
+  return null;
+}

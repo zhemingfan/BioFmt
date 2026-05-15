@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React from 'react';
-import type { ParsedVcfRow, VcfHeaderInfo, FormatDefinition, FormatRecordContext, TypedFormatValue } from '../types';
+import type {
+  ParsedVcfRow,
+  VcfHeaderInfo,
+  FormatDefinition,
+  FormatRecordContext,
+  TypedFormatValue,
+  ParsedGenotype,
+  ParsedAD,
+  ParsedPL,
+  ParsedPS,
+  ParsedFT,
+} from '../types';
 import { getFormatSummaries, hasSpecializedRenderer } from '../vcf/formatParsers';
 
 interface ExpandedInfoCellProps {
@@ -62,7 +72,6 @@ export function ExpandedInfoCell({ row, headerInfo }: ExpandedInfoCellProps) {
             sampleEntries={sampleEntries}
             formatDefs={formatDefs}
             alts={alts}
-            headerInfo={headerInfo}
           />
         </div>
       )}
@@ -75,10 +84,9 @@ interface SampleGenotypesTableProps {
   sampleEntries: [string, Record<string, string>][];
   formatDefs: Map<string, FormatDefinition>;
   alts: string[];
-  headerInfo: VcfHeaderInfo | null;
 }
 
-function SampleGenotypesTable({ row, sampleEntries, formatDefs, alts, headerInfo }: SampleGenotypesTableProps) {
+function SampleGenotypesTable({ row, sampleEntries, formatDefs, alts }: SampleGenotypesTableProps) {
   const formatKeys = row.format!.split(':');
 
   return (
@@ -176,7 +184,7 @@ function FormatValueCell({ formatKey, rawValue, typedValue, formatDefs, ctx }: F
     case 'DP':
       return <NumericDisplay value={typedValue.value} tooltip={tooltipText} />;
     case 'AD':
-      return <ADDisplay value={typedValue.value} ctx={ctx} tooltip={tooltipText} />;
+      return <ADDisplay value={typedValue.value} tooltip={tooltipText} />;
     case 'PL':
       return <PLDisplay value={typedValue.value} tooltip={tooltipText} />;
     case 'PS':
@@ -191,8 +199,6 @@ function FormatValueCell({ formatKey, rawValue, typedValue, formatDefs, ctx }: F
 // ============================================================================
 // Specialized Display Components
 // ============================================================================
-
-import type { ParsedGenotype, ParsedAD, ParsedPL, ParsedPS, ParsedFT } from '../types';
 
 function GenotypeDisplay({ value, ctx, tooltip }: { value: ParsedGenotype; ctx: FormatRecordContext; tooltip: string }) {
   const sep = value.isPhased ? '|' : '/';
@@ -251,7 +257,7 @@ function NumericDisplay({ value, tooltip }: { value: number | null; tooltip: str
   );
 }
 
-function ADDisplay({ value, ctx, tooltip }: { value: ParsedAD; ctx: FormatRecordContext; tooltip: string }) {
+function ADDisplay({ value, tooltip }: { value: ParsedAD; tooltip: string }) {
   if (value.values.length === 0) {
     return <span title={tooltip} style={{ opacity: 0.5 }}>.</span>;
   }

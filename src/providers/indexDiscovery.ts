@@ -65,40 +65,6 @@ export async function discoverIndex(fileUri: vscode.Uri): Promise<IndexInfo | nu
   return null;
 }
 
-/**
- * Discover all index files for a given data file.
- * Returns all found indexes (useful when both .fai and .gzi are needed).
- */
-export async function discoverAllIndexes(fileUri: vscode.Uri): Promise<IndexInfo[]> {
-  const filePath = fileUri.fsPath;
-  const sortedSuffixes = Object.keys(INDEX_CANDIDATES).sort((a, b) => b.length - a.length);
-  const matchedSuffix = sortedSuffixes.find(suffix => filePath.endsWith(suffix));
-
-  if (!matchedSuffix) {
-    return [];
-  }
-
-  const found: IndexInfo[] = [];
-  const candidates = INDEX_CANDIDATES[matchedSuffix];
-
-  for (const candidate of candidates) {
-    const standardUri = vscode.Uri.file(filePath + candidate.suffix);
-    if (await fileExists(standardUri)) {
-      found.push({ type: candidate.type, uri: standardUri });
-    }
-
-    if (matchedSuffix === '.bam' && candidate.type === 'bai') {
-      const altPath = filePath.replace(/\.bam$/, '.bai');
-      const altUri = vscode.Uri.file(altPath);
-      if (await fileExists(altUri)) {
-        found.push({ type: candidate.type, uri: altUri });
-      }
-    }
-  }
-
-  return found;
-}
-
 async function fileExists(uri: vscode.Uri): Promise<boolean> {
   try {
     await vscode.workspace.fs.stat(uri);

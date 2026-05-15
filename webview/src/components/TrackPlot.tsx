@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import type { DocumentMetadata } from '../types';
 
 interface TrackPlotProps {
@@ -32,7 +32,6 @@ const DOWNSAMPLE_THRESHOLD = 5000;
 function parseWig(rows: string[]): Track[] {
   const tracks: Track[] = [];
   let currentTrack: Track | null = null;
-  let currentSpan = 1;
   let currentStep = 0;
   let currentStart = 0;
   let currentChrom = '';
@@ -65,7 +64,6 @@ function parseWig(rows: string[]): Track[] {
       isFixedStep = trimmed.startsWith('fixedStep');
 
       const chromMatch = trimmed.match(/chrom=(\S+)/);
-      const spanMatch = trimmed.match(/span=(\d+)/);
       const startMatch = trimmed.match(/start=(\d+)/);
       const stepMatch = trimmed.match(/step=(\d+)/);
 
@@ -89,7 +87,6 @@ function parseWig(rows: string[]): Track[] {
         }
         currentChrom = newChrom;
       }
-      currentSpan = spanMatch ? parseInt(spanMatch[1], 10) : 1;
       currentStart = startMatch ? parseInt(startMatch[1], 10) : 0;
       currentStep = stepMatch ? parseInt(stepMatch[1], 10) : 0;
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
@@ -145,7 +145,7 @@ export function PslPreview({ metadata, rows, loadedLineCount, onRequestRows }: P
   });
 
   // Handle row click
-  const handleRowClick = useCallback((row: Record<string, string>, index: number) => {
+  const handleRowClick = useCallback((_row: Record<string, string>, index: number) => {
     setExpandedRow(prev => prev === index ? null : index);
   }, []);
 

@@ -10,6 +10,7 @@ import {
 } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { withSpecRef } from '../specRefs';
+import { getWordRangeAtPosition } from '../validationUtils';
 import type { ValidatorContext, BioFmtSettings, ParsedHeader } from './types';
 import { shouldValidateLine } from './types';
 
@@ -472,24 +473,7 @@ export function getVcfHover(document: TextDocument, params: HoverParams): Hover 
   return null;
 }
 
-export function getWordRangeAtPosition(
-  line: string,
-  character: number
-): { start: number; end: number } | null {
-  const wordPattern = /[A-Za-z0-9_]+/g;
-  let match;
-
-  while ((match = wordPattern.exec(line)) !== null) {
-    const start = match.index;
-    const end = start + match[0].length;
-
-    if (character >= start && character < end) {
-      return { start, end };
-    }
-  }
-
-  return null;
-}
+// getWordRangeAtPosition is now exported from ../validationUtils
 
 // Document symbols
 export function getVcfSymbols(document: TextDocument): DocumentSymbol[] {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DocumentMetadata } from '../types';
 
 interface GenbankPreviewProps {
@@ -45,7 +45,6 @@ function parseGenbank(rows: string[]): GenbankRecord {
 
   let currentSection = '';
   let currentFeature: Feature | null = null;
-  let currentQualifierValue = '';
   let inSequence = false;
 
   for (const line of rows) {
@@ -118,7 +117,6 @@ function parseGenbank(rows: string[]): GenbankRecord {
           // Remove quotes
           value = value.replace(/^"|"$/g, '');
           currentFeature.qualifiers.push({ key, value });
-          currentQualifierValue = value;
         } else {
           currentFeature.qualifiers.push({
             key: qualLine.substring(1),
