@@ -77,7 +77,7 @@ export function generateVcfContent(options: {
     // Generate sample values
     const sampleValues = sampleNames.map((_, si) => {
       const gt = si % 3 === 0 ? '0/0' : si % 3 === 1 ? '0/1' : '1/1';
-      const fmtValues = formatIds.map((fid, fi) => (fi === 0 ? gt : String(10 + si + fi)));
+      const fmtValues = formatIds.map((_, fi) => (fi === 0 ? gt : String(10 + si + fi)));
       return fmtValues.join(':');
     });
 

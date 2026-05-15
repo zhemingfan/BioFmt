@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DocumentMetadata } from '../types';
 
 interface MtxPreviewProps {
@@ -78,7 +78,7 @@ function parseHeader(rows: string[]): MtxHeader {
   return header;
 }
 
-function computeStats(rows: string[], header: MtxHeader): MtxStats {
+function computeStats(rows: string[]): MtxStats {
   const stats: MtxStats = {
     minValue: Infinity,
     maxValue: -Infinity,
@@ -154,7 +154,7 @@ export function MtxPreview({ metadata, rows, loadedLineCount, onRequestRows }: M
   }, [rows.length]);
 
   // Compute stats
-  const stats = useMemo(() => computeStats(rows, header), [rows, header]);
+  const stats = useMemo(() => computeStats(rows), [rows]);
 
   const sparsity = header.nRows * header.nCols > 0
     ? ((1 - header.nnz / (header.nRows * header.nCols)) * 100).toFixed(4)

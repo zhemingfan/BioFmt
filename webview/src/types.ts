@@ -35,6 +35,8 @@ export interface DocumentMetadata {
   references?: ReferenceInfo[];
   /** Error message if provider could not be created */
   error?: string;
+  /** Actual file size in bytes (for file size warnings) */
+  fileSize?: number;
 }
 
 export interface VcfHeaderInfo {
@@ -188,7 +190,7 @@ export interface FilterConfig {
 }
 
 export type MessageFromExtension =
-  | { command: 'metadata'; lineCount: number; languageId: string; fileName: string; headerInfo?: VcfHeaderInfo; providerType?: 'text' | 'indexed' | 'binary'; references?: ReferenceInfo[]; previewSettings?: PreviewSettings; error?: string }
+  | { command: 'metadata'; lineCount: number; languageId: string; fileName: string; headerInfo?: VcfHeaderInfo; providerType?: 'text' | 'indexed' | 'binary'; references?: ReferenceInfo[]; previewSettings?: PreviewSettings; error?: string; fileSize?: number }
   | { command: 'rowData'; rows: string[]; startLine: number }
   | { command: 'headerInfo'; headerInfo: VcfHeaderInfo }
   | { command: 'regionData'; rows: string[]; chrom: string; start: number; end: number; requestId: string; hasMore: boolean; error?: string }
@@ -199,4 +201,5 @@ export type MessageToExtension =
   | { command: 'requestRows'; startLine: number; endLine: number }
   | { command: 'requestHeader' }
   | { command: 'requestRegion'; chrom: string; start: number; end: number; requestId: string }
-  | { command: 'requestReferences' };
+  | { command: 'requestReferences' }
+  | { command: 'navigateToRegion'; chrom: string; start: number; end: number };

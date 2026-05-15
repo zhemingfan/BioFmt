@@ -5,8 +5,13 @@ import { FixedSizeList as List } from 'react-window';
 import type { DocumentMetadata, VcfHeaderInfo, ParsedVcfRow, FilterConfig, FormatDefinition, TypedSampleData, FormatRecordContext } from '../types';
 import { VcfFilterBar } from './VcfFilterBar';
 import { ExpandedInfoCell } from './ExpandedInfoCell';
-import { parseSampleFormats, renderFormatDisplay, getRenderer, getFormatSummaries } from '../vcf/formatParsers';
+import { parseSampleFormats, getRenderer, getFormatSummaries } from '../vcf/formatParsers';
 import { sortChromosomes, compareChromosomes } from '../utils';
+import { StatsPanel, StatItem } from './StatsPanel';
+import { Histogram } from './Histogram';
+import { BarChart } from './BarChart';
+import { topN } from '../utils/stats';
+import { navigateToRegion } from '../vscodeApi';
 
 interface VcfPreviewProps {
   metadata: DocumentMetadata;
@@ -18,7 +23,6 @@ interface VcfPreviewProps {
 
 const MAX_DISPLAY_ROWS = 200000;
 const ROW_HEIGHT = 32;
-const HEADER_HEIGHT = 40;
 
 const DEFAULT_COL_WIDTHS = {
   chrom: 100, pos: 100, id: 120, ref: 80, alt: 100,
@@ -158,6 +162,58 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     return headerInfo.samples.slice(0, limit);
   }, [headerInfo, showAllSamples]);
 
+  // Variant statistics computed from parsed data
+  const vcfStats = useMemo(() => {
+    let snp = 0, insertion = 0, deletion = 0, mnv = 0, sv = 0, other = 0;
+    let transitions = 0, transversions = 0;
+    const quals: number[] = [];
+    const filterCounts = new Map<string, number>();
+
+    const transitionPairs = new Set(['AG', 'GA', 'CT', 'TC']);
+
+    for (const row of parsedRows) {
+      // Variant type classification
+      const alts = row.alt === '.' ? [] : row.alt.split(',');
+      for (const alt of alts) {
+        if (alt.startsWith('<')) { sv++; }
+        else if (row.ref.length === 1 && alt.length === 1) {
+          snp++;
+          const pair = row.ref.toUpperCase() + alt.toUpperCase();
+          if (transitionPairs.has(pair)) transitions++;
+          else transversions++;
+        }
+        else if (alt.length > row.ref.length) insertion++;
+        else if (alt.length < row.ref.length) deletion++;
+        else if (row.ref.length > 1 && alt.length === row.ref.length) mnv++;
+        else other++;
+      }
+
+      // QUAL
+      if (row.qual !== null) quals.push(row.qual);
+
+      // FILTER
+      filterCounts.set(row.filter, (filterCounts.get(row.filter) || 0) + 1);
+    }
+
+    const tstv = transversions > 0 ? (transitions / transversions).toFixed(2) : transitions > 0 ? '\u221E' : 'N/A';
+
+    const variantTypes = [
+      { label: 'SNP', value: snp },
+      { label: 'Insertion', value: insertion },
+      { label: 'Deletion', value: deletion },
+      { label: 'MNV', value: mnv },
+      { label: 'SV', value: sv },
+      { label: 'Other', value: other },
+    ].filter(d => d.value > 0);
+
+    const filterBreakdown = topN(
+      Array.from(filterCounts, ([label, value]) => ({ label, value })),
+      10
+    );
+
+    return { tstv, transitions, transversions, variantTypes, quals, filterBreakdown };
+  }, [parsedRows]);
+
   // Sort state
   const [sort, setSort] = useState<{ col: 'chrom' | 'pos' | null; dir: 'asc' | 'desc' }>({ col: null, dir: 'asc' });
 
@@ -221,7 +277,17 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
           onClick={() => setExpandedRow(isExpanded ? null : row.lineNumber)}
         >
           <div className="table-cell" style={{ width: colWidths.chrom, flexShrink: 0 }} title={row.chrom}>{row.chrom}</div>
-          <div className="table-cell" style={{ width: colWidths.pos, flexShrink: 0 }} title={String(row.pos)}>{row.pos}</div>
+          <div className="table-cell" style={{ width: colWidths.pos, flexShrink: 0 }} title={`Go to ${row.chrom}:${row.pos}`}>
+            <span
+              className="nav-link"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateToRegion(row.chrom, row.pos - 1, row.pos - 1 + row.ref.length);
+              }}
+            >
+              {row.pos}
+            </span>
+          </div>
           <div className="table-cell" style={{ width: colWidths.id, flexShrink: 0 }} title={row.id}>{row.id}</div>
           <div className="table-cell" style={{ width: colWidths.ref, flexShrink: 0 }} title={row.ref}>{row.ref}</div>
           <div className="table-cell" style={{ width: colWidths.alt, flexShrink: 0 }} title={row.alt}>{row.alt}</div>
@@ -331,6 +397,20 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
             {' '}Show all {headerInfo.samples.length} samples
           </label>
         </div>
+      )}
+
+      {/* Statistics Panel */}
+      {parsedRows.length > 0 && (
+        <StatsPanel>
+          <div className="stats-summary">
+            <StatItem label="Ts/Tv Ratio" value={vcfStats.tstv} />
+            <StatItem label="Transitions" value={vcfStats.transitions} />
+            <StatItem label="Transversions" value={vcfStats.transversions} />
+          </div>
+          <BarChart data={vcfStats.variantTypes} label="Variant Types" height={Math.max(80, vcfStats.variantTypes.length * 22 + 20)} />
+          {vcfStats.quals.length > 0 && <Histogram data={vcfStats.quals} label="QUAL Distribution" />}
+          {vcfStats.filterBreakdown.length > 1 && <BarChart data={vcfStats.filterBreakdown} label="FILTER Breakdown" height={Math.max(80, vcfStats.filterBreakdown.length * 22 + 20)} />}
+        </StatsPanel>
       )}
 
       {/* Table */}
@@ -677,32 +757,4 @@ function buildSampleTooltip(
     }
   }
   return lines.join('\n');
-}
-
-function formatSampleForDisplay(sample: Record<string, string>, typedSample?: TypedSampleData, ref?: string, alts?: string[]): string {
-  if (!typedSample) {
-    return Object.values(sample).join(':');
-  }
-
-  // Build display string using typed values
-  const parts: string[] = [];
-  const ctx: FormatRecordContext = {
-    ref: ref || '',
-    alts: alts || [],
-    nAlleles: 1 + (alts?.length || 0),
-    formatKeys: Object.keys(sample),
-    sampleName: '',
-  };
-
-  for (const key of Object.keys(sample)) {
-    const typed = typedSample.typed[key];
-    if (typed) {
-      const renderer = getRenderer(key);
-      parts.push(renderer.renderDisplay(typed, ctx));
-    } else {
-      parts.push(sample[key]);
-    }
-  }
-
-  return parts.join(':');
 }

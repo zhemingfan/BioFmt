@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { VirtualTable, ColumnDefinition } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';

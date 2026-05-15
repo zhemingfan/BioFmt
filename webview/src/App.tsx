@@ -20,10 +20,12 @@ import { NetPreview } from './components/NetPreview';
 import { GfaPreview } from './components/GfaPreview';
 import { FastaPreview } from './components/FastaPreview';
 import { FastqPreview } from './components/FastqPreview';
+import { FileSizeBanner } from './components/FileSizeBanner';
 import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
+import { getVsCode } from './vscodeApi';
 import './styles.css';
 
-const vscode = acquireVsCodeApi();
+const vscode = getVsCode();
 
 export function App() {
   const [metadata, setMetadata] = useState<DocumentMetadata | null>(null);
@@ -77,6 +79,7 @@ export function App() {
             references: message.references,
             previewSettings: message.previewSettings,
             error: message.error,
+            fileSize: message.fileSize,
           });
           if (message.headerInfo) {
             setHeaderInfo(message.headerInfo);
@@ -174,9 +177,10 @@ export function App() {
   }
 
   // Route to format-specific preview (text mode)
+  let preview: React.ReactElement;
   switch (metadata.languageId) {
     case 'omics-vcf':
-      return (
+      preview = (
         <VcfPreview
           metadata={metadata}
           rows={rows}
@@ -185,12 +189,13 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-bed':
     case 'omics-bedpe':
     case 'omics-narrowpeak':
     case 'omics-broadpeak':
-      return (
+      preview = (
         <BedPreview
           metadata={metadata}
           rows={rows}
@@ -198,10 +203,11 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-gtf':
     case 'omics-gff3':
-      return (
+      preview = (
         <GtfGffPreview
           metadata={metadata}
           rows={rows}
@@ -209,9 +215,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-sam':
-      return (
+      preview = (
         <SamPreview
           metadata={metadata}
           rows={rows}
@@ -219,9 +226,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-paf':
-      return (
+      preview = (
         <PafPreview
           metadata={metadata}
           rows={rows}
@@ -229,9 +237,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-psl':
-      return (
+      preview = (
         <PslPreview
           metadata={metadata}
           rows={rows}
@@ -239,10 +248,11 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-wig':
     case 'omics-bedgraph':
-      return (
+      preview = (
         <TrackPlot
           metadata={metadata}
           rows={rows}
@@ -250,9 +260,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-maf-alignment':
-      return (
+      preview = (
         <MafAlignmentPreview
           metadata={metadata}
           rows={rows}
@@ -260,9 +271,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-maf-mutation':
-      return (
+      preview = (
         <MafMutationPreview
           metadata={metadata}
           rows={rows}
@@ -270,9 +282,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-mgf':
-      return (
+      preview = (
         <MgfPreview
           metadata={metadata}
           rows={rows}
@@ -280,9 +293,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-mtx':
-      return (
+      preview = (
         <MtxPreview
           metadata={metadata}
           rows={rows}
@@ -290,9 +304,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-mztab':
-      return (
+      preview = (
         <MzTabPreview
           metadata={metadata}
           rows={rows}
@@ -300,9 +315,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-genbank':
-      return (
+      preview = (
         <GenbankPreview
           metadata={metadata}
           rows={rows}
@@ -310,9 +326,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-chain':
-      return (
+      preview = (
         <ChainPreview
           metadata={metadata}
           rows={rows}
@@ -320,9 +337,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-net':
-      return (
+      preview = (
         <NetPreview
           metadata={metadata}
           rows={rows}
@@ -330,9 +348,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-gfa':
-      return (
+      preview = (
         <GfaPreview
           metadata={metadata}
           rows={rows}
@@ -340,9 +359,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-fasta':
-      return (
+      preview = (
         <FastaPreview
           metadata={metadata}
           rows={rows}
@@ -350,9 +370,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     case 'omics-fastq':
-      return (
+      preview = (
         <FastqPreview
           metadata={metadata}
           rows={rows}
@@ -360,9 +381,10 @@ export function App() {
           onRequestRows={requestRows}
         />
       );
+      break;
 
     default:
-      return (
+      preview = (
         <GenericPreview
           metadata={metadata}
           rows={rows}
@@ -373,6 +395,13 @@ export function App() {
         />
       );
   }
+
+  return (
+    <>
+      <FileSizeBanner metadata={metadata} />
+      {preview}
+    </>
+  );
 }
 
 /**

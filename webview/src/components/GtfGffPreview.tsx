@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
+import { navigateToRegion } from '../vscodeApi';
 
 interface GtfGffPreviewProps {
   metadata: DocumentMetadata;
@@ -16,7 +17,32 @@ const GTF_COLUMNS: ColumnDefinition[] = [
   { key: 'seqname', label: 'seqname', width: 100 },
   { key: 'source', label: 'source', width: 100 },
   { key: 'feature', label: 'feature', width: 100 },
-  { key: 'start', label: 'start', width: 90 },
+  {
+    key: 'start',
+    label: 'start',
+    width: 90,
+    render: (value: string, row: Record<string, unknown>) => {
+      const seqname = row.seqname as string | undefined;
+      const startRaw = parseInt(value, 10);
+      const endRaw = parseInt(row.end as string, 10);
+      if (!seqname || isNaN(startRaw) || isNaN(endRaw)) return value;
+      // GTF/GFF3 are 1-based inclusive -> convert to 0-based half-open
+      const start = startRaw - 1;
+      const end = endRaw;
+      return (
+        <span
+          className="nav-link"
+          title={`Go to ${seqname}:${start}-${end}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateToRegion(seqname, start, end);
+          }}
+        >
+          {value}
+        </span>
+      );
+    },
+  },
   { key: 'end', label: 'end', width: 90 },
   { key: 'score', label: 'score', width: 70 },
   { key: 'strand', label: 'strand', width: 60 },
@@ -56,7 +82,7 @@ export function GtfGffPreview({ metadata, rows, loadedLineCount, onRequestRows }
   const isGff3 = metadata.languageId === 'omics-gff3';
 
   // Parse rows
-  const { parsedRows, features, sources } = useMemo(() => {
+  const { parsedRows, features } = useMemo(() => {
     const parsed: (TableRow & { _parsedAttrs: Record<string, string> })[] = [];
     const featureSet = new Set<string>();
     const sourceSet = new Set<string>();
@@ -130,7 +156,7 @@ export function GtfGffPreview({ metadata, rows, loadedLineCount, onRequestRows }
   });
 
   // Handle row click to expand attributes
-  const handleRowClick = useCallback((row: Record<string, string>, index: number) => {
+  const handleRowClick = useCallback((_row: Record<string, string>, index: number) => {
     setExpandedRow(prev => prev === index ? null : index);
   }, []);
 

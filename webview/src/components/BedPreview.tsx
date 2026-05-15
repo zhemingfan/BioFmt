@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { VirtualTable, ColumnDefinition } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
+import { StatsPanel, StatItem } from './StatsPanel';
+import { Histogram } from './Histogram';
+import { BarChart } from './BarChart';
+import { mean, topN } from '../utils/stats';
+import { navigateToRegion } from '../vscodeApi';
 
 interface BedPreviewProps {
   metadata: DocumentMetadata;
@@ -142,9 +147,36 @@ export function BedPreview({ metadata, rows, loadedLineCount, onRequestRows }: B
     };
   }, [rows, variant]);
 
-  // Get columns to display
+  // Get columns to display, with navigation render on the start column
   const columns = useMemo(() => {
-    return getColumns(variant, maxColumns);
+    const base = getColumns(variant, maxColumns);
+    const navKey = variant === 'bedpe' ? 'start1' : 'chromStart';
+    const chromKey = variant === 'bedpe' ? 'chrom1' : 'chrom';
+    const endKey = variant === 'bedpe' ? 'end1' : 'chromEnd';
+    return base.map(col => {
+      if (col.key !== navKey) return col;
+      return {
+        ...col,
+        render: (value: string, row: Record<string, unknown>) => {
+          const chrom = row[chromKey] as string | undefined;
+          const start = parseInt(row[navKey] as string, 10);
+          const end = parseInt(row[endKey] as string, 10);
+          if (!chrom || isNaN(start) || isNaN(end)) return value;
+          return (
+            <span
+              className="nav-link"
+              title={`Go to ${chrom}:${start}-${end}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateToRegion(chrom, start, end);
+              }}
+            >
+              {value}
+            </span>
+          );
+        },
+      };
+    });
   }, [variant, maxColumns]);
 
   // Filter rows
@@ -157,6 +189,44 @@ export function BedPreview({ metadata, rows, loadedLineCount, onRequestRows }: B
       row.chrom2 === chromFilter
     );
   }, [parsedRows, chromFilter]);
+
+  // BED statistics
+  const bedStats = useMemo(() => {
+    const sizes: number[] = [];
+    const scores: number[] = [];
+    const chromCounts = new Map<string, number>();
+    let totalCoverage = 0;
+
+    for (const row of parsedRows) {
+      // Interval size
+      const start = parseInt(row.chromStart ?? row.start1, 10);
+      const end = parseInt(row.chromEnd ?? row.end1, 10);
+      if (!isNaN(start) && !isNaN(end) && end > start) {
+        const size = end - start;
+        sizes.push(size);
+        totalCoverage += size;
+      }
+
+      // Chromosome counts
+      const chrom = row.chrom ?? row.chrom1;
+      if (chrom) {
+        chromCounts.set(chrom, (chromCounts.get(chrom) || 0) + 1);
+      }
+
+      // Scores
+      const score = parseFloat(row.score);
+      if (!isNaN(score)) scores.push(score);
+    }
+
+    const avgSize = Math.round(mean(sizes));
+
+    const chromBreakdown = topN(
+      Array.from(chromCounts, ([label, value]) => ({ label, value })),
+      15
+    );
+
+    return { sizes, scores, totalCoverage, avgSize, chromBreakdown };
+  }, [parsedRows]);
 
   // Handle scroll for lazy loading
   const handleScroll = useScrollHandler({
@@ -202,6 +272,20 @@ export function BedPreview({ metadata, rows, loadedLineCount, onRequestRows }: B
           </span>
         )}
       </div>
+
+      {/* Statistics Panel */}
+      {parsedRows.length > 0 && (
+        <StatsPanel>
+          <div className="stats-summary">
+            <StatItem label="Total Coverage" value={bedStats.totalCoverage.toLocaleString() + ' bp'} />
+            <StatItem label="Avg Interval Size" value={bedStats.avgSize.toLocaleString() + ' bp'} />
+            <StatItem label="Regions" value={parsedRows.length} />
+          </div>
+          {bedStats.sizes.length > 0 && <Histogram data={bedStats.sizes} label="Interval Size Distribution" />}
+          {bedStats.chromBreakdown.length > 1 && <BarChart data={bedStats.chromBreakdown} label="Regions per Chromosome" height={Math.max(80, bedStats.chromBreakdown.length * 22 + 20)} />}
+          {bedStats.scores.length > 0 && <Histogram data={bedStats.scores} label="Score Distribution" />}
+        </StatsPanel>
+      )}
 
       {/* Table */}
       <div className="table-container" style={{ flex: 1 }}>

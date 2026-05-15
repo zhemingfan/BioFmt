@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import { baseToColor } from '../utils/phredColor';
 import type { DocumentMetadata } from '../types';
+import { StatsPanel, StatItem } from './StatsPanel';
+import { Histogram } from './Histogram';
+import { nL50, sum } from '../utils/stats';
 
 interface FastaPreviewProps {
   metadata: DocumentMetadata;
@@ -19,6 +22,8 @@ interface ParsedSequence {
   sequence: string;
   length: number;
   startLine: number;
+  gcCount: number;
+  validCount: number;
 }
 
 const FASTA_COLUMNS: ColumnDefinition[] = [
@@ -29,18 +34,6 @@ const FASTA_COLUMNS: ColumnDefinition[] = [
 ];
 
 const WRAP_WIDTH = 80;
-
-function computeGcPercent(seq: string): string {
-  if (seq.length === 0) return '0.0';
-  let gc = 0;
-  let valid = 0;
-  for (let i = 0; i < seq.length; i++) {
-    const c = seq[i].toUpperCase();
-    if (c === 'G' || c === 'C') { gc++; valid++; }
-    else if (c === 'A' || c === 'T' || c === 'U') { valid++; }
-  }
-  return valid > 0 ? ((gc / valid) * 100).toFixed(1) : '0.0';
-}
 
 export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }: FastaPreviewProps) {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
@@ -60,7 +53,7 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
     }
 
     const result = [...prev.sequences];
-    let current = prev.pending ? { ...prev.pending, sequence: prev.pending.sequence } : null;
+    let current = prev.pending ? { ...prev.pending, sequence: prev.pending.sequence, gcCount: prev.pending.gcCount, validCount: prev.pending.validCount } : null;
 
     for (let i = prev.count; i < rows.length; i++) {
       const line = rows[i];
@@ -75,9 +68,16 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
         const spaceIdx = line.indexOf(' ', 1);
         const name = spaceIdx > 0 ? line.substring(1, spaceIdx) : line.substring(1);
         const description = spaceIdx > 0 ? line.substring(spaceIdx + 1) : '';
-        current = { name, description, sequence: '', length: 0, startLine: i };
+        current = { name, description, sequence: '', length: 0, startLine: i, gcCount: 0, validCount: 0 };
       } else if (current) {
-        current.sequence += line.trim();
+        const trimmed = line.trim();
+        current.sequence += trimmed;
+        // Count GC incrementally as lines are added
+        for (let j = 0; j < trimmed.length; j++) {
+          const c = trimmed.charCodeAt(j) | 0x20; // lowercase via bitmask
+          if (c === 0x67 /* g */ || c === 0x63 /* c */) { current.gcCount++; current.validCount++; }
+          else if (c === 0x61 /* a */ || c === 0x74 /* t */ || c === 0x75 /* u */) { current.validCount++; }
+        }
       }
     }
 
@@ -94,7 +94,7 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
       _index: idx,
       name: seq.name,
       length: seq.length.toLocaleString(),
-      gcContent: computeGcPercent(seq.sequence),
+      gcContent: seq.validCount > 0 ? ((seq.gcCount / seq.validCount) * 100).toFixed(1) : '0.0',
       description: seq.description,
     }));
   }, [sequences]);
@@ -122,7 +122,7 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
             &gt;{seq.name} {seq.description}
           </div>
           <div className="expanded-section-header" style={{ fontSize: '0.85em', opacity: 0.7 }}>
-            {seq.length.toLocaleString()} bp | GC: {computeGcPercent(seq.sequence)}%
+            {seq.length.toLocaleString()} bp | GC: {seq.validCount > 0 ? ((seq.gcCount / seq.validCount) * 100).toFixed(1) : '0.0'}%
           </div>
         </div>
         <div className="expanded-section">
@@ -153,7 +153,24 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
   });
 
   const totalBases = useMemo(() => {
-    return sequences.reduce((sum, seq) => sum + seq.length, 0);
+    return sum(sequences.map(s => s.length));
+  }, [sequences]);
+
+  // FASTA statistics
+  const fastaStats = useMemo(() => {
+    const lengths = sequences.map(s => s.length).filter(l => l > 0);
+
+    // Overall GC% (weighted) — uses pre-computed counts from parsing
+    let totalGc = 0, totalValid = 0;
+    for (const seq of sequences) {
+      totalGc += seq.gcCount;
+      totalValid += seq.validCount;
+    }
+    const overallGc = totalValid > 0 ? ((totalGc / totalValid) * 100).toFixed(1) + '%' : 'N/A';
+
+    const { n50, l50 } = nL50(lengths);
+
+    return { lengths, overallGc, n50, l50 };
   }, [sequences]);
 
   return (
@@ -167,6 +184,20 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
           <span>Total bases: {totalBases.toLocaleString()}</span>
         </div>
       </div>
+
+      {/* Statistics Panel */}
+      {sequences.length > 0 && (
+        <StatsPanel>
+          <div className="stats-summary">
+            <StatItem label="Overall GC" value={fastaStats.overallGc} />
+            <StatItem label="Total Bases" value={totalBases.toLocaleString()} />
+            <StatItem label="N50" value={fastaStats.n50.toLocaleString()} />
+            <StatItem label="L50" value={fastaStats.l50} />
+            <StatItem label="Sequences" value={sequences.length} />
+          </div>
+          {fastaStats.lengths.length > 1 && <Histogram data={fastaStats.lengths} label="Sequence Length Distribution" />}
+        </StatsPanel>
+      )}
 
       <div className="tip">
         Click a row to view the sequence with base coloring

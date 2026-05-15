@@ -71,6 +71,7 @@
     "onCustomEditor:biofmt.indexedPreview"
   ],
   "main": "./dist/extension.js",
+  "browser": "./dist/extension.web.js",
   "contributes": {
     "languages": [
       {
@@ -105,7 +106,7 @@
         "extensions": [
           ".bed"
         ],
-        "configuration": "./language-configuration/bed.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-bedpe",
@@ -116,7 +117,7 @@
         "extensions": [
           ".bedpe"
         ],
-        "configuration": "./language-configuration/bedpe.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-gtf",
@@ -140,7 +141,7 @@
           ".gff3"
         ],
         "firstLine": "^##gff-version",
-        "configuration": "./language-configuration/gff3.language-configuration.json"
+        "configuration": "./language-configuration/hash-comment.language-configuration.json"
       },
       {
         "id": "omics-psl",
@@ -151,7 +152,7 @@
         "extensions": [
           ".psl"
         ],
-        "configuration": "./language-configuration/psl.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-paf",
@@ -197,7 +198,7 @@
         "extensions": [
           ".ped"
         ],
-        "configuration": "./language-configuration/ped.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-map",
@@ -208,7 +209,7 @@
         "extensions": [
           ".map"
         ],
-        "configuration": "./language-configuration/map.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-gct",
@@ -220,7 +221,7 @@
           ".gct"
         ],
         "firstLine": "^#1\\.2",
-        "configuration": "./language-configuration/gct.language-configuration.json"
+        "configuration": "./language-configuration/hash-comment.language-configuration.json"
       },
       {
         "id": "omics-mtx",
@@ -257,7 +258,7 @@
           ".mgf"
         ],
         "firstLine": "^BEGIN IONS",
-        "configuration": "./language-configuration/mgf.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-bedgraph",
@@ -268,7 +269,7 @@
           ".bedGraph",
           ".bdg"
         ],
-        "configuration": "./language-configuration/bedgraph.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-wig",
@@ -289,7 +290,7 @@
         "extensions": [
           ".narrowPeak"
         ],
-        "configuration": "./language-configuration/bed.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-broadpeak",
@@ -299,7 +300,7 @@
         "extensions": [
           ".broadPeak"
         ],
-        "configuration": "./language-configuration/bed.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-genbank",
@@ -312,7 +313,7 @@
           ".genbank"
         ],
         "firstLine": "^LOCUS",
-        "configuration": "./language-configuration/genbank.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-chain",
@@ -324,7 +325,7 @@
           ".chain"
         ],
         "firstLine": "^chain\\s+",
-        "configuration": "./language-configuration/chain.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-net",
@@ -335,7 +336,7 @@
         "extensions": [
           ".net"
         ],
-        "configuration": "./language-configuration/net.language-configuration.json"
+        "configuration": "./language-configuration/basic.language-configuration.json"
       },
       {
         "id": "omics-gfa",
@@ -531,6 +532,10 @@
       {
         "command": "biofmt.jumpToHeaderDefinition",
         "title": "BioFmt: Jump to Header Definition"
+      },
+      {
+        "command": "biofmt.navigateToRegion",
+        "title": "BioFmt: Navigate to Overlapping Region"
       }
     ],
     "menus": {
@@ -647,9 +652,12 @@
   "scripts": {
     "postinstall": "git config core.hooksPath scripts",
     "vscode:prepublish": "npm run build",
-    "build": "npm run build:extension && npm run build:server && npm run build:webview",
+    "build": "npm run build:extension && npm run build:server && npm run build:extension:web && npm run build:server:web && npm run build:webview",
     "build:extension": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs",
     "build:server": "esbuild server/src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs",
+    "build:extension:web": "esbuild src/extension.web.ts --bundle --outfile=dist/extension.web.js --external:vscode --platform=browser --format=cjs",
+    "build:server:web": "esbuild server/src/server.worker.ts --bundle --outfile=dist/server.worker.js --platform=browser --format=iife",
+    "build:web": "npm run build:extension:web && npm run build:server:web && npm run build:webview",
     "build:webview": "cd webview && npm run build",
     "watch": "npm run build:extension -- --watch",
     "lint": "eslint src server/src --ext .ts",

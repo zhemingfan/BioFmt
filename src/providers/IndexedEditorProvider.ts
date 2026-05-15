@@ -90,6 +90,7 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
                 fileName: meta.fileName,
                 providerType: meta.type,
                 references: meta.references,
+                fileSize: meta.fileSize,
                 previewSettings: {
                   maxLines: config.get<number>('maxLines', 200000),
                   maxBytes: config.get<number>('maxBytes', 52428800),

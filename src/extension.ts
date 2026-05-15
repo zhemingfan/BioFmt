@@ -10,8 +10,11 @@ import {
   TransportKind,
 } from 'vscode-languageclient/node';
 import { IndexedEditorProvider } from './providers/IndexedEditorProvider';
+import { GenomicIndexRegistry } from './services/GenomicIndexRegistry';
+import { parseGenomicCoords } from './shared/genomicCoords';
 
 let client: LanguageClient | undefined;
+let genomicRegistry: GenomicIndexRegistry | undefined;
 
 // Map of supported language IDs for BioFmt
 const OMICS_LANGUAGES = [
@@ -61,10 +64,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Start LSP server
   await startLanguageServer(context);
 
+  // Set up cross-format navigation
+  setupGenomicIndex(context);
+
   console.log('BioFmt extension activated');
 }
 
 export function deactivate(): Thenable<void> | undefined {
+  if (genomicRegistry) {
+    genomicRegistry.dispose();
+    genomicRegistry = undefined;
+  }
   if (client) {
     return client.stop();
   }
@@ -95,13 +105,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
       // Check file size against configured maxBytes
       const config = vscode.workspace.getConfiguration('biofmt.preview');
       const maxBytes = config.get<number>('maxBytes', 52428800);
+      let fileSize: number | undefined;
       try {
         const stat = await vscode.workspace.fs.stat(document.uri);
+        fileSize = stat.size;
         if (stat.size > maxBytes) {
           const sizeMB = (stat.size / (1024 * 1024)).toFixed(1);
           const limitMB = (maxBytes / (1024 * 1024)).toFixed(0);
+          const advice = getFileSizeAdvice(languageId);
           const choice = await vscode.window.showWarningMessage(
-            `File is ${sizeMB} MB, which exceeds the configured limit of ${limitMB} MB. Preview may be slow.`,
+            `File is ${sizeMB} MB (limit: ${limitMB} MB). Preview will be truncated.${advice ? ' ' + advice : ''}`,
             'Open Anyway', 'Cancel'
           );
           if (choice !== 'Open Anyway') return;
@@ -151,7 +164,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
               break;
             }
             case 'getMetadata': {
-              const metadata = getDocumentMetadata(document, headerInfo);
+              const metadata = getDocumentMetadata(document, headerInfo, fileSize);
               panel.webview.postMessage({
                 command: 'metadata',
                 ...metadata,
@@ -167,6 +180,15 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 });
               }
               break;
+            case 'navigateToRegion': {
+              await vscode.commands.executeCommand(
+                'biofmt.navigateToRegion',
+                message.chrom,
+                message.start,
+                message.end
+              );
+              break;
+            }
           }
         },
         undefined,
@@ -798,13 +820,15 @@ async function getDocumentRows(
 
 function getDocumentMetadata(
   document: vscode.TextDocument,
-  headerInfo?: VcfHeaderInfo
+  headerInfo?: VcfHeaderInfo,
+  fileSize?: number
 ): {
   lineCount: number;
   languageId: string;
   fileName: string;
   headerInfo?: VcfHeaderInfo;
   previewSettings: { maxLines: number; maxBytes: number; downsampleLimit: number; sampleColumnLimit: number };
+  fileSize?: number;
 } {
   const config = vscode.workspace.getConfiguration('biofmt.preview');
   return {
@@ -812,6 +836,7 @@ function getDocumentMetadata(
     languageId: document.languageId,
     fileName: path.basename(document.fileName),
     headerInfo,
+    fileSize,
     previewSettings: {
       maxLines: config.get<number>('maxLines', 200000),
       maxBytes: config.get<number>('maxBytes', 52428800),
@@ -819,6 +844,31 @@ function getDocumentMetadata(
       sampleColumnLimit: config.get<number>('sampleColumnLimit', 10),
     },
   };
+}
+
+function getFileSizeAdvice(languageId: string): string {
+  switch (languageId) {
+    case 'omics-sam':
+      return 'For large alignments, convert to BAM (samtools view -bS) — BioFmt supports indexed BAM with no file size limit.';
+    case 'omics-vcf':
+      return 'For large VCFs, bgzip and index with tabix — BioFmt supports indexed VCF.gz with no file size limit.';
+    case 'omics-fasta':
+      return 'For large FASTA files, consider samtools faidx for indexed access or a genome browser like IGV.';
+    case 'omics-fastq':
+      return 'FASTQ files are typically too large for interactive preview. Consider FastQC or MultiQC for quality assessment.';
+    case 'omics-bed':
+    case 'omics-bedpe':
+    case 'omics-narrowpeak':
+    case 'omics-broadpeak':
+    case 'omics-gff3':
+    case 'omics-gtf':
+      return 'For large annotation files, bgzip and tabix-index for region-based access.';
+    case 'omics-bedgraph':
+    case 'omics-wig':
+      return 'For large track files, convert to bigWig for indexed access in a genome browser.';
+    default:
+      return '';
+  }
 }
 
 function getFormatFromExtension(filename: string): string {
@@ -871,4 +921,146 @@ function parseInfoField(value: string): Record<string, string | boolean> {
   }
 
   return result;
+}
+
+// Cross-format genomic navigation
+
+const NAVIGABLE_LANGUAGES = [
+  'omics-vcf', 'omics-bed', 'omics-bedpe', 'omics-narrowpeak', 'omics-broadpeak',
+  'omics-gff3', 'omics-gtf', 'omics-sam', 'omics-paf', 'omics-fasta',
+];
+
+function setupGenomicIndex(context: vscode.ExtensionContext): void {
+  genomicRegistry = new GenomicIndexRegistry();
+
+  // Index all currently open documents
+  for (const doc of vscode.workspace.textDocuments) {
+    genomicRegistry.indexDocument(doc);
+  }
+
+  // Index documents when opened
+  const openListener = vscode.workspace.onDidOpenTextDocument((doc) => {
+    genomicRegistry?.indexDocument(doc);
+  });
+
+  // Re-index on change (debounced)
+  const changeListener = vscode.workspace.onDidChangeTextDocument((e) => {
+    genomicRegistry?.scheduleReindex(e.document);
+  });
+
+  // Remove from index when closed
+  const closeListener = vscode.workspace.onDidCloseTextDocument((doc) => {
+    genomicRegistry?.removeDocument(doc.uri.toString());
+  });
+
+  // Register DefinitionProvider for cross-format navigation
+  const definitionProvider = vscode.languages.registerDefinitionProvider(
+    NAVIGABLE_LANGUAGES.map(lang => ({ language: lang, scheme: 'file' })),
+    new GenomicDefinitionProvider()
+  );
+
+  // Command for webview-initiated navigation
+  const navigateCommand = vscode.commands.registerCommand(
+    'biofmt.navigateToRegion',
+    async (chrom?: string, start?: number, end?: number) => {
+      if (!genomicRegistry || !chrom || start === undefined || end === undefined) {
+        vscode.window.showInformationMessage('No region specified');
+        return;
+      }
+
+      const activeUri = vscode.window.activeTextEditor?.document.uri.toString();
+      const regions = genomicRegistry.findOverlapping(chrom, start, end, activeUri);
+
+      if (regions.length === 0) {
+        // Also check FASTA contigs
+        const contig = genomicRegistry.findContig(chrom, activeUri);
+        if (contig) {
+          await openAtRegion(contig);
+          return;
+        }
+        vscode.window.showInformationMessage(
+          `No open file contains an overlapping region for ${chrom}:${start + 1}-${end}`
+        );
+        return;
+      }
+
+      if (regions.length === 1) {
+        await openAtRegion(regions[0]);
+      } else {
+        // Multiple matches — let user pick
+        const items = regions.map(r => ({
+          label: `${r.chrom}:${r.start + 1}-${r.end}`,
+          description: vscode.Uri.parse(r.uri).fsPath.split('/').pop() || '',
+          region: r,
+        }));
+        const picked = await vscode.window.showQuickPick(items, {
+          placeHolder: 'Select overlapping region',
+        });
+        if (picked) {
+          await openAtRegion(picked.region);
+        }
+      }
+    }
+  );
+
+  context.subscriptions.push(
+    openListener,
+    changeListener,
+    closeListener,
+    definitionProvider,
+    navigateCommand,
+    { dispose: () => genomicRegistry?.dispose() }
+  );
+}
+
+async function openAtRegion(region: { uri: string; lineNumber: number }): Promise<void> {
+  const uri = vscode.Uri.parse(region.uri);
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const editor = await vscode.window.showTextDocument(doc, {
+    preview: false,
+    viewColumn: vscode.ViewColumn.Beside,
+  });
+  const range = new vscode.Range(region.lineNumber, 0, region.lineNumber, 0);
+  editor.selection = new vscode.Selection(range.start, range.end);
+  editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+}
+
+class GenomicDefinitionProvider implements vscode.DefinitionProvider {
+  provideDefinition(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    _token: vscode.CancellationToken
+  ): vscode.ProviderResult<vscode.Definition> {
+    if (!genomicRegistry) return null;
+
+    const line = document.lineAt(position.line).text;
+    if (!line.trim() || line.startsWith('#') || line.startsWith('@')) return null;
+
+    const region = this.parseRegionAtCursor(line, document.languageId);
+    if (!region) return null;
+
+    const overlapping = genomicRegistry.findOverlapping(
+      region.chrom, region.start, region.end, document.uri.toString()
+    );
+
+    // Also check FASTA contigs
+    const contig = genomicRegistry.findContig(region.chrom, document.uri.toString());
+    if (contig) {
+      overlapping.push(contig);
+    }
+
+    if (overlapping.length === 0) return null;
+
+    return overlapping.map(r => new vscode.Location(
+      vscode.Uri.parse(r.uri),
+      new vscode.Position(r.lineNumber, 0)
+    ));
+  }
+
+  private parseRegionAtCursor(
+    line: string,
+    languageId: string
+  ): { chrom: string; start: number; end: number } | null {
+    return parseGenomicCoords(line, languageId);
+  }
 }

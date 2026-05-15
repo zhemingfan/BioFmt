@@ -55,14 +55,6 @@ interface ParsedFT {
   raw: string;
 }
 
-interface FormatRecordContext {
-  ref: string;
-  alts: string[];
-  nAlleles: number;
-  formatKeys: string[];
-  sampleName: string;
-}
-
 // Parser implementations (mirroring the actual module)
 function parseInteger(val: string): number | null {
   if (val === '.' || val === '') return null;

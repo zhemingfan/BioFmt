@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import { asciiToPhred, phredToColor, baseToColor } from '../utils/phredColor';

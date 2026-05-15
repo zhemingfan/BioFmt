@@ -314,6 +314,80 @@ body {
   opacity: 0.6;
 }
 
+/* File Size Warning Banner */
+.file-size-banner {
+  padding: 12px 16px;
+  background: var(--vscode-inputValidation-warningBackground, #352a05);
+  border-bottom: 2px solid var(--vscode-inputValidation-warningBorder, #9d8b00);
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.file-size-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1em;
+  margin-bottom: 6px;
+}
+
+.file-size-banner-icon {
+  font-size: 1.3em;
+  color: var(--vscode-inputValidation-warningBorder, #cca700);
+}
+
+.file-size-banner-title {
+  color: var(--vscode-inputValidation-warningBorder, #cca700);
+}
+
+.file-size-banner-details {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.file-size-banner-stat {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.85em;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.file-size-banner-message {
+  font-size: 0.9em;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.file-size-banner-advice {
+  font-size: 0.85em;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  border-left: 3px solid var(--vscode-inputValidation-warningBorder, #9d8b00);
+}
+
+.file-size-banner-advice-label {
+  font-weight: 600;
+}
+
+.file-size-banner-config {
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.file-size-banner-config code {
+  font-family: var(--vscode-editor-font-family, monospace);
+  padding: 1px 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
 /* Truncation Banner */
 .truncation-banner {
   padding: 8px 16px;
@@ -1387,4 +1461,89 @@ body {
   margin-top: 4px;
   font-size: 0.8em;
   color: var(--vscode-errorForeground, #f48771);
+}
+
+/* Statistics Panel */
+.stats-panel {
+  margin: 4px 0;
+  border: 1px solid var(--vscode-panel-border, #333);
+  border-radius: 4px;
+}
+
+.stats-panel-toggle {
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  background: var(--vscode-sideBar-background, #252526);
+  color: var(--vscode-foreground, #ccc);
+  border: none;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.stats-panel-toggle:hover {
+  background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.stats-panel-content {
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.stats-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stats-chart-label {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stats-chart canvas {
+  border-radius: 3px;
+}
+
+.stats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 80px;
+}
+
+.stat-label {
+  font-size: 0.75em;
+  color: var(--vscode-descriptionForeground, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.1em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-link {
+  cursor: pointer;
+  text-decoration: underline;
+  color: var(--vscode-textLink-foreground, #3794ff);
+}
+
+.nav-link:hover {
+  color: var(--vscode-textLink-activeForeground, #6cb6ff);
 }

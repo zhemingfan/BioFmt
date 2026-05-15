@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
@@ -118,7 +118,7 @@ export function ChainPreview({ metadata, rows, loadedLineCount, onRequestRows }:
     return Array.from(new Set([...targets, ...queries])).sort();
   }, [targets, queries]);
 
-  const handleRowClick = useCallback((row: TableRow, index: number) => {
+  const handleRowClick = useCallback((_row: TableRow, index: number) => {
     setExpandedRow(expandedRow === index ? null : index);
   }, [expandedRow]);
 
