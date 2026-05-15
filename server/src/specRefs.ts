@@ -13,13 +13,19 @@ const SAM_SPEC = 'https://samtools.github.io/hts-specs/SAMv1.pdf';
 const BED_SPEC = 'https://genome.ucsc.edu/FAQ/FAQformat.html#format1';
 const BEDPE_SPEC = 'https://bedtools.readthedocs.io/en/latest/content/general-usage.html#bedpe-format';
 const GTF_SPEC = 'https://www.ensembl.org/info/website/upload/gff.html';
-const GFF3_SPEC = 'https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md';
+const GFF3_SPEC_COMMIT = 'fe73505276dd324bf6a55773f3413fe2bed47af4';
+const GFF3_SPEC = `https://github.com/The-Sequence-Ontology/Specifications/blob/${GFF3_SPEC_COMMIT}/gff3.md?plain=1`;
 const PAF_SPEC = 'https://lh3.github.io/minimap2/minimap2.html#10';
 const PSL_SPEC = 'https://genome.ucsc.edu/FAQ/FAQformat.html#format2';
 const WIG_SPEC = 'https://genome.ucsc.edu/goldenPath/help/wiggle.html';
 const BEDGRAPH_SPEC = 'https://genome.ucsc.edu/goldenPath/help/bedgraph.html';
 const FASTA_SPEC = 'https://www.ncbi.nlm.nih.gov/genbank/fastaformat/';
 const FASTQ_SPEC = 'https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/#fastq-files';
+
+function gff3SpecLines(start: number, end = start): string {
+  const anchor = end === start ? `#L${start}` : `#L${start}-L${end}`;
+  return `${GFF3_SPEC}${anchor}`;
+}
 
 export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   // VCF rules
@@ -59,12 +65,34 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   ['GTF-006', { code: 'GTF-006', href: GTF_SPEC, summary: 'Attributes should use key "value"; format' }],
 
   // GFF3 rules
-  ['GFF3-001', { code: 'GFF3-001', href: GFF3_SPEC, summary: 'GFF3 requires 9 columns' }],
-  ['GFF3-002', { code: 'GFF3-002', href: GFF3_SPEC, summary: 'Start and end must be integers' }],
-  ['GFF3-003', { code: 'GFF3-003', href: GFF3_SPEC, summary: 'Start cannot be greater than end' }],
-  ['GFF3-004', { code: 'GFF3-004', href: GFF3_SPEC, summary: 'Strand must be +, -, ., or ?' }],
-  ['GFF3-005', { code: 'GFF3-005', href: GFF3_SPEC, summary: 'Phase must be 0, 1, 2, or .' }],
-  ['GFF3-006', { code: 'GFF3-006', href: GFF3_SPEC, summary: 'Attributes should use key=value format' }],
+  ['GFF3_MISSING_VERSION', { code: 'GFF3_MISSING_VERSION', href: gff3SpecLines(138, 140), summary: 'GFF3 file must declare ##gff-version first' }],
+  ['GFF3_VERSION_NOT_FIRST', { code: 'GFF3_VERSION_NOT_FIRST', href: gff3SpecLines(138, 140), summary: '##gff-version must be the first non-empty line' }],
+  ['GFF3_DUPLICATE_VERSION', { code: 'GFF3_DUPLICATE_VERSION', href: gff3SpecLines(138, 140), summary: '##gff-version should occur once' }],
+  ['GFF3_MALFORMED_DIRECTIVE', { code: 'GFF3_MALFORMED_DIRECTIVE', href: gff3SpecLines(138, 140), summary: 'GFF3 directives must use valid directive syntax' }],
+  ['GFF3_DUPLICATE_SEQUENCE_REGION', { code: 'GFF3_DUPLICATE_SEQUENCE_REGION', href: gff3SpecLines(473, 474), summary: 'Only one ##sequence-region directive may be given per seqid' }],
+  ['GFF3_FIELD_COUNT', { code: 'GFF3_FIELD_COUNT', href: gff3SpecLines(24), summary: 'GFF3 feature records must have exactly 9 tab-delimited columns' }],
+  ['GFF3_INLINE_COMMENT', { code: 'GFF3_INLINE_COMMENT', href: gff3SpecLines(138), summary: 'End-of-line comments are not allowed on feature or directive lines' }],
+  ['GFF3_INVALID_PERCENT_ESCAPE', { code: 'GFF3_INVALID_PERCENT_ESCAPE', href: gff3SpecLines(64, 66), summary: 'Reserved characters must use valid percent escapes' }],
+  ['GFF3_ILLEGAL_CONTROL_CHARACTER', { code: 'GFF3_ILLEGAL_CONTROL_CHARACTER', href: gff3SpecLines(64, 66), summary: 'Control characters must be percent-encoded' }],
+  ['GFF3_INVALID_SEQID', { code: 'GFF3_INVALID_SEQID', href: gff3SpecLines(44, 45), summary: 'Seqid must use legal unescaped characters or percent escapes' }],
+  ['GFF3_INVALID_TYPE', { code: 'GFF3_INVALID_TYPE', href: gff3SpecLines(48, 49), summary: 'Feature type must be a valid GFF3 type value' }],
+  ['GFF3_INVALID_START', { code: 'GFF3_INVALID_START', href: gff3SpecLines(50, 52), summary: 'Start must be a positive 1-based integer' }],
+  ['GFF3_INVALID_END', { code: 'GFF3_INVALID_END', href: gff3SpecLines(50, 52), summary: 'End must be a positive 1-based integer' }],
+  ['GFF3_START_GT_END', { code: 'GFF3_START_GT_END', href: gff3SpecLines(50, 52), summary: 'Start must be less than or equal to end' }],
+  ['GFF3_INVALID_SCORE', { code: 'GFF3_INVALID_SCORE', href: gff3SpecLines(55, 56), summary: 'Score must be numeric or "."' }],
+  ['GFF3_INVALID_STRAND', { code: 'GFF3_INVALID_STRAND', href: gff3SpecLines(57, 58), summary: 'Strand must be +, -, ., or ?' }],
+  ['GFF3_INVALID_PHASE', { code: 'GFF3_INVALID_PHASE', href: gff3SpecLines(59, 62), summary: 'Phase must be valid for the feature type' }],
+  ['GFF3_CDS_PHASE_REQUIRED', { code: 'GFF3_CDS_PHASE_REQUIRED', href: gff3SpecLines(59, 62), summary: 'CDS features require phase 0, 1, or 2' }],
+  ['GFF3_INVALID_ATTRIBUTES', { code: 'GFF3_INVALID_ATTRIBUTES', href: gff3SpecLines(64, 96), summary: 'Attributes must use semicolon-separated tag=value syntax' }],
+  ['GFF3_EMPTY_ATTRIBUTE_TAG', { code: 'GFF3_EMPTY_ATTRIBUTE_TAG', href: gff3SpecLines(64, 66), summary: 'Attribute tags must not be empty' }],
+  ['GFF3_MISSING_ATTRIBUTE_EQUALS', { code: 'GFF3_MISSING_ATTRIBUTE_EQUALS', href: gff3SpecLines(64, 66), summary: 'Attributes must include a tag=value separator' }],
+  ['GFF3_INVALID_MULTIVALUE_ATTRIBUTE', { code: 'GFF3_INVALID_MULTIVALUE_ATTRIBUTE', href: gff3SpecLines(92, 95), summary: 'Only selected reserved attributes may contain comma-separated values' }],
+  ['GFF3_UNKNOWN_RESERVED_ATTRIBUTE', { code: 'GFF3_UNKNOWN_RESERVED_ATTRIBUTE', href: gff3SpecLines(95, 96), summary: 'Unknown uppercase attributes are reserved by GFF3' }],
+  ['GFF3_INVALID_TARGET', { code: 'GFF3_INVALID_TARGET', href: gff3SpecLines(77, 78), summary: 'Target must use target_id start end [strand]' }],
+  ['GFF3_INVALID_GAP', { code: 'GFF3_INVALID_GAP', href: gff3SpecLines(258, 265), summary: 'Gap must use GFF3 operation-length pairs' }],
+  ['GFF3_INVALID_DBXREF', { code: 'GFF3_INVALID_DBXREF', href: gff3SpecLines(447, 449), summary: 'Dbxref values should use DBTAG:ID format' }],
+  ['GFF3_INVALID_ONTOLOGY_TERM', { code: 'GFF3_INVALID_ONTOLOGY_TERM', href: gff3SpecLines(447, 449), summary: 'Ontology_term values should use DBTAG:ID format' }],
+  ['GFF3_INVALID_IS_CIRCULAR', { code: 'GFF3_INVALID_IS_CIRCULAR', href: gff3SpecLines(238, 244), summary: 'Is_circular should be true when present' }],
 
   // PAF rules
   ['PAF-001', { code: 'PAF-001', href: PAF_SPEC, summary: 'PAF requires at least 12 columns' }],
@@ -133,8 +161,13 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   ['GTF-S003', { code: 'GTF-S003', href: GTF_SPEC, summary: 'Attributes must contain transcript_id' }],
 
   // GFF3 strict
-  ['GFF3-S001', { code: 'GFF3-S001', href: GFF3_SPEC, summary: 'First line must be ##gff-version 3' }],
-  ['GFF3-S002', { code: 'GFF3-S002', href: GFF3_SPEC, summary: 'Score must be numeric or .' }],
+  ['GFF3_DUPLICATE_ID_CONFLICT', { code: 'GFF3_DUPLICATE_ID_CONFLICT', href: gff3SpecLines(69, 70), summary: 'Repeated IDs must represent one discontinuous feature' }],
+  ['GFF3_UNRESOLVED_PARENT', { code: 'GFF3_UNRESOLVED_PARENT', href: gff3SpecLines(75, 76), summary: 'Parent attributes must resolve to feature IDs' }],
+  ['GFF3_UNRESOLVED_DERIVES_FROM', { code: 'GFF3_UNRESOLVED_DERIVES_FROM', href: gff3SpecLines(81, 82), summary: 'Derives_from attributes should resolve to feature IDs' }],
+  ['GFF3_PARENT_CYCLE', { code: 'GFF3_PARENT_CYCLE', href: gff3SpecLines(250, 254), summary: 'Parent relationships must not contain cycles' }],
+  ['GFF3_OUT_OF_BOUNDS', { code: 'GFF3_OUT_OF_BOUNDS', href: gff3SpecLines(473, 474), summary: 'Feature coordinates should fit declared ##sequence-region bounds' }],
+  ['GFF3_FASTA_BEFORE_HEADER', { code: 'GFF3_FASTA_BEFORE_HEADER', href: gff3SpecLines(530, 532), summary: 'FASTA sequence lines must follow a FASTA header' }],
+  ['GFF3_ANNOTATION_AFTER_FASTA', { code: 'GFF3_ANNOTATION_AFTER_FASTA', href: gff3SpecLines(530, 532), summary: 'Annotation content is not allowed after ##FASTA' }],
 
   // FASTA strict
   ['FASTA-S001', { code: 'FASTA-S001', href: FASTA_SPEC, summary: 'Blank line within sequence block' }],
@@ -155,18 +188,16 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   ['SAM-X002', { code: 'SAM-X002', href: SAM_SPEC, summary: 'FLAG bit conflict: unmapped + properly paired' }],
   ['SAM-X003', { code: 'SAM-X003', href: SAM_SPEC, summary: 'Paired-end FLAG bits require paired flag (0x1)' }],
 
-  // GFF3 cross-field
-  ['GFF3-X001', { code: 'GFF3-X001', href: GFF3_SPEC, summary: 'Parent attribute references non-existent ID' }],
-  ['GFF3-X002', { code: 'GFF3-X002', href: GFF3_SPEC, summary: 'Duplicate feature ID' }],
+  // GFF3 cross-field rules are listed in the GFF3 strict block above.
 ]);
 
 /**
  * Attach spec reference to a diagnostic. Returns the diagnostic for chaining.
  */
 export function withSpecRef(diagnostic: Diagnostic, ruleCode: string): Diagnostic {
+  diagnostic.code = ruleCode;
   const ref = SPEC_REFS.get(ruleCode);
   if (ref) {
-    diagnostic.code = ruleCode;
     diagnostic.codeDescription = { href: ref.href };
   }
   return diagnostic;
