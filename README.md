@@ -1,84 +1,90 @@
 # BioFmt
 
-Syntax highlighting, spec-referenced validation, and interactive previews for **27 genomics, transcriptomics, and proteomics formats** in VS Code — including indexed and binary files.
+Syntax highlighting, spec-referenced validation, and interactive previews for **27 genomics, transcriptomics, and proteomics formats** in VS Code, including indexed and binary files.
 
 <img src="docs/VCF_preview.png" alt="VCF preview panel showing a sortable, filterable table of somatic structural variants" width="800">
 
-*Shown: [`test/fixtures/vcf_somatic_sv.vcf`](test/fixtures/vcf_somatic_sv.vcf)*
+*Interactive VCF preview shown with [`test/fixtures/vcf_somatic_sv.vcf`](test/fixtures/vcf_somatic_sv.vcf).*
 
-## Features
+## What BioFmt Does
 
-### Syntax Highlighting
+| Capability | What you get |
+|------------|--------------|
+| Syntax highlighting | TextMate grammars for headers, fields, records, intervals, alignments, and sequence data across supported formats. |
+| Spec-referenced diagnostics | Validation squiggles include stable rule codes and links to the relevant public format specification. |
+| Interactive previews | Virtualized tables, search, sorting, drag-resizable columns, format-specific renderers, and TSV export for large files. |
+| Indexed and binary files | Direct opening for `.vcf.gz`, `.bed.gz`, `.gff3.gz`, and `.bam` with genomic region navigation. |
+| Workspace lint | Optional workspace-wide validation that reports file issues in the VS Code Problems panel. |
 
-TextMate grammars for all 27 formats with distinct coloring for field types, headers, and data regions. Works in any VS Code color theme.
+## Feature Gallery
 
-### Spec-Referenced Diagnostics
+| Diagnostics | Strict validation |
+|-------------|-------------------|
+| <img src="docs/gallery-spec-validation.png" alt="Hovering a diagnostic squiggle shows the rule code with a clickable link to the format specification" width="390"> | <img src="docs/gallery-strict-validation.png" alt="Strict validation diagnostics showing multiple format-specific rule violations" width="390"> |
+| Hover a squiggle to see the violated rule and jump to the source specification. Shown with [`test/fixtures/vcf-errors-demo.vcf`](test/fixtures/vcf-errors-demo.vcf). | Strict mode catches cross-field and semantic issues that basic structure checks miss. |
 
-Every diagnostic carries a rule code and a clickable link to the relevant format specification. Hover a squiggle to see which rule was violated and jump directly to the VCF v4.4, SAM v1, GFF3, or BED spec.
+| FASTQ quality view | Indexed region navigation |
+|--------------------|---------------------------|
+| <img src="docs/gallery-fastq-heatmap.png" alt="FASTQ preview showing expanded read with per-base quality heatmap colored by Phred score" width="390"> | <img src="docs/gallery-region-navigator.png" alt="Region navigator showing genomic coordinate input and record count for an indexed VCF file" width="390"> |
+| Inspect per-base quality with a Phred score heatmap. Shown with [`test/fixtures/example.fastq`](test/fixtures/example.fastq). | Query indexed genomic files by coordinates without decompressing them first. Shown with [`test/fixtures/example.vcf.gz`](test/fixtures/example.vcf.gz). |
 
-<img src="docs/spec-validation.png" alt="Hovering a diagnostic squiggle shows the rule code with a clickable link to the format specification" width="800">
+| Workspace lint |
+|----------------|
+| <img src="docs/workspace-lint.png" alt="Problems panel showing diagnostics for multiple bioinformatics files across the workspace" width="800"> |
+| Validate supported files across a workspace and review issues in the Problems panel. Enable with `biofmt.workspace.enableLint`. |
 
-*Shown: [`test/fixtures/vcf-errors-demo.vcf`](test/fixtures/vcf-errors-demo.vcf)*
+## Validation
 
-Three validation levels:
+BioFmt supports three validation levels:
 
 | Level | What it catches |
-|-------|----------------|
-| **off** | No validation |
-| **basic** | Structural errors: wrong column count, non-integer coordinates, missing delimiters |
-| **strict** (default) | Everything in basic, plus: REF/ALT format, CIGAR syntax, FILTER/FORMAT header declarations, genotype allele bounds, CIGAR vs SEQ length, GFF3 Parent resolution, and more |
+|-------|-----------------|
+| `off` | No validation |
+| `basic` | Structural errors such as wrong column counts, invalid coordinates, and missing delimiters |
+| `strict` (default) | Everything in `basic`, plus format-specific checks such as REF/ALT syntax, CIGAR consistency, header declarations, genotype allele bounds, GFF3 references, and duplicate/conflicting IDs |
 
-Cross-field validation (strict mode) catches the errors that break pipelines:
-- **VCF**: sample column count vs header, genotype allele index bounds, AD length vs allele count, INFO/FORMAT/FILTER header declarations
-- **SAM**: CIGAR query length vs SEQ length, FLAG bit conflicts (unmapped + properly paired)
-- **GFF3**: Parent attribute resolution (missing/duplicate IDs)
+Strict cross-field validation catches issues that commonly break pipelines:
 
-### Interactive Previews
+| Format | Examples |
+|--------|----------|
+| VCF | Sample column count vs header, genotype allele bounds, AD length vs allele count, INFO/FORMAT/FILTER declarations |
+| SAM | CIGAR query length vs SEQ length, FLAG conflicts |
+| GFF3 | Attribute grammar, Parent and Derives_from resolution, repeated-ID consistency, parent cycles, sequence-region bounds |
 
-Virtualized tables handle 200K+ rows with search, column sorting, drag-resizable columns, and TSV export. Format-specific views include:
+## Interactive Previews
 
-- **VCF**: color-coded INFO/FORMAT fields, sample hover tooltips, FILTER badges, chromosome sorting
-- **SAM/BAM**: FLAG decoding, tag parsing, alignment details
-- **WIG/bedGraph**: interactive track plots with downsampling
-- **MGF**: spectrum plots
-- **GenBank**: feature outline view
-- **GFA**: tabbed segments/links/paths view
-- **FASTA**: per-base coloring (A/T/G/C/N)
-- **FASTQ**: quality heatmap with Phred score color gradient
+Preview panels are tailored to the file type rather than showing every format as plain text.
 
-<img src="docs/fastq-heatmap.png" alt="FASTQ preview showing expanded read with per-base quality heatmap colored by Phred score" width="800">
+| Format family | Preview features |
+|---------------|------------------|
+| VCF | INFO/FORMAT parsing, sample hover tooltips, FILTER badges, chromosome sorting |
+| SAM/BAM | FLAG decoding, tag parsing, alignment details |
+| WIG/bedGraph | Downsampled track plots |
+| MGF | Spectrum plots |
+| GenBank | Feature outline view |
+| GFA | Segments, links, and paths tabs |
+| FASTA | Per-base coloring for A/T/G/C/N |
+| FASTQ | Per-base quality heatmap |
 
-*Shown: [`test/fixtures/example.fastq`](test/fixtures/example.fastq)*
+## Indexed and Binary Files
 
-### Indexed & Binary File Support
+Open compressed and indexed files directly:
 
-Open compressed and indexed files directly — no decompression needed:
+| File | Required index |
+|------|----------------|
+| `.vcf.gz` | `.tbi` or `.csi` |
+| `.bed.gz` | `.tbi` or `.csi` |
+| `.gff3.gz` | `.tbi` or `.csi` |
+| `.bam` | `.bai` or `.csi` |
 
-- `.vcf.gz` + `.tbi`/`.csi` (tabix)
-- `.bed.gz` + `.tbi`/`.csi` (tabix)
-- `.gff3.gz` + `.tbi`/`.csi` (tabix)
-- `.bam` + `.bai`/`.csi`
-
-Navigate by genomic region with the built-in region bar. Type `chr1:1000000-2000000` for a range, `chr1:500000` for a 10kb window around a position, or select a chromosome from the dropdown.
-
-<img src="docs/region-navigator.png" alt="Region navigator showing genomic coordinate input and record count for an indexed VCF file" width="800">
-
-*Shown: [`test/fixtures/example.vcf.gz`](test/fixtures/example.vcf.gz)*
-
-### Workspace-Wide Lint
-
-Validate all bioinformatics files across your workspace — not just the ones you have open. Diagnostics appear in the VS Code **Problems** panel, making it easy to clean up datasets or audit file collections.
-
-<img src="docs/workspace-lint.png" alt="Problems panel showing diagnostics for multiple bioinformatics files across the workspace" width="800">
-
-Enable with `biofmt.workspace.enableLint`. Off by default.
+Use the region bar to query `chr1:1000000-2000000`, a 10 kb window around `chr1:500000`, or a selected chromosome.
 
 ## Supported Formats
 
 ### Validated formats with specialized previews
 
 | Format | Extensions | Indexed |
-|--------|-----------|---------|
+|--------|------------|---------|
 | VCF | `.vcf` | `.vcf.gz` + `.tbi`/`.csi` |
 | SAM / BAM | `.sam` | `.bam` + `.bai`/`.csi` |
 | BED | `.bed` | `.bed.gz` + `.tbi`/`.csi` |
@@ -94,13 +100,13 @@ Enable with `biofmt.workspace.enableLint`. Off by default.
 | narrowPeak | `.narrowPeak` | |
 | broadPeak | `.broadPeak` | |
 
-### Specialized previews (no validation)
+### Specialized previews without validation
 
-MAF (alignment), MAF (mutation), GenBank, MTX (Matrix Market), mzTab, MGF, Chain, Net, GFA
+MAF alignment, MAF mutation, GenBank, MTX Matrix Market, mzTab, MGF, Chain, Net, GFA.
 
-### Generic preview
+### Generic previews
 
-PED, MAP, GCT, HTSeq, Salmon, Kallisto
+PED, MAP, GCT, HTSeq, Salmon, Kallisto.
 
 ## Installation
 
@@ -108,10 +114,10 @@ Search **BioFmt** in the VS Code Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X
 
 ## Usage
 
-1. **Open** any supported file in VS Code
-2. Click the **preview icon** in the editor title bar, or run **BioFmt: Open Preview** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-3. **Indexed/binary files** (`.vcf.gz`, `.bam`, etc.) open directly with a region navigator — type a coordinate to query
-4. **Hover** over INFO or FORMAT keys in VCF data rows to see field definitions and spec references
+1. Open any supported file in VS Code.
+2. Click the preview icon in the editor title bar, or run **BioFmt: Open Preview** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+3. For indexed or binary files, use the region navigator to query a coordinate or chromosome.
+4. Hover over diagnostics or VCF INFO/FORMAT keys to see rule, field, and specification details.
 
 ## Configuration
 
@@ -139,7 +145,7 @@ Search **BioFmt** in the VS Code Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X
 |---------|---------|-------------|
 | `biofmt.workspace.enableLint` | `false` | Validate all bioinformatics files in the workspace |
 | `biofmt.workspace.maxFiles` | `100` | Maximum number of files to validate |
-| `biofmt.workspace.maxFileSizeMB` | `10` | Maximum file size (MB) for workspace validation |
+| `biofmt.workspace.maxFileSizeMB` | `10` | Maximum file size in MB for workspace validation |
 
 ## Requirements
 
@@ -147,7 +153,7 @@ VS Code 1.85.0 or higher.
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE.txt).
+GPL-3.0. See [LICENSE](LICENSE).
 
 ## Changelog
 
