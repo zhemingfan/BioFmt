@@ -8,6 +8,7 @@ test/**
 
 # Development configuration
 .vscode/**
+.claude/**
 .github/**
 tsconfig.json
 tsconfig.*.json
@@ -45,6 +46,10 @@ CLAUDE.md
 SPEC.md
 TODO.md
 docs/**
+!docs/
+!docs/*.md
+!docs/*.png
+!docs/_config.yml
 *.docx
 
 # Package files
