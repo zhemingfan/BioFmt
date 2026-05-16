@@ -15,6 +15,8 @@ import {
   FoldingRangeParams,
   DocumentSymbol,
   DocumentSymbolParams,
+  CodeActionParams,
+  CodeAction,
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -23,6 +25,7 @@ import { getVcfHover, getVcfSymbols, getVcfHeader, clearHeaderCache } from './va
 import type { BioFmtSettings, ValidatorContext } from './validators/types';
 import { defaultSettings } from './validators/types';
 import { WorkspaceScanner } from './workspace/workspaceScanner';
+import { getDiagnosticCodeActions } from './diagnosticActions';
 
 // Create connection using all proposed features
 const connection = createConnection(ProposedFeatures.all);
@@ -54,6 +57,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       hoverProvider: true,
+      codeActionProvider: true,
       foldingRangeProvider: true,
       documentSymbolProvider: true,
     },
@@ -172,6 +176,10 @@ connection.onHover((params: HoverParams): Hover | null => {
     default:
       return null;
   }
+});
+
+connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
+  return getDiagnosticCodeActions(params);
 });
 
 // Folding range provider

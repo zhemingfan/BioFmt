@@ -23,6 +23,8 @@ import {
   FoldingRangeParams,
   DocumentSymbol,
   DocumentSymbolParams,
+  CodeActionParams,
+  CodeAction,
   DidChangeConfigurationNotification,
 } from 'vscode-languageserver/browser';
 
@@ -31,6 +33,7 @@ import { getValidator } from './validators';
 import { getVcfHover, getVcfSymbols, clearHeaderCache } from './validators/vcf';
 import type { BioFmtSettings, ValidatorContext } from './validators/types';
 import { defaultSettings } from './validators/types';
+import { getDiagnosticCodeActions } from './diagnosticActions';
 
 // Browser-specific connection setup
 const messageReader = new BrowserMessageReader(self as DedicatedWorkerGlobalScope);
@@ -56,6 +59,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       hoverProvider: true,
+      codeActionProvider: true,
       foldingRangeProvider: true,
       documentSymbolProvider: true,
     },
@@ -141,6 +145,10 @@ connection.onHover((params: HoverParams): Hover | null => {
     default:
       return null;
   }
+});
+
+connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
+  return getDiagnosticCodeActions(params);
 });
 
 // Folding ranges

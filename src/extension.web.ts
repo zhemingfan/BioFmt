@@ -25,6 +25,13 @@ const OMICS_LANGUAGES = [
   'omics-chain', 'omics-net', 'omics-gfa', 'omics-fasta', 'omics-fastq',
 ];
 
+const BIOFMT_DOCS_BASE = 'https://zhemingfan.github.io/BioFmt';
+
+function biofmtRuleUrl(ruleCode: string): string {
+  const anchor = ruleCode.toLowerCase().replace(/_/g, '-').replace(/[^a-z0-9-]/g, '');
+  return `${BIOFMT_DOCS_BASE}/rules.html#${anchor}`;
+}
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   console.log('BioFmt web extension activating...');
 
@@ -128,7 +135,43 @@ function registerCommands(context: vscode.ExtensionContext): void {
     }
   );
 
-  context.subscriptions.push(openPreviewCommand);
+  const openDiagnosticRuleCommand = vscode.commands.registerCommand(
+    'biofmt.openDiagnosticRule',
+    async (ruleCode?: string, href?: string) => {
+      const target = href || (ruleCode ? biofmtRuleUrl(ruleCode) : `${BIOFMT_DOCS_BASE}/validation.html`);
+      await vscode.env.openExternal(vscode.Uri.parse(target));
+    }
+  );
+
+  const openDiagnosticSpecCommand = vscode.commands.registerCommand(
+    'biofmt.openDiagnosticSpec',
+    async (href?: string) => {
+      if (!href) {
+        vscode.window.showWarningMessage('No specification link is available for this diagnostic');
+        return;
+      }
+      await vscode.env.openExternal(vscode.Uri.parse(href));
+    }
+  );
+
+  const copyDiagnosticRuleCommand = vscode.commands.registerCommand(
+    'biofmt.copyDiagnosticRule',
+    async (details?: string) => {
+      if (!details) {
+        vscode.window.showWarningMessage('No diagnostic details are available to copy');
+        return;
+      }
+      await vscode.env.clipboard.writeText(details);
+      vscode.window.showInformationMessage('BioFmt diagnostic details copied');
+    }
+  );
+
+  context.subscriptions.push(
+    openPreviewCommand,
+    openDiagnosticRuleCommand,
+    openDiagnosticSpecCommand,
+    copyDiagnosticRuleCommand
+  );
 }
 
 async function startLanguageServer(context: vscode.ExtensionContext): Promise<void> {

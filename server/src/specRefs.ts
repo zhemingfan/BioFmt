@@ -6,6 +6,11 @@ export interface SpecRef {
   code: string;
   href: string;
   summary: string;
+  details?: string;
+  example?: string;
+  safeFix?: {
+    title: string;
+  };
 }
 
 const VCF_SPEC = 'https://samtools.github.io/hts-specs/VCFv4.4.pdf';
@@ -65,7 +70,14 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   ['GTF-006', { code: 'GTF-006', href: GTF_SPEC, summary: 'Attributes should use key "value"; format' }],
 
   // GFF3 rules
-  ['GFF3_MISSING_VERSION', { code: 'GFF3_MISSING_VERSION', href: gff3SpecLines(138, 140), summary: 'GFF3 file must declare ##gff-version first' }],
+  ['GFF3_MISSING_VERSION', {
+    code: 'GFF3_MISSING_VERSION',
+    href: gff3SpecLines(138, 140),
+    summary: 'GFF3 file must declare ##gff-version first',
+    details: 'GFF3 files must start with a version directive before feature records, comments, or FASTA content.',
+    example: '##gff-version 3',
+    safeFix: { title: 'Insert ##gff-version 3' },
+  }],
   ['GFF3_VERSION_NOT_FIRST', { code: 'GFF3_VERSION_NOT_FIRST', href: gff3SpecLines(138, 140), summary: '##gff-version must be the first non-empty line' }],
   ['GFF3_DUPLICATE_VERSION', { code: 'GFF3_DUPLICATE_VERSION', href: gff3SpecLines(138, 140), summary: '##gff-version should occur once' }],
   ['GFF3_MALFORMED_DIRECTIVE', { code: 'GFF3_MALFORMED_DIRECTIVE', href: gff3SpecLines(138, 140), summary: 'GFF3 directives must use valid directive syntax' }],
@@ -201,4 +213,31 @@ export function withSpecRef(diagnostic: Diagnostic, ruleCode: string): Diagnosti
     diagnostic.codeDescription = { href: ref.href };
   }
   return diagnostic;
+}
+
+export function getSpecRef(ruleCode: string): SpecRef | undefined {
+  return SPEC_REFS.get(ruleCode);
+}
+
+export function ruleAnchor(ruleCode: string): string {
+  return ruleCode.toLowerCase().replace(/_/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+export function biofmtRuleHref(ruleCode: string): string {
+  return `https://zhemingfan.github.io/BioFmt/rules.html#${ruleAnchor(ruleCode)}`;
+}
+
+export function formatRuleDetails(ruleCode: string): string | undefined {
+  const ref = getSpecRef(ruleCode);
+  if (!ref) return undefined;
+
+  const parts = [
+    `${ref.code}: ${ref.summary}`,
+    ref.details,
+    ref.example ? `Example: ${ref.example}` : undefined,
+    `Spec: ${ref.href}`,
+    `BioFmt docs: ${biofmtRuleHref(ruleCode)}`,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.join('\n');
 }
