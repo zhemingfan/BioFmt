@@ -13,7 +13,7 @@ export interface SpecRef {
   };
 }
 
-const VCF_SPEC = 'https://samtools.github.io/hts-specs/VCFv4.4.pdf';
+const VCF_SPEC = 'https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex?plain=1';
 const SAM_SPEC = 'https://samtools.github.io/hts-specs/SAMv1.pdf';
 const BED_SPEC = 'https://genome.ucsc.edu/FAQ/FAQformat.html#format1';
 const BEDPE_SPEC = 'https://bedtools.readthedocs.io/en/latest/content/general-usage.html#bedpe-format';
@@ -32,14 +32,19 @@ function gff3SpecLines(start: number, end = start): string {
   return `${GFF3_SPEC}${anchor}`;
 }
 
+function vcfSpecLines(start: number, end = start): string {
+  const anchor = end === start ? `#L${start}` : `#L${start}-L${end}`;
+  return `${VCF_SPEC}${anchor}`;
+}
+
 export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   // VCF rules
-  ['VCF-001', { code: 'VCF-001', href: VCF_SPEC, summary: 'VCF file must start with ##fileformat=' }],
-  ['VCF-002', { code: 'VCF-002', href: VCF_SPEC, summary: 'VCF header must have at least 8 columns' }],
-  ['VCF-003', { code: 'VCF-003', href: VCF_SPEC, summary: 'VCF data line must have at least 8 columns' }],
-  ['VCF-004', { code: 'VCF-004', href: VCF_SPEC, summary: 'Data line column count must match header' }],
-  ['VCF-005', { code: 'VCF-005', href: VCF_SPEC, summary: 'QUAL must be numeric or "."' }],
-  ['VCF-006', { code: 'VCF-006', href: VCF_SPEC, summary: 'INFO key must be declared in header' }],
+  ['VCF-001', { code: 'VCF-001', href: vcfSpecLines(142, 146), summary: 'VCF file must start with ##fileformat=' }],
+  ['VCF-002', { code: 'VCF-002', href: vcfSpecLines(360, 376), summary: 'VCF header must have at least 8 columns' }],
+  ['VCF-003', { code: 'VCF-003', href: vcfSpecLines(378, 386), summary: 'VCF data line must have at least 8 columns' }],
+  ['VCF-004', { code: 'VCF-004', href: vcfSpecLines(497, 500), summary: 'Data line column count must match header' }],
+  ['VCF-005', { code: 'VCF-005', href: vcfSpecLines(420, 422), summary: 'QUAL must be numeric or "."' }],
+  ['VCF-006', { code: 'VCF-006', href: vcfSpecLines(437), summary: 'INFO key must be declared in header' }],
 
   // BED rules
   ['BED-001', { code: 'BED-001', href: BED_SPEC, summary: 'BED requires at least 3 columns' }],
@@ -152,11 +157,11 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   // === Strict-mode rules ===
 
   // VCF strict
-  ['VCF-S001', { code: 'VCF-S001', href: VCF_SPEC, summary: 'REF must contain only A, C, G, T, N' }],
-  ['VCF-S002', { code: 'VCF-S002', href: VCF_SPEC, summary: 'ALT must match VCF spec patterns' }],
-  ['VCF-S003', { code: 'VCF-S003', href: VCF_SPEC, summary: 'FILTER value must be declared in header' }],
-  ['VCF-S004', { code: 'VCF-S004', href: VCF_SPEC, summary: 'FORMAT key must be declared in header' }],
-  ['VCF-S005', { code: 'VCF-S005', href: VCF_SPEC, summary: 'POS must be >= 1 (1-based coordinate)' }],
+  ['VCF-S001', { code: 'VCF-S001', href: vcfSpecLines(403, 411), summary: 'REF must contain only A, C, G, T, N' }],
+  ['VCF-S002', { code: 'VCF-S002', href: vcfSpecLines(413, 419), summary: 'ALT must match VCF spec patterns' }],
+  ['VCF-S003', { code: 'VCF-S003', href: vcfSpecLines(177, 181), summary: 'FILTER value must be declared in header' }],
+  ['VCF-S004', { code: 'VCF-S004', href: vcfSpecLines(184, 189), summary: 'FORMAT key must be declared in header' }],
+  ['VCF-S005', { code: 'VCF-S005', href: vcfSpecLines(393, 397), summary: 'POS must be >= 1 (1-based coordinate)' }],
 
   // BED strict
   ['BED-S001', { code: 'BED-S001', href: BED_SPEC, summary: 'Score must be 0-1000' }],
@@ -191,9 +196,9 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
   // === Cross-field validation rules (strict mode) ===
 
   // VCF cross-field
-  ['VCF-X001', { code: 'VCF-X001', href: VCF_SPEC, summary: 'FORMAT key count must match sample value count' }],
-  ['VCF-X002', { code: 'VCF-X002', href: VCF_SPEC, summary: 'Genotype allele index out of range' }],
-  ['VCF-X003', { code: 'VCF-X003', href: VCF_SPEC, summary: 'AD field length must match allele count' }],
+  ['VCF-X001', { code: 'VCF-X001', href: vcfSpecLines(497, 500), summary: 'FORMAT key count must match sample value count' }],
+  ['VCF-X002', { code: 'VCF-X002', href: vcfSpecLines(613, 619), summary: 'Genotype allele index out of range' }],
+  ['VCF-X003', { code: 'VCF-X003', href: vcfSpecLines(534), summary: 'AD field length must match allele count' }],
 
   // SAM cross-field
   ['SAM-X001', { code: 'SAM-X001', href: SAM_SPEC, summary: 'CIGAR query length must match SEQ length' }],
