@@ -3,9 +3,11 @@
 import * as assert from 'assert';
 import { SPEC_REFS } from '../../server/src/specRefs';
 import { validateGff3 } from '../../server/src/validators/gff3';
+import { validateVcf } from '../../server/src/validators/vcf';
 import { defaultSettings, type ValidatorContext } from '../../server/src/validators/types';
 
 const GFF3_SPEC_BASE = 'https://github.com/The-Sequence-Ontology/Specifications/blob/fe73505276dd324bf6a55773f3413fe2bed47af4/gff3.md?plain=1';
+const VCF_SPEC_BASE = 'https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex?plain=1';
 
 const EXPECTED_GFF3_HREFS = new Map([
   ['GFF3_MISSING_VERSION', `${GFF3_SPEC_BASE}#L138-L140`],
@@ -43,6 +45,23 @@ const EXPECTED_GFF3_HREFS = new Map([
   ['GFF3_OUT_OF_BOUNDS', `${GFF3_SPEC_BASE}#L473-L474`],
   ['GFF3_FASTA_BEFORE_HEADER', `${GFF3_SPEC_BASE}#L530-L532`],
   ['GFF3_ANNOTATION_AFTER_FASTA', `${GFF3_SPEC_BASE}#L530-L532`],
+]);
+
+const EXPECTED_VCF_HREFS = new Map([
+  ['VCF-001', `${VCF_SPEC_BASE}#L142-L146`],
+  ['VCF-002', `${VCF_SPEC_BASE}#L360-L376`],
+  ['VCF-003', `${VCF_SPEC_BASE}#L378-L386`],
+  ['VCF-004', `${VCF_SPEC_BASE}#L497-L500`],
+  ['VCF-005', `${VCF_SPEC_BASE}#L420-L422`],
+  ['VCF-006', `${VCF_SPEC_BASE}#L437`],
+  ['VCF-S001', `${VCF_SPEC_BASE}#L403-L411`],
+  ['VCF-S002', `${VCF_SPEC_BASE}#L413-L419`],
+  ['VCF-S003', `${VCF_SPEC_BASE}#L177-L181`],
+  ['VCF-S004', `${VCF_SPEC_BASE}#L184-L189`],
+  ['VCF-S005', `${VCF_SPEC_BASE}#L393-L397`],
+  ['VCF-X001', `${VCF_SPEC_BASE}#L497-L500`],
+  ['VCF-X002', `${VCF_SPEC_BASE}#L613-L619`],
+  ['VCF-X003', `${VCF_SPEC_BASE}#L534`],
 ]);
 
 describe('Spec References', () => {
@@ -113,6 +132,43 @@ describe('Spec References', () => {
     assert.ok(strandDiagnostic, 'Expected invalid strand diagnostic');
     assert.deepStrictEqual(strandDiagnostic.codeDescription, {
       href: EXPECTED_GFF3_HREFS.get('GFF3_INVALID_STRAND'),
+    });
+  });
+
+  it('should pin every VCF rule to an exact VCFv4.5 source line anchor', () => {
+    const vcfCodes = Array.from(SPEC_REFS.keys()).filter(code => code.startsWith('VCF-')).sort();
+    const expectedCodes = Array.from(EXPECTED_VCF_HREFS.keys()).sort();
+
+    assert.deepStrictEqual(vcfCodes, expectedCodes);
+
+    for (const [code, expectedHref] of EXPECTED_VCF_HREFS) {
+      const ref = SPEC_REFS.get(code);
+      assert.ok(ref, `Missing spec ref for ${code}`);
+      assert.strictEqual(ref.href, expectedHref);
+      assert.ok(
+        ref.href.includes('VCFv4.5.tex?plain=1#L'),
+        `${code} should link to a specific VCFv4.5 source line anchor`,
+      );
+    }
+  });
+
+  it('should attach exact VCFv4.5 spec hrefs to diagnostics', () => {
+    const context: ValidatorContext = {
+      uri: 'file:///example.vcf',
+      lineCount: 3,
+      headerEndLine: 2,
+      bufferLines: 500,
+    };
+    const diagnostics = validateVcf(
+      '##fileformat=VCFv4.5\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\nchr1\t1\t.\tA\tT\tbad\tPASS\t.',
+      defaultSettings,
+      context,
+    );
+    const qualDiagnostic = diagnostics.find(diagnostic => diagnostic.code === 'VCF-005');
+
+    assert.ok(qualDiagnostic, 'Expected invalid QUAL diagnostic');
+    assert.deepStrictEqual(qualDiagnostic.codeDescription, {
+      href: EXPECTED_VCF_HREFS.get('VCF-005'),
     });
   });
 });
