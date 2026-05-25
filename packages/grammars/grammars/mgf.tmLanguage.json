@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MGF",
+  "scopeName": "source.mgf",
+  "patterns": [
+    { "include": "#ions-block" },
+    { "include": "#global-param" }
+  ],
+  "repository": {
+    "ions-block": {
+      "begin": "^(BEGIN IONS)$",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.begin.mgf" }
+      },
+      "end": "^(END IONS)$",
+      "endCaptures": {
+        "1": { "name": "keyword.control.end.mgf" }
+      },
+      "patterns": [
+        { "include": "#spectrum-param" },
+        { "include": "#peak" }
+      ]
+    },
+    "spectrum-param": {
+      "match": "^(TITLE|PEPMASS|CHARGE|RTINSECONDS|SCANS|RAWSCANS|SEQ|COMP|ETAG|TAG|INSTRUMENT|RAWFILE|SPECTRUMID)=(.*)$",
+      "captures": {
+        "1": { "name": "entity.name.tag.mgf" },
+        "2": { "name": "string.unquoted.value.mgf" }
+      }
+    },
+    "peak": {
+      "match": "^([0-9.]+)\\s+([0-9.]+)(\\s+([0-9]+))?$",
+      "captures": {
+        "1": { "name": "constant.numeric.mz.mgf" },
+        "2": { "name": "constant.numeric.intensity.mgf" },
+        "4": { "name": "constant.numeric.charge.mgf" }
+      }
+    },
+    "global-param": {
+      "match": "^([A-Z_]+)=(.*)$",
+      "captures": {
+        "1": { "name": "variable.other.global.mgf" },
+        "2": { "name": "string.unquoted.value.mgf" }
+      }
+    }
+  }
+}

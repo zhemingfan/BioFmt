@@ -1,0 +1,9 @@
+{
+  "comments": {
+    "lineComment": "#"
+  },
+  "brackets": [
+    ["\"", "\""]
+  ],
+  "wordPattern": "[A-Za-z0-9_]+"
+}

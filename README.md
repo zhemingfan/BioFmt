@@ -37,6 +37,33 @@ Specialized previews without validation: MAF alignment, MAF mutation, GenBank, M
 
 Generic previews: PED, MAP, GCT, HTSeq, Salmon, and Kallisto.
 
+Declarative formats (defined entirely by a JSON spec — see below): chrom.sizes and Picard interval_list.
+
+## Extending BioFmt
+
+### Add a format with a JSON spec — no TypeScript
+
+Column-oriented formats can be added declaratively. Drop a single JSON file in
+[`formats/`](formats) describing four things — **identity** (language id, extensions,
+scope name), **tokenize** (columns and scopes for highlighting), **validate** (column
+rules with spec-linked diagnostic codes), and **render** (preview table columns) — then run:
+
+```bash
+npm run gen:formats
+```
+
+The generator writes the TextMate grammar, language configuration, and VS Code manifest
+entries; the LSP server and the preview pick the format up automatically with no further
+code. `chrom.sizes` ([formats/chrom-sizes.json](formats/chrom-sizes.json)) and Picard
+`interval_list` ([formats/interval-list.json](formats/interval-list.json)) are defined
+this way. The full schema is [`formats/_schema.json`](formats/_schema.json).
+
+### Reuse the grammars in other editors
+
+The TextMate grammars are published separately as
+[`@biofmt/textmate-grammars`](packages/grammars) so Zed, Sublime Text, and GitHub Linguist
+can reuse them. Tree-sitter grammars for Neovim and Helix are [planned](packages/tree-sitter).
+
 ## Requirements
 
 VS Code 1.85.0 or higher.

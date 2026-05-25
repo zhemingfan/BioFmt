@@ -1,0 +1,7 @@
+{
+  "name": "@biofmt/tree-sitter",
+  "version": "0.0.0",
+  "description": "Planned tree-sitter grammars for BioFmt formats (not yet implemented). See README.",
+  "private": true,
+  "license": "GPL-3.0-or-later"
+}

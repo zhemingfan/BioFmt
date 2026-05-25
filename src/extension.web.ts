@@ -12,6 +12,8 @@ import {
   LanguageClient,
   LanguageClientOptions,
 } from 'vscode-languageclient/browser';
+import { GENERATED_FORMATS } from './shared/generatedFormats';
+import type { DeclarativeRenderSpec } from './shared/formatSpec';
 
 let client: LanguageClient | undefined;
 
@@ -24,6 +26,17 @@ const OMICS_LANGUAGES = [
   'omics-narrowpeak', 'omics-broadpeak', 'omics-genbank',
   'omics-chain', 'omics-net', 'omics-gfa', 'omics-fasta', 'omics-fastq',
 ];
+
+// Declarative formats (from /formats/*.json) participate alongside the hand-written ones.
+const DECLARATIVE_LANGUAGES = GENERATED_FORMATS.map((f) => f.identity.languageId);
+const ALL_LANGUAGES = [...OMICS_LANGUAGES, ...DECLARATIVE_LANGUAGES];
+
+function getDeclarativeRender(languageId: string): DeclarativeRenderSpec | undefined {
+  const spec = GENERATED_FORMATS.find((f) => f.identity.languageId === languageId);
+  return spec
+    ? { ...spec.render, displayName: spec.identity.displayName, delimiter: spec.tokenize.delimiter }
+    : undefined;
+}
 
 const BIOFMT_DOCS_BASE = 'https://zhemingfan.github.io/BioFmt';
 
@@ -61,7 +74,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
       const document = editor.document;
       const languageId = document.languageId;
 
-      if (!OMICS_LANGUAGES.includes(languageId)) {
+      if (!ALL_LANGUAGES.includes(languageId)) {
         vscode.window.showWarningMessage(
           `BioFmt does not support language: ${languageId}`
         );
@@ -178,7 +191,7 @@ async function startLanguageServer(context: vscode.ExtensionContext): Promise<vo
   const serverUri = vscode.Uri.joinPath(context.extensionUri, 'dist', 'server.worker.js');
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: OMICS_LANGUAGES.map((lang) => ({
+    documentSelector: ALL_LANGUAGES.map((lang) => ({
       language: lang,
     })),
     synchronize: {
@@ -196,7 +209,7 @@ async function startLanguageServer(context: vscode.ExtensionContext): Promise<vo
   await client.start();
 
   const visibleRangeDisposable = vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
-    if (client && OMICS_LANGUAGES.includes(event.textEditor.document.languageId)) {
+    if (client && ALL_LANGUAGES.includes(event.textEditor.document.languageId)) {
       client.sendNotification('biofmt/visibleRange', {
         uri: event.textEditor.document.uri.toString(),
         ranges: event.visibleRanges.map(r => ({
@@ -344,5 +357,6 @@ function getDocumentMetadata(document: vscode.TextDocument, headerInfo?: VcfHead
       sampleColumnLimit: config.get<number>('sampleColumnLimit', 10),
     },
     headerInfo,
+    declarativeRender: getDeclarativeRender(document.languageId),
   };
 }

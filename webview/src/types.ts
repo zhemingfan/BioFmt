@@ -23,6 +23,35 @@ export interface ReferenceInfo {
   length?: number;
 }
 
+export interface DeclarativeRenderColumn {
+  key: string;
+  label: string;
+  type?: 'string' | 'int' | 'number';
+  width?: number;
+}
+
+export interface DeclarativeNavigation {
+  chromKey: string;
+  startKey: string;
+  endKey: string;
+  linkColumn: string;
+}
+
+/**
+ * Render description for a declarative format (/formats/*.json), delivered to the
+ * webview inside the `metadata` message so the generic DeclarativePreview can build
+ * a table without a format-specific component. Mirrors src/shared/formatSpec.ts.
+ */
+export interface DeclarativeRenderSpec {
+  displayName: string;
+  renderer: 'table';
+  delimiter: 'tab' | 'whitespace';
+  commentPrefixes?: string[];
+  skipPrefixes?: string[];
+  columns: DeclarativeRenderColumn[];
+  navigation?: DeclarativeNavigation | null;
+}
+
 export interface DocumentMetadata {
   lineCount: number;
   languageId: string;
@@ -37,6 +66,8 @@ export interface DocumentMetadata {
   error?: string;
   /** Actual file size in bytes (for file size warnings) */
   fileSize?: number;
+  /** Present for declarative formats: drives the generic table preview. */
+  declarativeRender?: DeclarativeRenderSpec;
 }
 
 export interface VcfHeaderInfo {
@@ -190,7 +221,7 @@ export interface FilterConfig {
 }
 
 export type MessageFromExtension =
-  | { command: 'metadata'; lineCount: number; languageId: string; fileName: string; headerInfo?: VcfHeaderInfo; providerType?: 'text' | 'indexed' | 'binary'; references?: ReferenceInfo[]; previewSettings?: PreviewSettings; error?: string; fileSize?: number }
+  | { command: 'metadata'; lineCount: number; languageId: string; fileName: string; headerInfo?: VcfHeaderInfo; providerType?: 'text' | 'indexed' | 'binary'; references?: ReferenceInfo[]; previewSettings?: PreviewSettings; error?: string; fileSize?: number; declarativeRender?: DeclarativeRenderSpec }
   | { command: 'rowData'; rows: string[]; startLine: number }
   | { command: 'headerInfo'; headerInfo: VcfHeaderInfo }
   | { command: 'regionData'; rows: string[]; chrom: string; start: number; end: number; requestId: string; hasMore: boolean; error?: string }

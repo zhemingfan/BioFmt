@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "PAF",
+  "scopeName": "source.paf",
+  "patterns": [
+    { "include": "#alignment" }
+  ],
+  "repository": {
+    "alignment": {
+      "match": "^([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([+\\-])\\t([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)(\\t.+)?$",
+      "captures": {
+        "1": { "name": "entity.name.qname.paf" },
+        "2": { "name": "constant.numeric.qlen.paf" },
+        "3": { "name": "constant.numeric.qstart.paf" },
+        "4": { "name": "constant.numeric.qend.paf" },
+        "5": { "name": "keyword.operator.strand.paf" },
+        "6": { "name": "string.unquoted.tname.paf" },
+        "7": { "name": "constant.numeric.tlen.paf" },
+        "8": { "name": "constant.numeric.tstart.paf" },
+        "9": { "name": "constant.numeric.tend.paf" },
+        "10": { "name": "constant.numeric.matches.paf" },
+        "11": { "name": "constant.numeric.alnlen.paf" },
+        "12": { "name": "constant.numeric.mapq.paf" },
+        "13": { "name": "meta.tags.paf" }
+      }
+    }
+  }
+}

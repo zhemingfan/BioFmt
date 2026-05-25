@@ -1,0 +1,71 @@
+{
+  "$schema": "./_schema.json",
+  "specVersion": 1,
+  "identity": {
+    "languageId": "omics-chrom-sizes",
+    "displayName": "chrom.sizes",
+    "aliases": ["chrom.sizes", "Chromosome Sizes"],
+    "extensions": [".sizes", ".chrom.sizes"],
+    "filenames": ["chrom.sizes"],
+    "firstLine": null,
+    "scopeName": "source.chrom-sizes",
+    "languageConfiguration": {
+      "lineComment": "#",
+      "wordPattern": "[A-Za-z0-9_.]+"
+    }
+  },
+  "tokenize": {
+    "delimiter": "tab",
+    "comment": { "match": "^#.*$", "scope": "comment.line.number-sign" },
+    "lineKinds": [
+      {
+        "name": "data",
+        "kind": "columns",
+        "columns": [
+          { "name": "chrom", "type": "string", "scope": "string.unquoted.chrom" },
+          { "name": "size", "type": "int", "scope": "constant.numeric.size" }
+        ]
+      }
+    ]
+  },
+  "validate": {
+    "skipPrefixes": [],
+    "rules": [
+      {
+        "id": "minColumns",
+        "code": "CHROMSIZES-001",
+        "min": 2,
+        "severity": "error",
+        "message": "chrom.sizes requires 2 columns (chrom, size)",
+        "spec": {
+          "href": "https://genome.ucsc.edu/goldenPath/help/bigWig.html",
+          "summary": "chrom.sizes is two tab-separated columns: sequence name and length"
+        }
+      },
+      {
+        "id": "column",
+        "code": "CHROMSIZES-002",
+        "column": 1,
+        "name": "size",
+        "type": "int",
+        "min": 1,
+        "severity": "error",
+        "message": "size must be a positive integer",
+        "spec": {
+          "href": "https://genome.ucsc.edu/goldenPath/help/bigWig.html",
+          "summary": "Chromosome size must be a positive integer (length in bases)"
+        }
+      }
+    ]
+  },
+  "render": {
+    "renderer": "table",
+    "commentPrefixes": ["#"],
+    "skipPrefixes": [],
+    "columns": [
+      { "key": "chrom", "label": "chrom", "type": "string", "width": 160 },
+      { "key": "size", "label": "size", "type": "int", "width": 140 }
+    ],
+    "navigation": null
+  }
+}

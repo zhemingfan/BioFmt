@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MAP",
+  "scopeName": "source.map",
+  "patterns": [
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "data-line": {
+      "match": "^([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([^\\t\\s]+)[\\t\\s]+([0-9]+)$",
+      "captures": {
+        "1": { "name": "string.unquoted.chromosome.map" },
+        "2": { "name": "entity.name.snp.map" },
+        "3": { "name": "constant.numeric.distance.map" },
+        "4": { "name": "constant.numeric.position.map" }
+      }
+    }
+  }
+}

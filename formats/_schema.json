@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/zhemingfan/BioFmt/formats/_schema.json",
+  "title": "BioFmt declarative format spec",
+  "description": "Describes how to tokenize, validate, and render a bioinformatics text format. One file per format under /formats/. Mirrors src/shared/formatSpec.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specVersion", "identity", "tokenize", "validate", "render"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "specVersion": { "const": 1 },
+
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["languageId", "displayName", "aliases", "extensions", "scopeName"],
+      "properties": {
+        "languageId": { "type": "string", "pattern": "^omics-[a-z0-9-]+$" },
+        "displayName": { "type": "string", "minLength": 1 },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "extensions": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\." },
+          "minItems": 1
+        },
+        "filenames": { "type": "array", "items": { "type": "string" } },
+        "firstLine": { "type": ["string", "null"] },
+        "scopeName": { "type": "string", "pattern": "^source\\.[a-z0-9.-]+$" },
+        "languageConfiguration": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lineComment": { "type": "string" },
+            "wordPattern": { "type": "string" },
+            "brackets": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "tokenize": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delimiter", "lineKinds"],
+      "properties": {
+        "delimiter": { "enum": ["tab", "whitespace"] },
+        "comment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["match", "scope"],
+          "properties": {
+            "match": { "type": "string" },
+            "scope": { "type": "string" }
+          }
+        },
+        "lineKinds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "kind", "columns"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "kind": { "const": "columns" },
+                  "columns": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["name", "type", "scope"],
+                      "properties": {
+                        "name": { "type": "string" },
+                        "type": { "enum": ["string", "int", "number"] },
+                        "scope": { "type": "string" }
+                      }
+                    }
+                  },
+                  "trailing": { "enum": ["none", "optional-extra"] }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "kind", "match", "captures"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "kind": { "const": "regex" },
+                  "match": { "type": "string" },
+                  "captures": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+
+    "validate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rules"],
+      "properties": {
+        "skipPrefixes": { "type": "array", "items": { "type": "string" } },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "code", "message", "spec"],
+            "properties": {
+              "id": { "enum": ["minColumns", "column", "coordinatePair", "strand"] },
+              "code": { "type": "string", "pattern": "^[A-Z0-9]+(-[A-Z]?[0-9]+)?$" },
+              "severity": { "enum": ["error", "warning"] },
+              "message": { "type": "string", "minLength": 1 },
+              "strict": { "type": "boolean" },
+              "spec": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["href", "summary"],
+                "properties": {
+                  "href": { "type": "string" },
+                  "summary": { "type": "string" },
+                  "details": { "type": "string" },
+                  "example": { "type": "string" }
+                }
+              },
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "column": { "type": "integer", "minimum": 0 },
+              "name": { "type": "string" },
+              "type": { "enum": ["int", "number", "enum", "regex"] },
+              "values": { "type": "array", "items": { "type": "string" } },
+              "pattern": { "type": "string" },
+              "allowDot": { "type": "boolean" },
+              "startColumn": { "type": "integer", "minimum": 0 },
+              "endColumn": { "type": "integer", "minimum": 0 },
+              "startName": { "type": "string" },
+              "endName": { "type": "string" },
+              "allowEqual": { "type": "boolean" }
+            },
+            "allOf": [
+              {
+                "if": { "properties": { "id": { "const": "minColumns" } } },
+                "then": { "required": ["min"] }
+              },
+              {
+                "if": { "properties": { "id": { "const": "column" } } },
+                "then": { "required": ["column", "name", "type"] }
+              },
+              {
+                "if": { "properties": { "id": { "const": "coordinatePair" } } },
+                "then": { "required": ["startColumn", "endColumn", "startName", "endName"] }
+              },
+              {
+                "if": { "properties": { "id": { "const": "strand" } } },
+                "then": { "required": ["column", "values"] }
+              }
+            ]
+          }
+        }
+      }
+    },
+
+    "render": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["renderer", "columns"],
+      "properties": {
+        "renderer": { "const": "table" },
+        "commentPrefixes": { "type": "array", "items": { "type": "string" } },
+        "skipPrefixes": { "type": "array", "items": { "type": "string" } },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "label"],
+            "properties": {
+              "key": { "type": "string" },
+              "label": { "type": "string" },
+              "type": { "enum": ["string", "int", "number"] },
+              "width": { "type": "number" }
+            }
+          }
+        },
+        "navigation": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["chromKey", "startKey", "endKey", "linkColumn"],
+          "properties": {
+            "chromKey": { "type": "string" },
+            "startKey": { "type": "string" },
+            "endKey": { "type": "string" },
+            "linkColumn": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

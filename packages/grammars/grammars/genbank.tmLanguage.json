@@ -1,0 +1,93 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GenBank",
+  "scopeName": "source.genbank",
+  "patterns": [
+    { "include": "#locus" },
+    { "include": "#definition" },
+    { "include": "#accession" },
+    { "include": "#version" },
+    { "include": "#keywords" },
+    { "include": "#source" },
+    { "include": "#reference" },
+    { "include": "#features" },
+    { "include": "#origin" },
+    { "include": "#sequence" },
+    { "include": "#terminator" }
+  ],
+  "repository": {
+    "locus": {
+      "match": "^(LOCUS)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.locus.genbank" },
+        "2": { "name": "meta.locus.info.genbank" }
+      }
+    },
+    "definition": {
+      "match": "^(DEFINITION)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.definition.genbank" },
+        "2": { "name": "string.unquoted.definition.genbank" }
+      }
+    },
+    "accession": {
+      "match": "^(ACCESSION)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.accession.genbank" },
+        "2": { "name": "constant.other.accession.genbank" }
+      }
+    },
+    "version": {
+      "match": "^(VERSION)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.version.genbank" },
+        "2": { "name": "constant.other.version.genbank" }
+      }
+    },
+    "keywords": {
+      "match": "^(KEYWORDS)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.keywords.genbank" },
+        "2": { "name": "string.unquoted.keywords.genbank" }
+      }
+    },
+    "source": {
+      "match": "^(SOURCE|ORGANISM)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.source.genbank" },
+        "2": { "name": "string.unquoted.source.genbank" }
+      }
+    },
+    "reference": {
+      "match": "^(REFERENCE|AUTHORS|TITLE|JOURNAL|PUBMED)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.reference.genbank" },
+        "2": { "name": "string.unquoted.reference.genbank" }
+      }
+    },
+    "features": {
+      "match": "^(FEATURES)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.features.genbank" },
+        "2": { "name": "meta.features.header.genbank" }
+      }
+    },
+    "origin": {
+      "match": "^(ORIGIN)\\s*$",
+      "captures": {
+        "1": { "name": "keyword.control.origin.genbank" }
+      }
+    },
+    "sequence": {
+      "match": "^\\s*([0-9]+)\\s+([acgtnACGTN\\s]+)$",
+      "captures": {
+        "1": { "name": "constant.numeric.position.genbank" },
+        "2": { "name": "string.unquoted.sequence.genbank" }
+      }
+    },
+    "terminator": {
+      "match": "^//$",
+      "name": "keyword.control.terminator.genbank"
+    }
+  }
+}

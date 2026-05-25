@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "PSL",
+  "scopeName": "source.psl",
+  "patterns": [
+    { "include": "#header" },
+    { "include": "#alignment" }
+  ],
+  "repository": {
+    "header": {
+      "match": "^psLayout.*$",
+      "name": "comment.line.header.psl"
+    },
+    "alignment": {
+      "match": "^([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([+\\-])\\t([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([^\\t]+)\\t(.+)?$",
+      "captures": {
+        "1": { "name": "constant.numeric.matches.psl" },
+        "2": { "name": "constant.numeric.mismatches.psl" },
+        "3": { "name": "constant.numeric.repmatches.psl" },
+        "4": { "name": "constant.numeric.ncount.psl" },
+        "5": { "name": "constant.numeric.qnuminsert.psl" },
+        "6": { "name": "constant.numeric.qbaseinsert.psl" },
+        "7": { "name": "constant.numeric.tnuminsert.psl" },
+        "8": { "name": "constant.numeric.tbaseinsert.psl" },
+        "9": { "name": "keyword.operator.strand.psl" },
+        "10": { "name": "entity.name.qname.psl" },
+        "11": { "name": "constant.numeric.qsize.psl" },
+        "12": { "name": "constant.numeric.qstart.psl" },
+        "13": { "name": "constant.numeric.qend.psl" },
+        "14": { "name": "string.unquoted.tname.psl" },
+        "15": { "name": "constant.numeric.tsize.psl" },
+        "16": { "name": "constant.numeric.tstart.psl" },
+        "17": { "name": "constant.numeric.tend.psl" },
+        "18": { "name": "constant.numeric.blockcount.psl" },
+        "19": { "name": "meta.blocksizes.psl" },
+        "20": { "name": "meta.qstarts.psl" },
+        "21": { "name": "meta.tstarts.psl" }
+      }
+    }
+  }
+}

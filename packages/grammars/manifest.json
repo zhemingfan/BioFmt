@@ -1,0 +1,373 @@
+[
+  {
+    "scopeName": "source.bed",
+    "language": "omics-bed",
+    "grammar": "grammars/bed.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".bed"
+    ],
+    "aliases": [
+      "BED",
+      "Browser Extensible Data"
+    ]
+  },
+  {
+    "scopeName": "source.bedgraph",
+    "language": "omics-bedgraph",
+    "grammar": "grammars/bedgraph.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".bedGraph",
+      ".bdg"
+    ],
+    "aliases": [
+      "bedGraph"
+    ]
+  },
+  {
+    "scopeName": "source.bedpe",
+    "language": "omics-bedpe",
+    "grammar": "grammars/bedpe.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".bedpe"
+    ],
+    "aliases": [
+      "BEDPE",
+      "Paired-End BED"
+    ]
+  },
+  {
+    "scopeName": "source.broadpeak",
+    "language": "omics-broadpeak",
+    "grammar": "grammars/broadpeak.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".broadPeak"
+    ],
+    "aliases": [
+      "broadPeak"
+    ]
+  },
+  {
+    "scopeName": "source.chain",
+    "language": "omics-chain",
+    "grammar": "grammars/chain.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".chain"
+    ],
+    "aliases": [
+      "Chain",
+      "UCSC Chain"
+    ]
+  },
+  {
+    "scopeName": "source.chrom-sizes",
+    "language": "omics-chrom-sizes",
+    "grammar": "grammars/chrom-sizes.tmLanguage.json",
+    "languageConfiguration": "language-configuration/chrom-sizes.language-configuration.json",
+    "extensions": [
+      ".sizes",
+      ".chrom.sizes"
+    ],
+    "aliases": [
+      "chrom.sizes",
+      "Chromosome Sizes"
+    ]
+  },
+  {
+    "scopeName": "source.fasta",
+    "language": "omics-fasta",
+    "grammar": "grammars/fasta.tmLanguage.json",
+    "languageConfiguration": "language-configuration/fasta.language-configuration.json",
+    "extensions": [
+      ".fasta",
+      ".fa",
+      ".fna",
+      ".ffn",
+      ".faa",
+      ".frn"
+    ],
+    "aliases": [
+      "FASTA"
+    ]
+  },
+  {
+    "scopeName": "source.fastq",
+    "language": "omics-fastq",
+    "grammar": "grammars/fastq.tmLanguage.json",
+    "languageConfiguration": "language-configuration/fastq.language-configuration.json",
+    "extensions": [
+      ".fastq",
+      ".fq"
+    ],
+    "aliases": [
+      "FASTQ"
+    ]
+  },
+  {
+    "scopeName": "source.gct",
+    "language": "omics-gct",
+    "grammar": "grammars/gct.tmLanguage.json",
+    "languageConfiguration": "language-configuration/hash-comment.language-configuration.json",
+    "extensions": [
+      ".gct"
+    ],
+    "aliases": [
+      "GCT",
+      "Gene Cluster Text"
+    ]
+  },
+  {
+    "scopeName": "source.genbank",
+    "language": "omics-genbank",
+    "grammar": "grammars/genbank.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".gbk",
+      ".gb",
+      ".genbank"
+    ],
+    "aliases": [
+      "GenBank"
+    ]
+  },
+  {
+    "scopeName": "source.gfa",
+    "language": "omics-gfa",
+    "grammar": "grammars/gfa.tmLanguage.json",
+    "languageConfiguration": "language-configuration/gfa.language-configuration.json",
+    "extensions": [
+      ".gfa"
+    ],
+    "aliases": [
+      "GFA",
+      "Graphical Fragment Assembly"
+    ]
+  },
+  {
+    "scopeName": "source.gff3",
+    "language": "omics-gff3",
+    "grammar": "grammars/gff3.tmLanguage.json",
+    "languageConfiguration": "language-configuration/hash-comment.language-configuration.json",
+    "extensions": [
+      ".gff",
+      ".gff3"
+    ],
+    "aliases": [
+      "GFF3",
+      "General Feature Format 3"
+    ]
+  },
+  {
+    "scopeName": "source.gtf",
+    "language": "omics-gtf",
+    "grammar": "grammars/gtf.tmLanguage.json",
+    "languageConfiguration": "language-configuration/gtf.language-configuration.json",
+    "extensions": [
+      ".gtf"
+    ],
+    "aliases": [
+      "GTF",
+      "Gene Transfer Format"
+    ]
+  },
+  {
+    "scopeName": "source.interval-list",
+    "language": "omics-interval-list",
+    "grammar": "grammars/interval-list.tmLanguage.json",
+    "languageConfiguration": "language-configuration/interval-list.language-configuration.json",
+    "extensions": [
+      ".interval_list",
+      ".intervals"
+    ],
+    "aliases": [
+      "interval_list",
+      "Picard Intervals"
+    ]
+  },
+  {
+    "scopeName": "source.maf.alignment",
+    "language": "omics-maf-alignment",
+    "grammar": "grammars/maf-alignment.tmLanguage.json",
+    "languageConfiguration": "language-configuration/maf.language-configuration.json",
+    "extensions": [
+      ".maf"
+    ],
+    "aliases": [
+      "MAF Alignment",
+      "Multiple Alignment Format"
+    ]
+  },
+  {
+    "scopeName": "source.maf.mutation",
+    "language": "omics-maf-mutation",
+    "grammar": "grammars/maf-mutation.tmLanguage.json",
+    "languageConfiguration": "language-configuration/maf.language-configuration.json",
+    "extensions": [
+      ".maf"
+    ],
+    "aliases": [
+      "MAF Mutation",
+      "Mutation Annotation Format"
+    ]
+  },
+  {
+    "scopeName": "source.map",
+    "language": "omics-map",
+    "grammar": "grammars/map.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".map"
+    ],
+    "aliases": [
+      "MAP",
+      "Genetic Map Format"
+    ]
+  },
+  {
+    "scopeName": "source.mgf",
+    "language": "omics-mgf",
+    "grammar": "grammars/mgf.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".mgf"
+    ],
+    "aliases": [
+      "MGF",
+      "Mascot Generic Format"
+    ]
+  },
+  {
+    "scopeName": "source.mtx",
+    "language": "omics-mtx",
+    "grammar": "grammars/mtx.tmLanguage.json",
+    "languageConfiguration": "language-configuration/mtx.language-configuration.json",
+    "extensions": [
+      ".mtx"
+    ],
+    "aliases": [
+      "MTX",
+      "Matrix Market"
+    ]
+  },
+  {
+    "scopeName": "source.mztab",
+    "language": "omics-mztab",
+    "grammar": "grammars/mztab.tmLanguage.json",
+    "languageConfiguration": "language-configuration/mztab.language-configuration.json",
+    "extensions": [
+      ".mztab",
+      ".mzTab"
+    ],
+    "aliases": [
+      "mzTab",
+      "mzTab Format"
+    ]
+  },
+  {
+    "scopeName": "source.narrowpeak",
+    "language": "omics-narrowpeak",
+    "grammar": "grammars/narrowpeak.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".narrowPeak"
+    ],
+    "aliases": [
+      "narrowPeak"
+    ]
+  },
+  {
+    "scopeName": "source.net",
+    "language": "omics-net",
+    "grammar": "grammars/net.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".net"
+    ],
+    "aliases": [
+      "Net",
+      "UCSC Net"
+    ]
+  },
+  {
+    "scopeName": "source.paf",
+    "language": "omics-paf",
+    "grammar": "grammars/paf.tmLanguage.json",
+    "languageConfiguration": "language-configuration/paf.language-configuration.json",
+    "extensions": [
+      ".paf"
+    ],
+    "aliases": [
+      "PAF",
+      "Pairwise mApping Format"
+    ]
+  },
+  {
+    "scopeName": "source.ped",
+    "language": "omics-ped",
+    "grammar": "grammars/ped.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".ped"
+    ],
+    "aliases": [
+      "PED",
+      "Pedigree Format"
+    ]
+  },
+  {
+    "scopeName": "source.psl",
+    "language": "omics-psl",
+    "grammar": "grammars/psl.tmLanguage.json",
+    "languageConfiguration": "language-configuration/basic.language-configuration.json",
+    "extensions": [
+      ".psl"
+    ],
+    "aliases": [
+      "PSL",
+      "Pattern Space Layout"
+    ]
+  },
+  {
+    "scopeName": "source.sam",
+    "language": "omics-sam",
+    "grammar": "grammars/sam.tmLanguage.json",
+    "languageConfiguration": "language-configuration/sam.language-configuration.json",
+    "extensions": [
+      ".sam"
+    ],
+    "aliases": [
+      "SAM",
+      "Sequence Alignment Map"
+    ]
+  },
+  {
+    "scopeName": "source.vcf",
+    "language": "omics-vcf",
+    "grammar": "grammars/vcf.tmLanguage.json",
+    "languageConfiguration": "language-configuration/vcf.language-configuration.json",
+    "extensions": [
+      ".vcf"
+    ],
+    "aliases": [
+      "VCF",
+      "Variant Call Format"
+    ]
+  },
+  {
+    "scopeName": "source.wig",
+    "language": "omics-wig",
+    "grammar": "grammars/wig.tmLanguage.json",
+    "languageConfiguration": "language-configuration/wig.language-configuration.json",
+    "extensions": [
+      ".wig"
+    ],
+    "aliases": [
+      "WIG",
+      "Wiggle Track"
+    ]
+  }
+]
