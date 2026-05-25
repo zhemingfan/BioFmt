@@ -5,6 +5,9 @@
   "version": "1.1.0",
   "publisher": "jfan",
   "license": "GPL-3.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "icon": "images/icon.png",
   "repository": {
     "type": "git",
@@ -68,7 +71,9 @@
     "onLanguage:omics-gfa",
     "onLanguage:omics-fasta",
     "onLanguage:omics-fastq",
-    "onCustomEditor:biofmt.indexedPreview"
+    "onCustomEditor:biofmt.indexedPreview",
+    "onLanguage:omics-chrom-sizes",
+    "onLanguage:omics-interval-list"
   ],
   "main": "./dist/extension.js",
   "browser": "./dist/extension.web.js",
@@ -377,6 +382,34 @@
         ],
         "firstLine": "^@[A-Za-z0-9]",
         "configuration": "./language-configuration/fastq.language-configuration.json"
+      },
+      {
+        "id": "omics-chrom-sizes",
+        "aliases": [
+          "chrom.sizes",
+          "Chromosome Sizes"
+        ],
+        "extensions": [
+          ".sizes",
+          ".chrom.sizes"
+        ],
+        "filenames": [
+          "chrom.sizes"
+        ],
+        "configuration": "./language-configuration/generated/chrom-sizes.language-configuration.json"
+      },
+      {
+        "id": "omics-interval-list",
+        "aliases": [
+          "interval_list",
+          "Picard Intervals"
+        ],
+        "extensions": [
+          ".interval_list",
+          ".intervals"
+        ],
+        "firstLine": "^@HD\\t",
+        "configuration": "./language-configuration/generated/interval-list.language-configuration.json"
       }
     ],
     "grammars": [
@@ -509,6 +542,16 @@
         "language": "omics-fastq",
         "scopeName": "source.fastq",
         "path": "./syntaxes/fastq.tmLanguage.json"
+      },
+      {
+        "language": "omics-chrom-sizes",
+        "scopeName": "source.chrom-sizes",
+        "path": "./syntaxes/generated/chrom-sizes.tmLanguage.json"
+      },
+      {
+        "language": "omics-interval-list",
+        "scopeName": "source.interval-list",
+        "path": "./syntaxes/generated/interval-list.tmLanguage.json"
       }
     ],
     "commands": [
@@ -652,7 +695,9 @@
   "scripts": {
     "postinstall": "git config core.hooksPath scripts",
     "vscode:prepublish": "npm run build",
-    "build": "npm run build:extension && npm run build:server && npm run build:extension:web && npm run build:server:web && npm run build:webview",
+    "gen:formats": "ts-node scripts/gen-formats.ts",
+    "sync:grammars": "ts-node scripts/sync-grammars.ts",
+    "build": "npm run gen:formats && npm run sync:grammars && npm run build:extension && npm run build:server && npm run build:extension:web && npm run build:server:web && npm run build:webview",
     "build:extension": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs",
     "build:server": "esbuild server/src/server.ts --bundle --outfile=dist/server.js --platform=node --format=cjs",
     "build:extension:web": "esbuild src/extension.web.ts --bundle --outfile=dist/extension.web.js --external:vscode --platform=browser --format=cjs",

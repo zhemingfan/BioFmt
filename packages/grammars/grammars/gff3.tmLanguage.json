@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GFF3",
+  "scopeName": "source.gff3",
+  "patterns": [
+    { "include": "#directive" },
+    { "include": "#comment" },
+    { "include": "#feature-line" }
+  ],
+  "repository": {
+    "directive": {
+      "match": "^(##[a-zA-Z-]+)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.directive.gff3" },
+        "2": { "name": "string.unquoted.directive-value.gff3" }
+      }
+    },
+    "comment": {
+      "match": "^#[^#].*$",
+      "name": "comment.line.gff3"
+    },
+    "feature-line": {
+      "match": "^([^\\t]+)\\t([^\\t]+)\\t([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([+\\-\\.\\?])\\t([012\\.])\\t(.+)$",
+      "captures": {
+        "1": { "name": "string.unquoted.seqid.gff3" },
+        "2": { "name": "entity.name.source.gff3" },
+        "3": { "name": "keyword.other.type.gff3" },
+        "4": { "name": "constant.numeric.start.gff3" },
+        "5": { "name": "constant.numeric.end.gff3" },
+        "6": { "name": "constant.numeric.score.gff3" },
+        "7": { "name": "keyword.operator.strand.gff3" },
+        "8": { "name": "constant.numeric.phase.gff3" },
+        "9": { "name": "meta.attributes.gff3" }
+      }
+    }
+  }
+}

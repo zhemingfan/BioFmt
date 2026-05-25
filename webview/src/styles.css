@@ -1494,6 +1494,34 @@ body {
   align-items: flex-start;
 }
 
+.variant-type-table {
+  border-collapse: collapse;
+  font-size: 0.85em;
+  min-width: 240px;
+}
+
+.variant-type-table th {
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground, #999);
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.25));
+}
+
+.variant-type-table td {
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.12));
+}
+
+.variant-type-table th:nth-child(n + 2),
+.variant-type-table td:nth-child(n + 2) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .stats-chart {
   display: flex;
   flex-direction: column;

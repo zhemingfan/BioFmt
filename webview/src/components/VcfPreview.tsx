@@ -8,9 +8,7 @@ import { ExpandedInfoCell } from './ExpandedInfoCell';
 import { parseSampleFormats, getRenderer, getFormatSummaries } from '../vcf/formatParsers';
 import { sortChromosomes, compareChromosomes } from '../utils';
 import { StatsPanel, StatItem } from './StatsPanel';
-import { Histogram } from './Histogram';
-import { BarChart } from './BarChart';
-import { topN } from '../utils/stats';
+import { summarizeVariantTypes } from '../utils/variantType';
 import { navigateToRegion } from '../vscodeApi';
 
 interface VcfPreviewProps {
@@ -162,57 +160,8 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     return headerInfo.samples.slice(0, limit);
   }, [headerInfo, showAllSamples]);
 
-  // Variant statistics computed from parsed data
-  const vcfStats = useMemo(() => {
-    let snp = 0, insertion = 0, deletion = 0, mnv = 0, sv = 0, other = 0;
-    let transitions = 0, transversions = 0;
-    const quals: number[] = [];
-    const filterCounts = new Map<string, number>();
-
-    const transitionPairs = new Set(['AG', 'GA', 'CT', 'TC']);
-
-    for (const row of parsedRows) {
-      // Variant type classification
-      const alts = row.alt === '.' ? [] : row.alt.split(',');
-      for (const alt of alts) {
-        if (alt.startsWith('<')) { sv++; }
-        else if (row.ref.length === 1 && alt.length === 1) {
-          snp++;
-          const pair = row.ref.toUpperCase() + alt.toUpperCase();
-          if (transitionPairs.has(pair)) transitions++;
-          else transversions++;
-        }
-        else if (alt.length > row.ref.length) insertion++;
-        else if (alt.length < row.ref.length) deletion++;
-        else if (row.ref.length > 1 && alt.length === row.ref.length) mnv++;
-        else other++;
-      }
-
-      // QUAL
-      if (row.qual !== null) quals.push(row.qual);
-
-      // FILTER
-      filterCounts.set(row.filter, (filterCounts.get(row.filter) || 0) + 1);
-    }
-
-    const tstv = transversions > 0 ? (transitions / transversions).toFixed(2) : transitions > 0 ? '\u221E' : 'N/A';
-
-    const variantTypes = [
-      { label: 'SNP', value: snp },
-      { label: 'Insertion', value: insertion },
-      { label: 'Deletion', value: deletion },
-      { label: 'MNV', value: mnv },
-      { label: 'SV', value: sv },
-      { label: 'Other', value: other },
-    ].filter(d => d.value > 0);
-
-    const filterBreakdown = topN(
-      Array.from(filterCounts, ([label, value]) => ({ label, value })),
-      10
-    );
-
-    return { tstv, transitions, transversions, variantTypes, quals, filterBreakdown };
-  }, [parsedRows]);
+  // Variant statistics: total events + per-type count and % of total.
+  const vcfStats = useMemo(() => summarizeVariantTypes(parsedRows), [parsedRows]);
 
   // Sort state
   const [sort, setSort] = useState<{ col: 'chrom' | 'pos' | null; dir: 'asc' | 'desc' }>({ col: null, dir: 'asc' });
@@ -399,17 +348,30 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       )}
 
-      {/* Statistics Panel */}
-      {parsedRows.length > 0 && (
+      {/* Statistics Panel: total events + per-type count and % of total */}
+      {vcfStats.total > 0 && (
         <StatsPanel>
           <div className="stats-summary">
-            <StatItem label="Ts/Tv Ratio" value={vcfStats.tstv} />
-            <StatItem label="Transitions" value={vcfStats.transitions} />
-            <StatItem label="Transversions" value={vcfStats.transversions} />
+            <StatItem label="Events" value={vcfStats.total} />
           </div>
-          <BarChart data={vcfStats.variantTypes} label="Variant Types" height={Math.max(80, vcfStats.variantTypes.length * 22 + 20)} />
-          {vcfStats.quals.length > 0 && <Histogram data={vcfStats.quals} label="QUAL Distribution" />}
-          {vcfStats.filterBreakdown.length > 1 && <BarChart data={vcfStats.filterBreakdown} label="FILTER Breakdown" height={Math.max(80, vcfStats.filterBreakdown.length * 22 + 20)} />}
+          <table className="variant-type-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Count</th>
+                <th>% of VCF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vcfStats.types.map((t) => (
+                <tr key={t.label}>
+                  <td>{t.label}</td>
+                  <td>{t.count.toLocaleString()}</td>
+                  <td>{t.pct.toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </StatsPanel>
       )}
 

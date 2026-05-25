@@ -2,6 +2,11 @@
 src/**
 server/src/**
 webview/src/**
+scripts/**
+
+# Declarative format specs + standalone packages (build inputs; grammars are copied into syntaxes/)
+formats/**
+packages/**
 
 # Test files
 test/**

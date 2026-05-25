@@ -252,6 +252,25 @@ export const FIXTURES: Record<string, FixtureInfo> = {
     description: 'FASTQ with 8 reads and varied quality scores',
   },
 
+  // chrom.sizes (declarative format)
+  'chrom-sizes-example': {
+    path: 'example.chrom.sizes',
+    languageId: 'omics-chrom-sizes',
+    description: 'UCSC chrom.sizes with valid sequence lengths',
+  },
+  'chrom-sizes-errors': {
+    path: 'chrom.sizes-errors.sizes',
+    languageId: 'omics-chrom-sizes',
+    description: 'chrom.sizes with negative, non-numeric, zero, and missing size values',
+  },
+
+  // Picard interval_list (declarative format)
+  'interval-list-example': {
+    path: 'example.interval_list',
+    languageId: 'omics-interval-list',
+    description: 'Picard interval_list with a SAM-style @ header and three intervals',
+  },
+
 };
 
 /**

@@ -1,0 +1,6 @@
+@HD	VN:1.6	SO:coordinate
+@SQ	SN:chr1	LN:248956422
+@SQ	SN:chr2	LN:242193529
+chr1	1	100	+	target_1
+chr1	200	300	-	target_2
+chr2	50	150	+	target_3

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MAF Alignment",
+  "scopeName": "source.maf.alignment",
+  "patterns": [
+    { "include": "#header" },
+    { "include": "#alignment-block" },
+    { "include": "#sequence-line" },
+    { "include": "#comment" }
+  ],
+  "repository": {
+    "header": {
+      "match": "^(##maf)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.header.maf" },
+        "2": { "name": "meta.header.attributes.maf" }
+      }
+    },
+    "alignment-block": {
+      "match": "^(a)\\s+(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.alignment.maf" },
+        "2": { "name": "meta.alignment.attributes.maf" }
+      }
+    },
+    "sequence-line": {
+      "match": "^(s)\\s+(\\S+)\\s+([0-9]+)\\s+([0-9]+)\\s+([+\\-])\\s+([0-9]+)\\s+(.+)$",
+      "captures": {
+        "1": { "name": "keyword.control.sequence.maf" },
+        "2": { "name": "entity.name.seqname.maf" },
+        "3": { "name": "constant.numeric.start.maf" },
+        "4": { "name": "constant.numeric.size.maf" },
+        "5": { "name": "keyword.operator.strand.maf" },
+        "6": { "name": "constant.numeric.srcsize.maf" },
+        "7": { "name": "string.unquoted.sequence.maf" }
+      }
+    },
+    "comment": {
+      "match": "^#.*$",
+      "name": "comment.line.maf"
+    }
+  }
+}

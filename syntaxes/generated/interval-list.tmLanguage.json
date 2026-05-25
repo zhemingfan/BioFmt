@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Picard Interval List",
+  "scopeName": "source.interval-list",
+  "patterns": [
+    {
+      "include": "#header"
+    },
+    {
+      "include": "#data"
+    }
+  ],
+  "repository": {
+    "header": {
+      "match": "^(@[A-Z]{2})(\\t.*)?$",
+      "captures": {
+        "1": {
+          "name": "keyword.control.header.interval-list"
+        }
+      }
+    },
+    "data": {
+      "match": "^([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([^\\t]+)$",
+      "captures": {
+        "1": {
+          "name": "string.unquoted.chrom.interval-list"
+        },
+        "2": {
+          "name": "constant.numeric.start.interval-list"
+        },
+        "3": {
+          "name": "constant.numeric.end.interval-list"
+        },
+        "4": {
+          "name": "keyword.operator.strand.interval-list"
+        },
+        "5": {
+          "name": "entity.name.interval.interval-list"
+        }
+      }
+    }
+  }
+}

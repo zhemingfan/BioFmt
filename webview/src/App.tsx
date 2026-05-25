@@ -15,6 +15,7 @@ import { MtxPreview } from './components/MtxPreview';
 import { MzTabPreview } from './components/MzTabPreview';
 import { GenbankPreview } from './components/GenbankPreview';
 import { GenericPreview } from './components/GenericPreview';
+import { DeclarativePreview } from './components/DeclarativePreview';
 import { ChainPreview } from './components/ChainPreview';
 import { NetPreview } from './components/NetPreview';
 import { GfaPreview } from './components/GfaPreview';
@@ -80,6 +81,7 @@ export function App() {
             previewSettings: message.previewSettings,
             error: message.error,
             fileSize: message.fileSize,
+            declarativeRender: message.declarativeRender,
           });
           if (message.headerInfo) {
             setHeaderInfo(message.headerInfo);
@@ -384,7 +386,16 @@ export function App() {
       break;
 
     default:
-      preview = (
+      preview = metadata.declarativeRender ? (
+        <DeclarativePreview
+          metadata={metadata}
+          rows={rows}
+          loadedLineCount={loadedCount}
+          getRow={getRow}
+          isLineLoaded={isLineLoaded}
+          onRequestRows={requestRows}
+        />
+      ) : (
         <GenericPreview
           metadata={metadata}
           rows={rows}
@@ -533,6 +544,18 @@ function IndexedPreviewWrapper({ metadata }: { metadata: DocumentMetadata }) {
         );
 
       default:
+        if (metadata.declarativeRender) {
+          return (
+            <DeclarativePreview
+              metadata={metadata}
+              rows={regionRows}
+              loadedLineCount={regionRows.length}
+              getRow={(line: number) => regionRows[line]}
+              isLineLoaded={(line: number) => line < regionRows.length}
+              onRequestRows={noop}
+            />
+          );
+        }
         return (
           <GenericPreview
             metadata={metadata}

@@ -13,6 +13,7 @@ import { validateWig } from './wig';
 import { validateBedGraph } from './bedgraph';
 import { validateFasta } from './fasta';
 import { validateFastq } from './fastq';
+import { DECLARATIVE_VALIDATORS } from './declarative';
 
 const VALIDATOR_MAP = new Map<string, ValidatorFn>([
   ['omics-vcf', validateVcf],
@@ -32,7 +33,7 @@ const VALIDATOR_MAP = new Map<string, ValidatorFn>([
 ]);
 
 export function getValidator(languageId: string): ValidatorFn | undefined {
-  return VALIDATOR_MAP.get(languageId);
+  return VALIDATOR_MAP.get(languageId) ?? DECLARATIVE_VALIDATORS.get(languageId);
 }
 
 // Re-export individual validators for direct test imports

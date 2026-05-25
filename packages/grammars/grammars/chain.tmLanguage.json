@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Chain",
+  "scopeName": "source.chain",
+  "patterns": [
+    { "include": "#chain-header" },
+    { "include": "#alignment-data" }
+  ],
+  "repository": {
+    "chain-header": {
+      "match": "^(chain)\\s+([0-9]+)\\s+(\\S+)\\s+([0-9]+)\\s+([+\\-])\\s+([0-9]+)\\s+([0-9]+)\\s+(\\S+)\\s+([0-9]+)\\s+([+\\-])\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)$",
+      "captures": {
+        "1": { "name": "keyword.control.chain.chain" },
+        "2": { "name": "constant.numeric.score.chain" },
+        "3": { "name": "string.unquoted.tname.chain" },
+        "4": { "name": "constant.numeric.tsize.chain" },
+        "5": { "name": "keyword.operator.tstrand.chain" },
+        "6": { "name": "constant.numeric.tstart.chain" },
+        "7": { "name": "constant.numeric.tend.chain" },
+        "8": { "name": "string.unquoted.qname.chain" },
+        "9": { "name": "constant.numeric.qsize.chain" },
+        "10": { "name": "keyword.operator.qstrand.chain" },
+        "11": { "name": "constant.numeric.qstart.chain" },
+        "12": { "name": "constant.numeric.qend.chain" },
+        "13": { "name": "constant.numeric.id.chain" }
+      }
+    },
+    "alignment-data": {
+      "match": "^([0-9]+)(\\s+([0-9]+)\\s+([0-9]+))?$",
+      "captures": {
+        "1": { "name": "constant.numeric.size.chain" },
+        "3": { "name": "constant.numeric.dt.chain" },
+        "4": { "name": "constant.numeric.dq.chain" }
+      }
+    }
+  }
+}

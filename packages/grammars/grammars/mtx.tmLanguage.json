@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MTX",
+  "scopeName": "source.mtx",
+  "patterns": [
+    { "include": "#header" },
+    { "include": "#comment" },
+    { "include": "#dimensions" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "header": {
+      "match": "^(%%MatrixMarket)\\s+(matrix|vector)\\s+(coordinate|array)\\s+(real|integer|complex|pattern)\\s*(general|symmetric|skew-symmetric|hermitian)?$",
+      "captures": {
+        "1": { "name": "keyword.control.matrixmarket.mtx" },
+        "2": { "name": "keyword.other.object.mtx" },
+        "3": { "name": "keyword.other.format.mtx" },
+        "4": { "name": "storage.type.mtx" },
+        "5": { "name": "keyword.other.symmetry.mtx" }
+      }
+    },
+    "comment": {
+      "match": "^%.*$",
+      "name": "comment.line.mtx"
+    },
+    "dimensions": {
+      "match": "^([0-9]+)\\s+([0-9]+)\\s+([0-9]+)$",
+      "captures": {
+        "1": { "name": "constant.numeric.rows.mtx" },
+        "2": { "name": "constant.numeric.cols.mtx" },
+        "3": { "name": "constant.numeric.nnz.mtx" }
+      }
+    },
+    "data-line": {
+      "match": "^([0-9]+)\\s+([0-9]+)\\s+(.+)$",
+      "captures": {
+        "1": { "name": "constant.numeric.row.mtx" },
+        "2": { "name": "constant.numeric.col.mtx" },
+        "3": { "name": "constant.numeric.value.mtx" }
+      }
+    }
+  }
+}

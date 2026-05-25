@@ -1,0 +1,36 @@
+{
+  "name": "@biofmt/textmate-grammars",
+  "version": "0.1.0",
+  "description": "TextMate grammars and language configurations for genomics, transcriptomics, and proteomics text formats (VCF, SAM, BED, GFF3, and more). Reusable in VS Code, Zed, Sublime Text, Neovim, Helix, and GitHub Linguist.",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhemingfan/BioFmt",
+    "directory": "packages/grammars"
+  },
+  "homepage": "https://github.com/zhemingfan/BioFmt#readme",
+  "bugs": {
+    "url": "https://github.com/zhemingfan/BioFmt/issues"
+  },
+  "keywords": [
+    "textmate",
+    "tmlanguage",
+    "grammar",
+    "syntax-highlighting",
+    "bioinformatics",
+    "genomics",
+    "transcriptomics",
+    "proteomics",
+    "vcf",
+    "sam",
+    "bed",
+    "gff3"
+  ],
+  "files": [
+    "grammars/",
+    "language-configuration/",
+    "manifest.json",
+    "README.md",
+    "LICENSE"
+  ]
+}

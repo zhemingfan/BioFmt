@@ -209,11 +209,25 @@ export const SPEC_REFS: ReadonlyMap<string, SpecRef> = new Map([
 ]);
 
 /**
+ * Spec refs contributed at runtime by declarative format specs (/formats/*.json).
+ * Kept separate from the static SPEC_REFS map (which stays the source of truth for
+ * the hand-written formats) but consulted by getSpecRef/withSpecRef and, through
+ * them, by the diagnostic code actions.
+ */
+const DECLARATIVE_SPEC_REFS = new Map<string, SpecRef>();
+
+export function registerSpecRefs(refs: SpecRef[]): void {
+  for (const ref of refs) {
+    DECLARATIVE_SPEC_REFS.set(ref.code, ref);
+  }
+}
+
+/**
  * Attach spec reference to a diagnostic. Returns the diagnostic for chaining.
  */
 export function withSpecRef(diagnostic: Diagnostic, ruleCode: string): Diagnostic {
   diagnostic.code = ruleCode;
-  const ref = SPEC_REFS.get(ruleCode);
+  const ref = getSpecRef(ruleCode);
   if (ref) {
     diagnostic.codeDescription = { href: ref.href };
   }
@@ -221,7 +235,7 @@ export function withSpecRef(diagnostic: Diagnostic, ruleCode: string): Diagnosti
 }
 
 export function getSpecRef(ruleCode: string): SpecRef | undefined {
-  return SPEC_REFS.get(ruleCode);
+  return SPEC_REFS.get(ruleCode) ?? DECLARATIVE_SPEC_REFS.get(ruleCode);
 }
 
 export function ruleAnchor(ruleCode: string): string {

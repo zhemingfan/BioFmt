@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Net",
+  "scopeName": "source.net",
+  "patterns": [
+    { "include": "#net-line" },
+    { "include": "#fill-line" },
+    { "include": "#gap-line" }
+  ],
+  "repository": {
+    "net-line": {
+      "match": "^(net)\\s+(\\S+)\\s+([0-9]+)$",
+      "captures": {
+        "1": { "name": "keyword.control.net.net" },
+        "2": { "name": "string.unquoted.chrom.net" },
+        "3": { "name": "constant.numeric.size.net" }
+      }
+    },
+    "fill-line": {
+      "match": "^(\\s*)(fill)\\s+([0-9]+)\\s+([0-9]+)\\s+(\\S+)\\s+([+\\-])\\s+([0-9]+)\\s+([0-9]+)(.*)$",
+      "captures": {
+        "1": { "name": "meta.indent.net" },
+        "2": { "name": "keyword.control.fill.net" },
+        "3": { "name": "constant.numeric.tstart.net" },
+        "4": { "name": "constant.numeric.tsize.net" },
+        "5": { "name": "string.unquoted.qname.net" },
+        "6": { "name": "keyword.operator.strand.net" },
+        "7": { "name": "constant.numeric.qstart.net" },
+        "8": { "name": "constant.numeric.qsize.net" },
+        "9": { "name": "meta.attributes.net" }
+      }
+    },
+    "gap-line": {
+      "match": "^(\\s*)(gap)\\s+([0-9]+)\\s+([0-9]+)\\s+(\\S+)\\s+([+\\-])\\s+([0-9]+)\\s+([0-9]+)(.*)$",
+      "captures": {
+        "1": { "name": "meta.indent.net" },
+        "2": { "name": "keyword.control.gap.net" },
+        "3": { "name": "constant.numeric.tstart.net" },
+        "4": { "name": "constant.numeric.tsize.net" },
+        "5": { "name": "string.unquoted.qname.net" },
+        "6": { "name": "keyword.operator.strand.net" },
+        "7": { "name": "constant.numeric.qstart.net" },
+        "8": { "name": "constant.numeric.qsize.net" },
+        "9": { "name": "meta.attributes.net" }
+      }
+    }
+  }
+}

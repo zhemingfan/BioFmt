@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "chrom.sizes",
+  "scopeName": "source.chrom-sizes",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#data"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.chrom-sizes",
+      "match": "^#.*$"
+    },
+    "data": {
+      "match": "^([^\\t]+)\\t([0-9]+)$",
+      "captures": {
+        "1": {
+          "name": "string.unquoted.chrom.chrom-sizes"
+        },
+        "2": {
+          "name": "constant.numeric.size.chrom-sizes"
+        }
+      }
+    }
+  }
+}

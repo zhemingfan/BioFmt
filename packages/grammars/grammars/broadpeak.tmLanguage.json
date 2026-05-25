@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "broadPeak",
+  "scopeName": "source.broadpeak",
+  "patterns": [
+    { "include": "#track-line" },
+    { "include": "#browser-line" },
+    { "include": "#data-line" }
+  ],
+  "repository": {
+    "track-line": {
+      "match": "^(track)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.track.broadpeak" },
+        "2": { "name": "meta.track.attributes.broadpeak" }
+      }
+    },
+    "browser-line": {
+      "match": "^(browser)(.*)$",
+      "captures": {
+        "1": { "name": "keyword.control.browser.broadpeak" },
+        "2": { "name": "meta.browser.attributes.broadpeak" }
+      }
+    },
+    "data-line": {
+      "match": "^([^\\t]+)\\t([0-9]+)\\t([0-9]+)\\t([^\\t]+)\\t([0-9]+)\\t([+\\-\\.])\\t([0-9.eE+-]+)\\t([0-9.eE+-]+)\\t([0-9.eE+-]+)$",
+      "captures": {
+        "1": { "name": "string.unquoted.chrom.broadpeak" },
+        "2": { "name": "constant.numeric.start.broadpeak" },
+        "3": { "name": "constant.numeric.end.broadpeak" },
+        "4": { "name": "entity.name.broadpeak" },
+        "5": { "name": "constant.numeric.score.broadpeak" },
+        "6": { "name": "keyword.operator.strand.broadpeak" },
+        "7": { "name": "constant.numeric.signalValue.broadpeak" },
+        "8": { "name": "constant.numeric.pValue.broadpeak" },
+        "9": { "name": "constant.numeric.qValue.broadpeak" }
+      }
+    }
+  }
+}
