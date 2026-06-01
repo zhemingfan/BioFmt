@@ -13,10 +13,13 @@ import { IndexedEditorProvider } from './providers/IndexedEditorProvider';
 import { GenomicIndexRegistry } from './services/GenomicIndexRegistry';
 import { parseGenomicCoords } from './shared/genomicCoords';
 import { GENERATED_FORMATS } from './shared/generatedFormats';
+import { clampRowRange, getPreviewLineLimit, normalizePreviewMaxLines } from './shared/previewLimits';
 import type { DeclarativeRenderSpec } from './shared/formatSpec';
+import { WorkspaceLintLifecycle } from './shared/workspaceLintLifecycle';
 
 let client: LanguageClient | undefined;
 let genomicRegistry: GenomicIndexRegistry | undefined;
+const workspaceLintLifecycle = new WorkspaceLintLifecycle<vscode.FileSystemWatcher>();
 
 // Map of supported language IDs for BioFmt
 const OMICS_LANGUAGES = [
@@ -125,6 +128,14 @@ function registerCommands(context: vscode.ExtensionContext): void {
       // Check file size against configured maxBytes
       const config = vscode.workspace.getConfiguration('biofmt.preview');
       const maxBytes = config.get<number>('maxBytes', 52428800);
+      const maxLines = normalizePreviewMaxLines(config.get<number>('maxLines', 200000));
+      let headerInfo: VcfHeaderInfo | undefined;
+      if (languageId === 'omics-vcf') {
+        headerInfo = parseVcfHeader(document);
+      }
+      const previewLineLimit = getPreviewLineLimit(document.lineCount, maxLines, {
+        preserveLeadingLines: headerInfo?.headerEndLine,
+      });
       let fileSize: number | undefined;
       try {
         const stat = await vscode.workspace.fs.stat(document.uri);
@@ -160,12 +171,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
       // Set up panel content
       panel.webview.html = getPreviewHtml(panel.webview, context, document);
 
-      // Parse header for VCF files
-      let headerInfo: VcfHeaderInfo | undefined;
-      if (languageId === 'omics-vcf') {
-        headerInfo = parseVcfHeader(document);
-      }
-
       // Handle messages from webview
       panel.webview.onDidReceiveMessage(
         async (message) => {
@@ -174,7 +179,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
               const rows = await getDocumentRows(
                 document,
                 message.startLine,
-                message.endLine
+                message.endLine,
+                previewLineLimit
               );
               panel.webview.postMessage({
                 command: 'rowData',
@@ -469,7 +475,7 @@ async function startLanguageServer(
   // Workspace-wide lint
   const workspaceConfig = vscode.workspace.getConfiguration('biofmt.workspace');
   if (workspaceConfig.get<boolean>('enableLint', false)) {
-    startWorkspaceLint(context);
+    void startWorkspaceLint(context);
   }
 
   // Re-trigger workspace lint when config changes
@@ -477,13 +483,16 @@ async function startLanguageServer(
     if (e.affectsConfiguration('biofmt.workspace.enableLint')) {
       const enabled = vscode.workspace.getConfiguration('biofmt.workspace').get<boolean>('enableLint', false);
       if (enabled) {
-        startWorkspaceLint(context);
-      } else if (client) {
-        client.sendNotification('biofmt/workspaceCancel');
+        void startWorkspaceLint(context);
+      } else {
+        stopWorkspaceLint(true);
       }
     }
   });
-  context.subscriptions.push(configDisposable);
+  context.subscriptions.push(
+    configDisposable,
+    { dispose: () => stopWorkspaceLint(false) }
+  );
 }
 
 const BIO_FILE_PATTERNS = [
@@ -529,8 +538,6 @@ function inferLanguageId(fsPath: string): string {
   return 'unknown';
 }
 
-let workspaceScanTimeout: ReturnType<typeof setTimeout> | undefined;
-
 async function startWorkspaceLint(context: vscode.ExtensionContext): Promise<void> {
   if (!client) return;
 
@@ -551,20 +558,42 @@ async function startWorkspaceLint(context: vscode.ExtensionContext): Promise<voi
     }
   }
 
+  if (!vscode.workspace.getConfiguration('biofmt.workspace').get<boolean>('enableLint', false)) {
+    return;
+  }
+
   client.sendNotification('biofmt/workspaceFiles', { files, maxFileSizeMB });
 
-  // Watch for file changes and re-scan (debounced)
-  const watcher = vscode.workspace.createFileSystemWatcher('**/*.{vcf,sam,bed,bedpe,gtf,gff,gff3,paf,psl,wig,bedGraph,narrowPeak,broadPeak,fasta,fa,fastq,fq}');
+  workspaceLintLifecycle.ensureWatcher(() => {
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*.{vcf,sam,bed,bedpe,gtf,gff,gff3,paf,psl,wig,bedGraph,narrowPeak,broadPeak,fasta,fa,fastq,fq}');
 
-  const debouncedRescan = () => {
-    if (workspaceScanTimeout) clearTimeout(workspaceScanTimeout);
-    workspaceScanTimeout = setTimeout(() => startWorkspaceLint(context), 2000);
-  };
+    const debouncedRescan = () => {
+      workspaceLintLifecycle.clearPendingTimer(clearTimeout);
+      workspaceLintLifecycle.setPendingTimer(setTimeout(() => {
+        workspaceLintLifecycle.setPendingTimer(undefined);
+        void startWorkspaceLint(context);
+      }, 2000));
+    };
 
-  watcher.onDidCreate(debouncedRescan);
-  watcher.onDidChange(debouncedRescan);
-  watcher.onDidDelete(debouncedRescan);
-  context.subscriptions.push(watcher);
+    watcher.onDidCreate(debouncedRescan);
+    watcher.onDidChange(debouncedRescan);
+    watcher.onDidDelete(debouncedRescan);
+    context.subscriptions.push(watcher);
+    return watcher;
+  });
+}
+
+function stopWorkspaceLint(clearDiagnostics: boolean): void {
+  workspaceLintLifecycle.stop(clearTimeout);
+  if (!client) return;
+
+  client.sendNotification('biofmt/workspaceCancel');
+  if (clearDiagnostics) {
+    const maxFileSizeMB = vscode.workspace
+      .getConfiguration('biofmt.workspace')
+      .get<number>('maxFileSizeMB', 10);
+    client.sendNotification('biofmt/workspaceFiles', { files: [], maxFileSizeMB });
+  }
 }
 
 // VCF Header types
@@ -860,12 +889,15 @@ function getFallbackPreviewHtml(document: vscode.TextDocument, styles: string): 
 async function getDocumentRows(
   document: vscode.TextDocument,
   startLine: number,
-  endLine: number
+  endLine: number,
+  lineLimit = document.lineCount,
 ): Promise<string[]> {
-  const rows: string[] = [];
-  const maxLine = Math.min(endLine, document.lineCount);
+  const range = clampRowRange(startLine, endLine, Math.min(lineLimit, document.lineCount));
+  if (!range) return [];
 
-  for (let i = startLine; i < maxLine; i++) {
+  const rows: string[] = [];
+
+  for (let i = range.startLine; i < range.endLine; i++) {
     rows.push(document.lineAt(i).text);
   }
 
@@ -886,6 +918,7 @@ function getDocumentMetadata(
   declarativeRender?: DeclarativeRenderSpec;
 } {
   const config = vscode.workspace.getConfiguration('biofmt.preview');
+  const maxLines = normalizePreviewMaxLines(config.get<number>('maxLines', 200000));
   return {
     lineCount: document.lineCount,
     languageId: document.languageId,
@@ -894,7 +927,7 @@ function getDocumentMetadata(
     fileSize,
     declarativeRender: getDeclarativeRender(document.languageId),
     previewSettings: {
-      maxLines: config.get<number>('maxLines', 200000),
+      maxLines,
       maxBytes: config.get<number>('maxBytes', 52428800),
       downsampleLimit: config.get<number>('downsampleLimit', 200000),
       sampleColumnLimit: config.get<number>('sampleColumnLimit', 10),

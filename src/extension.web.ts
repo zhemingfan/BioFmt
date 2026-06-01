@@ -13,6 +13,7 @@ import {
   LanguageClientOptions,
 } from 'vscode-languageclient/browser';
 import { GENERATED_FORMATS } from './shared/generatedFormats';
+import { clampRowRange, getPreviewLineLimit, normalizePreviewMaxLines } from './shared/previewLimits';
 import type { DeclarativeRenderSpec } from './shared/formatSpec';
 
 let client: LanguageClient | undefined;
@@ -102,12 +103,17 @@ function registerCommands(context: vscode.ExtensionContext): void {
       if (languageId === 'omics-vcf') {
         headerInfo = parseVcfHeader(document);
       }
+      const previewConfig = vscode.workspace.getConfiguration('biofmt.preview');
+      const maxLines = normalizePreviewMaxLines(previewConfig.get<number>('maxLines', 200000));
+      const previewLineLimit = getPreviewLineLimit(document.lineCount, maxLines, {
+        preserveLeadingLines: headerInfo?.headerEndLine,
+      });
 
       panel.webview.onDidReceiveMessage(
         async (message) => {
           switch (message.command) {
             case 'requestRows': {
-              const rows = getDocumentRows(document, message.startLine, message.endLine);
+              const rows = getDocumentRows(document, message.startLine, message.endLine, previewLineLimit);
               panel.webview.postMessage({
                 command: 'rowData',
                 rows,
@@ -258,10 +264,17 @@ function getPreviewHtml(
 </html>`;
 }
 
-function getDocumentRows(document: vscode.TextDocument, startLine: number, endLine: number): string[] {
+function getDocumentRows(
+  document: vscode.TextDocument,
+  startLine: number,
+  endLine: number,
+  lineLimit = document.lineCount,
+): string[] {
+  const range = clampRowRange(startLine, endLine, Math.min(lineLimit, document.lineCount));
+  if (!range) return [];
+
   const rows: string[] = [];
-  const maxLine = Math.min(endLine, document.lineCount);
-  for (let i = startLine; i < maxLine; i++) {
+  for (let i = range.startLine; i < range.endLine; i++) {
     rows.push(document.lineAt(i).text);
   }
   return rows;
@@ -347,13 +360,14 @@ function getDocumentMetadata(document: vscode.TextDocument, headerInfo?: VcfHead
   const fileName = document.uri.path.split('/').pop() || 'unknown';
 
   const config = vscode.workspace.getConfiguration('biofmt.preview');
+  const maxLines = normalizePreviewMaxLines(config.get<number>('maxLines', 200000));
 
   return {
     fileName,
     languageId: document.languageId,
     lineCount: document.lineCount,
     previewSettings: {
-      maxLines: config.get<number>('maxLines', 200000),
+      maxLines,
       sampleColumnLimit: config.get<number>('sampleColumnLimit', 10),
     },
     headerInfo,

@@ -632,7 +632,7 @@
         "biofmt.preview.maxLines": {
           "type": "number",
           "default": 200000,
-          "description": "Maximum number of lines to load in preview"
+          "description": "Maximum number of lines to load in preview. For VCF previews, header lines are preserved and this setting limits variant records."
         },
         "biofmt.preview.maxBytes": {
           "type": "number",

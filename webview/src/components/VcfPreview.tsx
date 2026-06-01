@@ -10,6 +10,7 @@ import { sortChromosomes, compareChromosomes } from '../utils';
 import { StatsPanel, StatItem } from './StatsPanel';
 import { summarizeVariantTypes } from '../utils/variantType';
 import { navigateToRegion } from '../vscodeApi';
+import { getVcfPreviewDisplayScope } from '../../../src/shared/vcfPreviewDisplay';
 
 interface VcfPreviewProps {
   metadata: DocumentMetadata;
@@ -293,7 +294,15 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     }
   }, [headerInfo, loadedLineCount, metadata.lineCount, onRequestRows]);
 
-  const isTruncated = metadata.lineCount > MAX_DISPLAY_ROWS;
+  const displayScope = useMemo(
+    () => getVcfPreviewDisplayScope({
+      lineCount: metadata.lineCount,
+      maxLines: metadata.previewSettings?.maxLines,
+      previewedVariants: parsedRows.length,
+      headerEndLine: headerInfo?.headerEndLine,
+    }),
+    [metadata.lineCount, metadata.previewSettings?.maxLines, parsedRows.length, headerInfo?.headerEndLine]
+  );
 
   return (
     <div className="vcf-preview">
@@ -302,7 +311,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         <h1>{metadata.fileName}</h1>
         <div className="meta">
           <span>Format: VCF {headerInfo?.fileformat?.replace('VCF', '') || ''}</span>
-          <span>Variants: {sortedRows.length.toLocaleString()}</span>
+          <span>{displayScope.variantLabel}: {sortedRows.length.toLocaleString()}</span>
           {headerInfo?.samples && <span>Samples: {headerInfo.samples.length}</span>}
         </div>
         <button
@@ -316,12 +325,10 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       </div>
 
       {/* Truncation Warning */}
-      {isTruncated && (
+      {displayScope.truncationMessage && (
         <div className="truncation-banner">
           <span className="icon">⚠️</span>
-          <span className="message">
-            Showing first {MAX_DISPLAY_ROWS.toLocaleString()} rows of {metadata.lineCount.toLocaleString()} total
-          </span>
+          <span className="message">{displayScope.truncationMessage}</span>
         </div>
       )}
 
@@ -352,14 +359,14 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       {vcfStats.total > 0 && (
         <StatsPanel>
           <div className="stats-summary">
-            <StatItem label="Events" value={vcfStats.total} />
+            <StatItem label={displayScope.eventLabel} value={vcfStats.total} />
           </div>
           <table className="variant-type-table">
             <thead>
               <tr>
                 <th>Type</th>
                 <th>Count</th>
-                <th>% of VCF</th>
+                <th>{displayScope.percentHeader}</th>
               </tr>
             </thead>
             <tbody>
