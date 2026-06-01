@@ -24,9 +24,18 @@ import { FastqPreview } from './components/FastqPreview';
 import { FileSizeBanner } from './components/FileSizeBanner';
 import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
 import { getVsCode } from './vscodeApi';
+import { getPreviewLineLimit } from '../../src/shared/previewLimits';
 import './styles.css';
 
 const vscode = getVsCode();
+
+function getEffectivePreviewLineCount(metadata: DocumentMetadata): number {
+  return getPreviewLineLimit(metadata.lineCount, metadata.previewSettings?.maxLines, {
+    preserveLeadingLines: metadata.languageId === 'omics-vcf'
+      ? metadata.headerInfo?.headerEndLine
+      : undefined,
+  });
+}
 
 export function App() {
   const [metadata, setMetadata] = useState<DocumentMetadata | null>(null);
@@ -126,9 +135,9 @@ export function App() {
 
   // Request more rows when needed
   const requestRows = useCallback((startLine: number, endLine: number) => {
-    const totalLines = metadata?.lineCount;
+    const totalLines = metadata ? getEffectivePreviewLineCount(metadata) : undefined;
     const clampedStart = Math.max(0, startLine);
-    const clampedEnd = totalLines ? Math.min(endLine, totalLines) : endLine;
+    const clampedEnd = totalLines !== undefined ? Math.min(endLine, totalLines) : endLine;
 
     if (clampedEnd <= clampedStart) {
       return;

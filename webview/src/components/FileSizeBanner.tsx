@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 import type { DocumentMetadata } from '../types';
+import { getPreviewLimitDisplay } from '../../../src/shared/previewLimits';
 
 interface FileSizeBannerProps {
   metadata: DocumentMetadata;
@@ -43,8 +44,14 @@ function getFormatAdvice(languageId: string): string | null {
 export function FileSizeBanner({ metadata }: FileSizeBannerProps): ReactElement | null {
   const maxLines = metadata.previewSettings?.maxLines ?? 200000;
   const maxBytes = metadata.previewSettings?.maxBytes ?? 52428800;
+  const previewLimitDisplay = getPreviewLimitDisplay({
+    languageId: metadata.languageId,
+    lineCount: metadata.lineCount,
+    maxLines,
+    headerEndLine: metadata.headerInfo?.headerEndLine,
+  });
 
-  const exceedsLines = metadata.lineCount > maxLines;
+  const exceedsLines = previewLimitDisplay.exceedsLimit;
   const exceedsBytes = metadata.fileSize != null && metadata.fileSize > maxBytes;
 
   if (!exceedsLines && !exceedsBytes) return null;
@@ -53,7 +60,7 @@ export function FileSizeBanner({ metadata }: FileSizeBannerProps): ReactElement 
 
   const parts: string[] = [];
   if (exceedsLines) {
-    parts.push(`${metadata.lineCount.toLocaleString()} lines (limit: ${maxLines.toLocaleString()})`);
+    parts.push(previewLimitDisplay.stat);
   }
   if (exceedsBytes && metadata.fileSize != null) {
     parts.push(`${formatBytes(metadata.fileSize)} (limit: ${formatBytes(maxBytes)})`);
@@ -72,7 +79,7 @@ export function FileSizeBanner({ metadata }: FileSizeBannerProps): ReactElement 
       </div>
       <div className="file-size-banner-message">
         Preview is showing a truncated view of this file.
-        {exceedsLines && ` Only the first ${maxLines.toLocaleString()} lines are displayed.`}
+        {exceedsLines && ` ${previewLimitDisplay.message}`}
       </div>
       {advice && (
         <div className="file-size-banner-advice">
