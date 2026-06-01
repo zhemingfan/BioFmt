@@ -15,6 +15,7 @@ import {
 import { GENERATED_FORMATS } from './shared/generatedFormats';
 import { clampRowRange, getPreviewLineLimit, normalizePreviewMaxLines } from './shared/previewLimits';
 import type { DeclarativeRenderSpec } from './shared/formatSpec';
+import { buildExternalAssetWebviewHtml } from './shared/webviewHtml';
 
 let client: LanguageClient | undefined;
 
@@ -244,24 +245,12 @@ function getPreviewHtml(
 
   const fileName = document.uri.path.split('/').pop() || 'unknown';
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="${styleUri}">
-  <title>${fileName}</title>
-</head>
-<body>
-  <div id="root">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div>Loading preview...</div>
-    </div>
-  </div>
-  <script src="${scriptUri}"></script>
-</body>
-</html>`;
+  return buildExternalAssetWebviewHtml({
+    title: fileName,
+    cspSource: webview.cspSource,
+    styleUri: String(styleUri),
+    scriptUri: String(scriptUri),
+  });
 }
 
 function getDocumentRows(
