@@ -2,379 +2,205 @@
 
 import * as assert from 'assert';
 import * as fs from 'fs';
+import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
+import { validateBed, validateBedpe } from '../../../server/src/validators';
+import { defaultSettings } from '../../../server/src/validators/types';
+import type { ValidatorContext } from '../../../server/src/validators/types';
 import { getFixturePath } from '../../fixtures.index';
 
 /**
- * BED and BEDPE Validation Tests
- *
- * Tests the validation logic for BED (Browser Extensible Data) and
- * BEDPE (Paired-End BED) formats.
+ * BED and BEDPE validation tests, exercising the SHIPPED validators
+ * (server/src/validators/{bed,bedpe}.ts) directly.
  */
 
-// Simplified validation functions extracted from server for testing
-interface ValidationDiagnostic {
-  line: number;
-  message: string;
-  severity: 'error' | 'warning';
+function ctx(text: string): ValidatorContext {
+  return {
+    uri: 'file:///test',
+    lineCount: text.split('\n').length,
+    headerEndLine: 0,
+    bufferLines: 500,
+  };
 }
 
-function validateBedLine(line: string, lineNumber: number): ValidationDiagnostic | null {
-  // Skip empty lines, track lines, browser lines, and comments
-  if (!line.trim() || line.startsWith('track') || line.startsWith('browser') || line.startsWith('#')) {
-    return null;
-  }
+const runBed = (text: string): Diagnostic[] => validateBed(text, defaultSettings, ctx(text));
+const runBedpe = (text: string): Diagnostic[] => validateBedpe(text, defaultSettings, ctx(text));
 
-  const columns = line.split('\t');
-
-  if (columns.length < 3) {
-    return {
-      line: lineNumber,
-      message: 'BED format requires at least 3 columns (chrom, start, end)',
-      severity: 'error',
-    };
-  }
-
-  const start = parseInt(columns[1], 10);
-  const end = parseInt(columns[2], 10);
-
-  if (isNaN(start) || isNaN(end)) {
-    return {
-      line: lineNumber,
-      message: 'Start and end positions must be integers',
-      severity: 'error',
-    };
-  }
-
-  if (start < 0) {
-    return {
-      line: lineNumber,
-      message: 'Start position cannot be negative',
-      severity: 'error',
-    };
-  }
-
-  if (start >= end) {
-    return {
-      line: lineNumber,
-      message: 'Start position must be less than end position',
-      severity: 'error',
-    };
-  }
-
-  return null;
+function hasError(diags: Diagnostic[], substr: string): boolean {
+  return diags.some((d) => d.severity === DiagnosticSeverity.Error && d.message.includes(substr));
 }
-
-function validateBedpeLine(line: string, lineNumber: number): ValidationDiagnostic | null {
-  // Skip empty lines, comments, and header lines
-  if (!line.trim() || line.startsWith('#')) {
-    return null;
-  }
-
-  const columns = line.split('\t');
-
-  if (columns.length < 6) {
-    return {
-      line: lineNumber,
-      message: 'BEDPE format requires at least 6 columns (chrom1, start1, end1, chrom2, start2, end2)',
-      severity: 'error',
-    };
-  }
-
-  // Validate first coordinate pair
-  const start1 = parseInt(columns[1], 10);
-  const end1 = parseInt(columns[2], 10);
-
-  if (isNaN(start1) || isNaN(end1)) {
-    return {
-      line: lineNumber,
-      message: 'start1 and end1 positions must be integers',
-      severity: 'error',
-    };
-  }
-
-  // Validate second coordinate pair
-  const start2 = parseInt(columns[4], 10);
-  const end2 = parseInt(columns[5], 10);
-
-  if (isNaN(start2) || isNaN(end2)) {
-    return {
-      line: lineNumber,
-      message: 'start2 and end2 positions must be integers',
-      severity: 'error',
-    };
-  }
-
-  if (start1 < 0 || start2 < 0) {
-    return {
-      line: lineNumber,
-      message: 'Start positions cannot be negative',
-      severity: 'error',
-    };
-  }
-
-  if (end1 < start1 || end2 < start2) {
-    return {
-      line: lineNumber,
-      message: 'End position must be >= start position',
-      severity: 'error',
-    };
-  }
-
-  // Validate strand fields if present (columns 9 and 10)
-  if (columns.length >= 10) {
-    const strand1 = columns[8];
-    const strand2 = columns[9];
-    const validStrands = ['+', '-', '.'];
-
-    if (!validStrands.includes(strand1) || !validStrands.includes(strand2)) {
-      return {
-        line: lineNumber,
-        message: 'Strand fields should be +, -, or .',
-        severity: 'warning',
-      };
-    }
-  }
-
-  return null;
+function hasWarning(diags: Diagnostic[], substr: string): boolean {
+  return diags.some((d) => d.severity === DiagnosticSeverity.Warning && d.message.includes(substr));
 }
 
 describe('BED Validation', () => {
-  describe('validateBedLine', () => {
+  describe('validateBed', () => {
     it('should accept valid BED3 line', () => {
-      const result = validateBedLine('chr1\t100\t200', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed('chr1\t100\t200'), []);
     });
 
     it('should accept valid BED6 line', () => {
-      const result = validateBedLine('chr1\t100\t200\tfeature1\t500\t+', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed('chr1\t100\t200\tfeature1\t500\t+'), []);
     });
 
     it('should accept valid BED12 line', () => {
-      const result = validateBedLine('chr1\t100\t200\tfeature1\t500\t+\t100\t200\t0\t1\t100\t0', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed('chr1\t100\t200\tfeature1\t500\t+\t100\t200\t0\t1\t100\t0'), []);
     });
 
     it('should skip empty lines', () => {
-      const result = validateBedLine('', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed(''), []);
     });
 
     it('should skip comment lines', () => {
-      const result = validateBedLine('#chrom\tchromStart\tchromEnd', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed('#chrom\tchromStart\tchromEnd'), []);
     });
 
     it('should skip track lines', () => {
-      const result = validateBedLine('track name="test"', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed('track name="test"'), []);
     });
 
     it('should skip browser lines', () => {
-      const result = validateBedLine('browser position chr1:1-1000', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBed('browser position chr1:1-1000'), []);
     });
 
     it('should reject lines with fewer than 3 columns', () => {
-      const result = validateBedLine('chr1\t100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('at least 3 columns'));
+      assert.ok(hasError(runBed('chr1\t100'), 'at least 3 columns'));
     });
 
     it('should reject non-integer start position', () => {
-      const result = validateBedLine('chr1\tabc\t200', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('integers'));
+      assert.ok(hasError(runBed('chr1\tabc\t200'), 'integers'));
     });
 
     it('should reject non-integer end position', () => {
-      const result = validateBedLine('chr1\t100\txyz', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('integers'));
+      assert.ok(hasError(runBed('chr1\t100\txyz'), 'integers'));
     });
 
     it('should reject negative start position', () => {
-      const result = validateBedLine('chr1\t-10\t200', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('negative'));
+      assert.ok(hasError(runBed('chr1\t-10\t200'), 'negative'));
     });
 
     it('should reject start >= end', () => {
-      const result = validateBedLine('chr1\t200\t100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('less than'));
+      assert.ok(hasError(runBed('chr1\t200\t100'), 'less than'));
     });
 
     it('should reject start == end', () => {
-      const result = validateBedLine('chr1\t100\t100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
+      const diags = runBed('chr1\t100\t100');
+      assert.ok(diags.some((d) => d.severity === DiagnosticSeverity.Error));
+    });
+
+    it('should warn on out-of-range score in strict mode', () => {
+      assert.ok(hasWarning(runBed('chr1\t100\t200\tfeature\t5000\t+'), 'Score'));
+    });
+
+    it('should warn on invalid strand in strict mode', () => {
+      assert.ok(hasWarning(runBed('chr1\t100\t200\tfeature\t500\tX'), 'strand'));
     });
   });
 
   describe('with fixture file', () => {
     it('should validate BED fixture file without errors on first 10 lines', () => {
       const content = fs.readFileSync(getFixturePath('bed-example'), 'utf-8');
-      const lines = content.split('\n').slice(0, 10);
-
-      for (let i = 0; i < lines.length; i++) {
-        const result = validateBedLine(lines[i], i);
-        assert.strictEqual(result, null, `Line ${i + 1} should be valid: ${lines[i]}`);
-      }
+      const text = content.split('\n').slice(0, 10).join('\n');
+      const errors = runBed(text).filter((d) => d.severity === DiagnosticSeverity.Error);
+      assert.deepStrictEqual(errors, [], `Expected no errors but found: ${JSON.stringify(errors)}`);
     });
   });
 });
 
 describe('BEDPE Validation', () => {
-  describe('validateBedpeLine', () => {
+  describe('validateBedpe', () => {
     it('should accept valid BEDPE line with 10 columns', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1000\t1100\tpair1\t50\t+\t-', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBedpe('chr1\t100\t200\tchr1\t1000\t1100\tpair1\t50\t+\t-'), []);
     });
 
     it('should accept valid BEDPE line with 6 columns (minimum)', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr2\t500\t600', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBedpe('chr1\t100\t200\tchr2\t500\t600'), []);
     });
 
     it('should accept BEDPE with dot placeholders for strand', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1000\t1100\tpair\t.\t.\t.', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBedpe('chr1\t100\t200\tchr1\t1000\t1100\tpair\t.\t.\t.'), []);
     });
 
     it('should skip empty lines', () => {
-      const result = validateBedpeLine('', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBedpe(''), []);
     });
 
     it('should skip comment/header lines', () => {
-      const result = validateBedpeLine('#chrom1\tstart1\tend1\tchrom2\tstart2\tend2', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBedpe('#chrom1\tstart1\tend1\tchrom2\tstart2\tend2'), []);
     });
 
     it('should reject lines with fewer than 6 columns', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1000', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('at least 6 columns'));
+      assert.ok(hasError(runBedpe('chr1\t100\t200\tchr1\t1000'), 'at least 6 columns'));
     });
 
     it('should reject non-integer start1', () => {
-      const result = validateBedpeLine('chr1\tabc\t200\tchr1\t1000\t1100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('start1'));
+      assert.ok(hasError(runBedpe('chr1\tabc\t200\tchr1\t1000\t1100'), 'start1'));
     });
 
     it('should reject non-integer end1', () => {
-      const result = validateBedpeLine('chr1\t100\txyz\tchr1\t1000\t1100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('end1'));
+      assert.ok(hasError(runBedpe('chr1\t100\txyz\tchr1\t1000\t1100'), 'end1'));
     });
 
     it('should reject non-integer start2', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\tabc\t1100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('start2'));
+      assert.ok(hasError(runBedpe('chr1\t100\t200\tchr1\tabc\t1100'), 'start2'));
     });
 
     it('should reject non-integer end2', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1000\txyz', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('end2'));
+      assert.ok(hasError(runBedpe('chr1\t100\t200\tchr1\t1000\txyz'), 'end2'));
     });
 
     it('should reject negative start1', () => {
-      const result = validateBedpeLine('chr1\t-10\t200\tchr1\t1000\t1100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('negative'));
+      assert.ok(hasError(runBedpe('chr1\t-10\t200\tchr1\t1000\t1100'), 'negative'));
     });
 
     it('should reject negative start2', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t-10\t1100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('negative'));
+      assert.ok(hasError(runBedpe('chr1\t100\t200\tchr1\t-10\t1100'), 'negative'));
     });
 
     it('should reject end1 < start1', () => {
-      const result = validateBedpeLine('chr1\t200\t100\tchr1\t1000\t1100', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('start'));
+      assert.ok(hasError(runBedpe('chr1\t200\t100\tchr1\t1000\t1100'), 'start'));
     });
 
     it('should reject end2 < start2', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1100\t1000', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'error');
-      assert.ok(result!.message.includes('start'));
+      assert.ok(hasError(runBedpe('chr1\t100\t200\tchr1\t1100\t1000'), 'start'));
     });
 
     it('should accept end == start (point features)', () => {
-      // BEDPE allows end == start for point features
-      const result = validateBedpeLine('chr1\t100\t100\tchr1\t1000\t1000', 0);
-      assert.strictEqual(result, null);
+      assert.deepStrictEqual(runBedpe('chr1\t100\t100\tchr1\t1000\t1000'), []);
     });
 
     it('should warn on invalid strand1', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1000\t1100\tpair\t50\tX\t-', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'warning');
-      assert.ok(result!.message.includes('Strand'));
+      assert.ok(hasWarning(runBedpe('chr1\t100\t200\tchr1\t1000\t1100\tpair\t50\tX\t-'), 'Strand'));
     });
 
     it('should warn on invalid strand2', () => {
-      const result = validateBedpeLine('chr1\t100\t200\tchr1\t1000\t1100\tpair\t50\t+\tY', 0);
-      assert.notStrictEqual(result, null);
-      assert.strictEqual(result!.severity, 'warning');
-      assert.ok(result!.message.includes('Strand'));
+      assert.ok(hasWarning(runBedpe('chr1\t100\t200\tchr1\t1000\t1100\tpair\t50\t+\tY'), 'Strand'));
     });
   });
 
   describe('with fixture file', () => {
     it('should validate BEDPE fixture file without errors', () => {
       const content = fs.readFileSync(getFixturePath('bedpe-example'), 'utf-8');
-      const lines = content.split('\n');
-
-      for (let i = 0; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        const result = validateBedpeLine(lines[i], i);
-        assert.strictEqual(result, null, `Line ${i + 1} should be valid: ${lines[i]}`);
-      }
+      const errors = runBedpe(content).filter((d) => d.severity === DiagnosticSeverity.Error);
+      assert.deepStrictEqual(errors, [], `Expected no errors but found: ${JSON.stringify(errors)}`);
     });
   });
 });
 
-describe('Edge Cases', () => {
+describe('BED/BEDPE Edge Cases', () => {
   it('should handle BED with very large coordinates', () => {
-    const result = validateBedLine('chr1\t100000000\t200000000', 0);
-    assert.strictEqual(result, null);
+    assert.deepStrictEqual(runBed('chr1\t100000000\t200000000'), []);
   });
 
   it('should handle BEDPE with inter-chromosomal pairs', () => {
-    const result = validateBedpeLine('chr1\t100\t200\tchr2\t500\t600\ttranslocation\t100\t+\t-', 0);
-    assert.strictEqual(result, null);
+    assert.deepStrictEqual(runBedpe('chr1\t100\t200\tchr2\t500\t600\ttranslocation\t100\t+\t-'), []);
   });
 
-  it('should handle BED with tabs and spaces mixed', () => {
-    // Only tabs are valid separators - spaces should cause issues
-    const result = validateBedLine('chr1\t100 200', 0);
-    // This should fail because "100 200" is not a valid integer
-    assert.notStrictEqual(result, null);
+  it('should reject BED with a space instead of a tab separator', () => {
+    // "chr1\t100 200" splits into two columns, which is below the 3-column minimum.
+    assert.ok(runBed('chr1\t100 200').length >= 1);
   });
 
   it('should handle BEDPE with only required columns', () => {
-    const result = validateBedpeLine('chr1\t0\t1\tchr1\t0\t1', 0);
-    assert.strictEqual(result, null);
+    assert.deepStrictEqual(runBedpe('chr1\t0\t1\tchr1\t0\t1'), []);
   });
 });

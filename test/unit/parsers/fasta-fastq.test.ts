@@ -2,86 +2,40 @@
 
 import * as assert from 'assert';
 import * as fs from 'fs';
+import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
+import { validateFasta, validateFastq } from '../../../server/src/validators';
+import { defaultSettings } from '../../../server/src/validators/types';
+import type { ValidatorContext } from '../../../server/src/validators/types';
 import { getFixturePath } from '../../fixtures.index';
 
 /**
- * FASTA and FASTQ Validation Tests
+ * FASTA and FASTQ validation tests, exercising the SHIPPED validators
+ * (server/src/validators/{fasta,fastq}.ts) directly.
  */
 
-interface ValidationDiagnostic {
-  line: number;
-  message: string;
-  severity: 'error' | 'warning';
+function ctx(text: string): ValidatorContext {
+  return {
+    uri: 'file:///test',
+    lineCount: text.split('\n').length,
+    headerEndLine: 0,
+    bufferLines: 500,
+  };
 }
 
-// Simplified FASTA validation matching server logic
-function validateFastaLines(lines: string[]): ValidationDiagnostic[] {
-  const diagnostics: ValidationDiagnostic[] = [];
-  const validBases = /^[ACGTUNRYSWKMBDHVacgtunryswkmbdhv.*\-\s]+$/;
-  let sawHeader = false;
+const runFasta = (lines: string[]): Diagnostic[] =>
+  validateFasta(lines.join('\n'), defaultSettings, ctx(lines.join('\n')));
+const runFastq = (lines: string[]): Diagnostic[] =>
+  validateFastq(lines.join('\n'), defaultSettings, ctx(lines.join('\n')));
 
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (!trimmed || trimmed.startsWith(';')) continue;
+const hasWarning = (diags: Diagnostic[], substr: string): boolean =>
+  diags.some((d) => d.severity === DiagnosticSeverity.Warning && d.message.includes(substr));
+const hasError = (diags: Diagnostic[], substr: string): boolean =>
+  diags.some((d) => d.severity === DiagnosticSeverity.Error && d.message.includes(substr));
 
-    if (trimmed.startsWith('>')) {
-      sawHeader = true;
-      if (trimmed.length < 2) {
-        diagnostics.push({ line: i, message: 'FASTA header is empty', severity: 'warning' });
-      }
-      continue;
-    }
-
-    if (!sawHeader && i === 0) {
-      diagnostics.push({ line: i, message: 'FASTA file should start with a header line (>)', severity: 'warning' });
-    }
-
-    if (!validBases.test(trimmed)) {
-      diagnostics.push({ line: i, message: 'Line contains invalid base characters', severity: 'warning' });
-    }
-  }
-
-  return diagnostics;
-}
-
-// Simplified FASTQ validation matching server logic
-function validateFastqLines(lines: string[]): ValidationDiagnostic[] {
-  const diagnostics: ValidationDiagnostic[] = [];
-
-  for (let i = 0; i + 3 < lines.length; i += 4) {
-    const headerLine = lines[i].trim();
-    const seqLine = lines[i + 1]?.trim();
-    const plusLine = lines[i + 2]?.trim();
-    const qualLine = lines[i + 3]?.trim();
-
-    if (!headerLine) { i -= 3; continue; }
-
-    if (!headerLine.startsWith('@')) {
-      diagnostics.push({ line: i, message: 'FASTQ record should start with @', severity: 'error' });
-      break;
-    }
-
-    if (!plusLine || !plusLine.startsWith('+')) {
-      diagnostics.push({ line: i + 2, message: 'Expected + separator', severity: 'error' });
-    }
-
-    if (seqLine && qualLine && seqLine.length !== qualLine.length) {
-      diagnostics.push({
-        line: i + 3,
-        message: `Quality length (${qualLine.length}) != sequence length (${seqLine.length})`,
-        severity: 'error',
-      });
-    }
-  }
-
-  return diagnostics;
-}
-
-// Phred quality helpers (matching webview utils)
+// Phred quality helpers (mirroring the webview heatmap display math).
 function asciiToPhred(char: string): number {
   return char.charCodeAt(0) - 33;
 }
-
 function phredToColor(phred: number): string {
   if (phred >= 30) return '#4caf50';
   if (phred >= 20) return '#ffeb3b';
@@ -90,136 +44,118 @@ function phredToColor(phred: number): string {
 }
 
 describe('FASTA Validation', () => {
-  describe('validateFastaLines', () => {
+  describe('validateFasta', () => {
     it('should accept valid FASTA with single sequence', () => {
-      const lines = ['>seq1 test', 'ATCGATCG', 'GCTAGCTA'];
-      assert.deepStrictEqual(validateFastaLines(lines), []);
+      assert.deepStrictEqual(runFasta(['>seq1 test', 'ATCGATCG', 'GCTAGCTA']), []);
     });
 
     it('should accept valid FASTA with multiple sequences', () => {
-      const lines = ['>seq1', 'ATCG', '>seq2', 'GCTA'];
-      assert.deepStrictEqual(validateFastaLines(lines), []);
+      assert.deepStrictEqual(runFasta(['>seq1', 'ATCG', '>seq2', 'GCTA']), []);
     });
 
     it('should accept all IUPAC ambiguity codes', () => {
-      const lines = ['>seq', 'ATCGURYSWKMBDHVNatcguryswkmbdhvn'];
-      assert.deepStrictEqual(validateFastaLines(lines), []);
+      assert.deepStrictEqual(runFasta(['>seq', 'ATCGURYSWKMBDHVNatcguryswkmbdhvn']), []);
     });
 
     it('should accept gap characters', () => {
-      const lines = ['>seq', 'ATCG-.*GCTA'];
-      assert.deepStrictEqual(validateFastaLines(lines), []);
+      assert.deepStrictEqual(runFasta(['>seq', 'ATCG-.*GCTA']), []);
     });
 
     it('should skip comment lines starting with ;', () => {
-      const lines = ['; comment', '>seq1', 'ATCG'];
-      assert.deepStrictEqual(validateFastaLines(lines), []);
+      assert.deepStrictEqual(runFasta(['; comment', '>seq1', 'ATCG']), []);
     });
 
-    it('should skip empty lines', () => {
-      const lines = ['>seq1', 'ATCG', '', 'GCTA'];
-      assert.deepStrictEqual(validateFastaLines(lines), []);
+    it('should not flag a blank line before the first sequence', () => {
+      assert.deepStrictEqual(runFasta(['', '>seq1', 'ATCG']), []);
+    });
+
+    it('should warn on a blank line within a sequence block (strict)', () => {
+      assert.ok(hasWarning(runFasta(['>seq1', 'ATCG', '', 'GCTA']), 'Blank line'));
+    });
+
+    it('should not flag a trailing blank line (final newline at EOF)', () => {
+      assert.deepStrictEqual(runFasta(['>seq1', 'ATCG', '']), []);
     });
 
     it('should warn if file does not start with > header', () => {
-      const lines = ['ATCGATCG', '>seq1', 'GCTA'];
-      const diags = validateFastaLines(lines);
-      assert.strictEqual(diags.length, 1);
-      assert.strictEqual(diags[0].line, 0);
-      assert.ok(diags[0].message.includes('should start with'));
+      const diags = runFasta(['ATCGATCG', '>seq1', 'GCTA']);
+      assert.ok(hasWarning(diags, 'should start with'));
+      assert.ok(diags.some((d) => d.range.start.line === 0));
     });
 
     it('should warn on empty header (just >)', () => {
-      const lines = ['>', 'ATCG'];
-      const diags = validateFastaLines(lines);
-      assert.strictEqual(diags.length, 1);
-      assert.ok(diags[0].message.includes('empty'));
+      assert.ok(hasWarning(runFasta(['>', 'ATCG']), 'empty'));
     });
 
     it('should warn on invalid base characters', () => {
-      const lines = ['>seq1', 'ATCG123GCTA'];
-      const diags = validateFastaLines(lines);
-      assert.strictEqual(diags.length, 1);
-      assert.ok(diags[0].message.includes('invalid base'));
+      assert.ok(hasWarning(runFasta(['>seq1', 'ATCG123GCTA']), 'invalid base'));
     });
   });
 
   describe('with fixture file', () => {
-    it('should validate FASTA fixture without errors', () => {
+    it('should validate FASTA fixture without diagnostics', () => {
       const content = fs.readFileSync(getFixturePath('fasta-example'), 'utf-8');
-      const lines = content.split('\n');
-      const diags = validateFastaLines(lines);
-      assert.strictEqual(diags.length, 0, `Expected no errors but found: ${JSON.stringify(diags)}`);
+      const diags = validateFasta(content, defaultSettings, ctx(content));
+      assert.deepStrictEqual(diags, [], `Expected none but found: ${JSON.stringify(diags)}`);
     });
 
     it('should find correct number of sequences', () => {
       const content = fs.readFileSync(getFixturePath('fasta-example'), 'utf-8');
-      const lines = content.split('\n');
-      const headers = lines.filter(l => l.startsWith('>'));
+      const headers = content.split('\n').filter((l) => l.startsWith('>'));
       assert.strictEqual(headers.length, 5);
     });
   });
 });
 
 describe('FASTQ Validation', () => {
-  describe('validateFastqLines', () => {
+  describe('validateFastq', () => {
     it('should accept valid 4-line FASTQ record', () => {
-      const lines = ['@read1', 'ATCG', '+', 'IIII'];
-      assert.deepStrictEqual(validateFastqLines(lines), []);
+      assert.deepStrictEqual(runFastq(['@read1', 'ATCG', '+', 'IIII']), []);
     });
 
     it('should accept FASTQ record with description', () => {
-      const lines = ['@read1 length=36', 'ATCG', '+', 'IIII'];
-      assert.deepStrictEqual(validateFastqLines(lines), []);
+      assert.deepStrictEqual(runFastq(['@read1 length=36', 'ATCG', '+', 'IIII']), []);
     });
 
     it('should accept multiple records', () => {
-      const lines = [
-        '@read1', 'ATCG', '+', 'IIII',
-        '@read2', 'GCTA', '+', 'BBBB',
-      ];
-      assert.deepStrictEqual(validateFastqLines(lines), []);
+      assert.deepStrictEqual(
+        runFastq(['@read1', 'ATCG', '+', 'IIII', '@read2', 'GCTA', '+', 'BBBB']),
+        []
+      );
     });
 
     it('should error if record does not start with @', () => {
-      const lines = ['read1', 'ATCG', '+', 'IIII'];
-      const diags = validateFastqLines(lines);
-      assert.strictEqual(diags.length, 1);
-      assert.ok(diags[0].message.includes('@'));
+      assert.ok(hasError(runFastq(['read1', 'ATCG', '+', 'IIII']), '@'));
     });
 
     it('should error if + separator is missing', () => {
-      const lines = ['@read1', 'ATCG', 'missing', 'IIII'];
-      const diags = validateFastqLines(lines);
-      assert.ok(diags.length >= 1);
-      assert.ok(diags.some(d => d.message.includes('+ separator')));
+      assert.ok(hasError(runFastq(['@read1', 'ATCG', 'missing', 'IIII']), '+ separator'));
     });
 
     it('should error if quality length does not match sequence length', () => {
-      const lines = ['@read1', 'ATCGATCG', '+', 'III'];
-      const diags = validateFastqLines(lines);
-      assert.ok(diags.length >= 1);
-      assert.ok(diags.some(d => d.message.includes('length')));
+      assert.ok(hasError(runFastq(['@read1', 'ATCGATCG', '+', 'III']), 'length'));
     });
 
     it('should accept quality line with same length as sequence', () => {
-      const lines = ['@read1', 'ATCGATCG', '+', 'IIIIIIII'];
-      assert.deepStrictEqual(validateFastqLines(lines), []);
+      assert.deepStrictEqual(runFastq(['@read1', 'ATCGATCG', '+', 'IIIIIIII']), []);
+    });
+
+    it('should warn on quality characters outside the Phred range (strict)', () => {
+      // A space (ASCII 32) is below the Phred+33 floor of 33.
+      assert.ok(hasWarning(runFastq(['@read1', 'ATCG', '+', 'II I']), 'Phred range'));
     });
   });
 
   describe('with fixture file', () => {
-    it('should validate FASTQ fixture without errors', () => {
+    it('should validate FASTQ fixture without diagnostics', () => {
       const content = fs.readFileSync(getFixturePath('fastq-example'), 'utf-8');
-      const lines = content.split('\n');
-      const diags = validateFastqLines(lines);
-      assert.strictEqual(diags.length, 0, `Expected no errors but found: ${JSON.stringify(diags)}`);
+      const diags = validateFastq(content, defaultSettings, ctx(content));
+      assert.deepStrictEqual(diags, [], `Expected none but found: ${JSON.stringify(diags)}`);
     });
 
     it('should find correct number of reads', () => {
       const content = fs.readFileSync(getFixturePath('fastq-example'), 'utf-8');
-      const lines = content.split('\n');
-      const headers = lines.filter(l => l.startsWith('@'));
+      const headers = content.split('\n').filter((l) => l.startsWith('@'));
       assert.strictEqual(headers.length, 8);
     });
   });

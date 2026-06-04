@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Corrected VCF breakend classification and simplified variant statistics.
 - Preview limits for large VCFs now preserve the header when capping displayed variants.
+- FASTA validation no longer reports a spurious "blank line within sequence block" warning for a file's trailing newline.
 
 ## [1.1.0] - 2026-04-09
 
