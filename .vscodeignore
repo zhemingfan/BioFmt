@@ -1,6 +1,6 @@
 # Source files (compiled outputs are in dist/)
 src/**
-server/src/**
+server/**
 webview/src/**
 scripts/**
 
