@@ -103,6 +103,11 @@ describe('BED Validation', () => {
       const errors = runBed(text).filter((d) => d.severity === DiagnosticSeverity.Error);
       assert.deepStrictEqual(errors, [], `Expected no errors but found: ${JSON.stringify(errors)}`);
     });
+
+    it('should validate the broadPeak fixture without diagnostics (omics-broadpeak uses validateBed)', () => {
+      const content = fs.readFileSync(getFixturePath('broadpeak-example'), 'utf-8');
+      assert.deepStrictEqual(runBed(content), []);
+    });
   });
 });
 
