@@ -16,6 +16,7 @@ import { GENERATED_FORMATS } from './shared/generatedFormats';
 import { clampRowRange, getPreviewLineLimit, normalizePreviewMaxLines } from './shared/previewLimits';
 import type { DeclarativeRenderSpec } from './shared/formatSpec';
 import { WorkspaceLintLifecycle } from './shared/workspaceLintLifecycle';
+import { parseInfoField } from './shared/infoField';
 
 let client: LanguageClient | undefined;
 let genomicRegistry: GenomicIndexRegistry | undefined;
@@ -994,22 +995,6 @@ function getFormatFromExtension(filename: string): string {
     '.sf': 'Salmon Quant',
   };
   return formats[ext] || 'Unknown Format';
-}
-
-function parseInfoField(value: string): Record<string, string | boolean> {
-  const result: Record<string, string | boolean> = {};
-  const pairs = value.split(';');
-
-  for (const pair of pairs) {
-    if (pair.includes('=')) {
-      const [key, val] = pair.split('=', 2);
-      result[key] = val;
-    } else if (pair) {
-      result[pair] = true;
-    }
-  }
-
-  return result;
 }
 
 // Cross-format genomic navigation
