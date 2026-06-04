@@ -5,9 +5,7 @@ import * as vscode from 'vscode';
 import { TabixIndexedFile } from '@gmod/tabix';
 import type { FileProvider, ProviderMetadata, ReferenceInfo, RegionResult } from './types';
 import type { IndexInfo } from './indexDiscovery';
-
-/** Maximum number of records returned per region query to avoid UI overload */
-const MAX_REGION_ROWS = 10000;
+import { DEFAULT_MAX_REGION_ROWS } from './regionLimit';
 
 /**
  * FileProvider backed by a tabix-indexed bgzipped file.
@@ -18,23 +16,27 @@ export class TabixProvider implements FileProvider {
   private _metadata: ProviderMetadata;
   private _refs: ReferenceInfo[] = [];
   private _headerLines: string[] = [];
+  private maxRows: number;
 
   private constructor(
     tabix: TabixIndexedFile,
     metadata: ProviderMetadata,
     refs: ReferenceInfo[],
     headerLines: string[],
+    maxRows: number,
   ) {
     this.tabix = tabix;
     this._metadata = metadata;
     this._refs = refs;
     this._headerLines = headerLines;
+    this.maxRows = maxRows > 0 ? maxRows : DEFAULT_MAX_REGION_ROWS;
   }
 
   static async create(
     uri: vscode.Uri,
     formatId: string,
     indexInfo: IndexInfo,
+    maxRows: number = DEFAULT_MAX_REGION_ROWS,
   ): Promise<TabixProvider> {
     const filePath = uri.fsPath;
     const indexPath = indexInfo.uri.fsPath;
@@ -68,7 +70,7 @@ export class TabixProvider implements FileProvider {
       references: refs,
     };
 
-    return new TabixProvider(tabix, metadata, refs, headerLines);
+    return new TabixProvider(tabix, metadata, refs, headerLines, maxRows);
   }
 
   async getRows(startLine: number, endLine: number): Promise<string[]> {
@@ -82,7 +84,7 @@ export class TabixProvider implements FileProvider {
 
     await this.tabix.getLines(chrom, start, end, {
       lineCallback: (line) => {
-        if (rows.length >= MAX_REGION_ROWS) {
+        if (rows.length >= this.maxRows) {
           truncated = true;
           return;
         }

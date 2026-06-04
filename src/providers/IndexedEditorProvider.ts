@@ -68,9 +68,11 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
 
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
 
-    // Create the appropriate FileProvider based on format
-    // Phase 2: just stub metadata — actual providers (Tabix, BAM) come in Phases 3-4
-    const provider = await this.createProvider(uri, formatId, indexInfo);
+    // Create the appropriate FileProvider based on format and the configured record cap.
+    const maxRegionRecords = vscode.workspace
+      .getConfiguration('biofmt.preview')
+      .get<number>('maxRegionRecords', 10000);
+    const provider = await this.createProvider(uri, formatId, indexInfo, maxRegionRecords);
     if (provider) {
       this.activeProviders.set(uri.toString(), provider);
     }
@@ -191,12 +193,13 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
     uri: vscode.Uri,
     formatId: string,
     indexInfo: { type: string; uri: vscode.Uri } | null,
+    maxRegionRecords: number,
   ): Promise<FileProvider | null> {
     const fileName = path.basename(uri.fsPath).toLowerCase();
 
     // Tabix-indexed bgzipped files: use region-based random access
     if (fileName.endsWith('.gz') && indexInfo && (indexInfo.type === 'tbi' || indexInfo.type === 'csi')) {
-      return TabixProvider.create(uri, formatId, indexInfo as { type: 'tbi' | 'csi'; uri: vscode.Uri });
+      return TabixProvider.create(uri, formatId, indexInfo as { type: 'tbi' | 'csi'; uri: vscode.Uri }, maxRegionRecords);
     }
 
     // Bgzipped files without index: decompress fully
@@ -206,7 +209,7 @@ export class IndexedEditorProvider implements vscode.CustomReadonlyEditorProvide
 
     // BAM files with .bai or .csi index
     if (fileName.endsWith('.bam') && indexInfo && (indexInfo.type === 'bai' || indexInfo.type === 'csi')) {
-      return BamProvider.create(uri, indexInfo as { type: 'bai' | 'csi'; uri: vscode.Uri });
+      return BamProvider.create(uri, indexInfo as { type: 'bai' | 'csi'; uri: vscode.Uri }, maxRegionRecords);
     }
 
     return null;
