@@ -35,7 +35,7 @@ Validated formats with specialized previews: VCF, SAM/BAM, BED, BEDPE, GTF, GFF3
 
 Specialized previews without validation: MAF alignment, MAF mutation, GenBank, MTX Matrix Market, mzTab, MGF, Chain, Net, and GFA.
 
-Generic previews: PED, MAP, GCT, HTSeq, Salmon, and Kallisto.
+Generic previews: PED, MAP, and GCT.
 
 Declarative formats (defined entirely by a JSON spec — see below): chrom.sizes and Picard interval_list.
 
