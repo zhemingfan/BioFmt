@@ -710,6 +710,7 @@
     "test:unit": "mocha --require ts-node/register 'test/unit/**/*.test.ts'",
     "test:integration": "node ./test/runIntegration.js",
     "test:perf": "mocha --require ts-node/register 'test/perf/**/*.test.ts' --timeout 60000",
+    "test:webview": "cd webview && npm test",
     "package": "vsce package"
   },
   "devDependencies": {

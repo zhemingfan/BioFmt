@@ -35,6 +35,9 @@ jobs:
       - name: Type-check webview
         run: cd webview && npx tsc --noEmit
 
+      - name: Webview unit tests
+        run: cd webview && npm test
+
       - name: Lint
         run: npm run lint
 
