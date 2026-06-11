@@ -120,6 +120,13 @@ export const FIXTURES: Record<string, FixtureInfo> = {
     description: 'UCSC MAF multiple alignment format',
   },
 
+  // MAF (mutation)
+  'maf-mutation': {
+    path: 'mutation-example.maf',
+    languageId: 'omics-maf-mutation',
+    description: 'TCGA-style mutation MAF (Hugo_Symbol columns)',
+  },
+
   // PED
   'ped-example': {
     path: 'example.ped',
@@ -208,6 +215,13 @@ export const FIXTURES: Record<string, FixtureInfo> = {
     path: 'bigNarrowPeak_full.narrowPeak',
     languageId: 'omics-narrowpeak',
     description: 'Full narrowPeak file (large)',
+  },
+
+  // broadPeak
+  'broadpeak-example': {
+    path: 'example.broadPeak',
+    languageId: 'omics-broadpeak',
+    description: 'broadPeak ChIP-seq peaks (9 columns)',
   },
 
   // GenBank

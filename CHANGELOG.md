@@ -5,6 +5,44 @@ All notable changes to BioFmt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-04
+
+### Added
+
+- Declarative format plugin system: new column-oriented formats can be added with a single JSON spec in `formats/` (schema `formats/_schema.json`) — the TextMate grammar, language configuration, validation, and preview are generated automatically via `npm run gen:formats`, with no TypeScript.
+- Two new supported formats defined declaratively: chrom.sizes and Picard `interval_list`.
+- Standalone `@biofmt/textmate-grammars` package so the grammars can be reused in other editors (Zed, Sublime Text, GitHub Linguist).
+- Documentation site under `docs/`.
+- Diagnostic code actions: open the rule reference, open the format specification, and copy the rule code directly from a diagnostic.
+- GFF3: expanded syntax highlighting and validation following the GFF3 specification.
+- Gzip text previews: bgzipped/gzipped text files (e.g. `.vcf.gz`) can be previewed without manual decompression.
+
+### Changed
+
+- Hardened the webview Content-Security-Policy for external-asset previews (removed the inline-script allowance).
+- VCF diagnostics now link to the exact specification source lines.
+
+### Fixed
+
+- Corrected VCF breakend classification and simplified variant statistics.
+- Preview limits for large VCFs now preserve the header when capping displayed variants.
+- FASTA validation no longer reports a spurious "blank line within sequence block" warning for a file's trailing newline.
+
+## [1.1.0] - 2026-04-09
+
+### Added
+
+- Strict mode enforcement expanded from VCF-only to all validated formats (VCF, SAM, GTF, GFF3, FASTA, FASTQ).
+- Cross-field validation: VCF (FORMAT key count vs. sample values, genotype allele bounds, AD length), SAM (CIGAR vs. SEQ length, FLAG bit conflicts), and GFF3 (two-pass `Parent` resolution, duplicate `ID` detection).
+- Workspace-wide lint for bioinformatics files, surfaced in the Problems panel (off by default via `biofmt.workspace.enableLint`).
+
+### Changed
+
+- Decomposed the LSP server into modular, independently unit-testable validator modules.
+- Default validation level changed from `basic` to `strict`.
+
+> Note: the 1.0.0 and 1.1.0 releases were both published on 2026-04-09; the `[1.0.0]` section below also captures some of this work.
+
 ## [1.0.0] - 2026-04-09
 
 ### Added

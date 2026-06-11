@@ -22,15 +22,20 @@ export function validateFasta(
 
     if (trimmed.startsWith(';')) continue;
 
-    // Strict: blank lines within sequence blocks
+    // Strict: blank lines within sequence blocks. A trailing blank line (e.g. a
+    // final newline at EOF) is not "within" a block, so only flag a blank line
+    // when more content follows it.
     if (!trimmed) {
       if (settings.validation.level === 'strict' && inSequence) {
-        diagnostics.push(withSpecRef({
-          severity: DiagnosticSeverity.Warning,
-          range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
-          message: 'Blank line within sequence block',
-          source: 'biofmt',
-        }, 'FASTA-S001'));
+        const moreContentFollows = lines.slice(i + 1, maxLines).some((l) => l.trim().length > 0);
+        if (moreContentFollows) {
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Warning,
+            range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
+            message: 'Blank line within sequence block',
+            source: 'biofmt',
+          }, 'FASTA-S001'));
+        }
       }
       continue;
     }

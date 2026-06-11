@@ -16,6 +16,7 @@ import { GENERATED_FORMATS } from './shared/generatedFormats';
 import { clampRowRange, getPreviewLineLimit, normalizePreviewMaxLines } from './shared/previewLimits';
 import type { DeclarativeRenderSpec } from './shared/formatSpec';
 import { buildExternalAssetWebviewHtml } from './shared/webviewHtml';
+import { parseInfoField } from './shared/infoField';
 
 let client: LanguageClient | undefined;
 
@@ -51,6 +52,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   console.log('BioFmt web extension activating...');
 
   registerCommands(context);
+  registerIndexedFallback(context);
   await startLanguageServer(context);
 
   console.log('BioFmt web extension activated');
@@ -186,12 +188,161 @@ function registerCommands(context: vscode.ExtensionContext): void {
     }
   );
 
+  // Editor commands. These use only the vscode API (no Node.js), so they work
+  // identically to the desktop build.
+  const copyRowCommand = vscode.commands.registerCommand(
+    'biofmt.copyRowAsTsv',
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const line = editor.document.lineAt(editor.selection.active.line);
+      await vscode.env.clipboard.writeText(line.text);
+      vscode.window.showInformationMessage('Row copied to clipboard');
+    }
+  );
+
+  const copyCellCommand = vscode.commands.registerCommand(
+    'biofmt.copyCellAsJson',
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const document = editor.document;
+      const position = editor.selection.active;
+      const line = document.lineAt(position.line).text;
+      const columns = line.split('\t');
+
+      let charCount = 0;
+      let columnIndex = 0;
+      for (let i = 0; i < columns.length; i++) {
+        charCount += columns[i].length + 1; // +1 for tab
+        if (position.character < charCount) {
+          columnIndex = i;
+          break;
+        }
+      }
+
+      const cellValue = columns[columnIndex] || '';
+      if (cellValue.includes('=') || cellValue.includes(';')) {
+        const parsed = parseInfoField(cellValue);
+        await vscode.env.clipboard.writeText(JSON.stringify(parsed, null, 2));
+      } else {
+        await vscode.env.clipboard.writeText(JSON.stringify(cellValue));
+      }
+      vscode.window.showInformationMessage('Cell copied to clipboard as JSON');
+    }
+  );
+
+  const jumpToDefinitionCommand = vscode.commands.registerCommand(
+    'biofmt.jumpToHeaderDefinition',
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const document = editor.document;
+      const position = editor.selection.active;
+      const wordRange = document.getWordRangeAtPosition(position);
+      if (!wordRange) {
+        return;
+      }
+      const word = document.getText(wordRange);
+
+      for (let i = 0; i < document.lineCount; i++) {
+        const line = document.lineAt(i).text;
+        if (!line.startsWith('#')) {
+          break;
+        }
+        if (line.includes(`ID=${word}`) || line.includes(`ID=${word},`)) {
+          editor.selection = new vscode.Selection(i, 0, i, line.length);
+          editor.revealRange(new vscode.Range(i, 0, i, line.length));
+          return;
+        }
+      }
+      vscode.window.showInformationMessage(`Definition for "${word}" not found in header`);
+    }
+  );
+
+  // Desktop-only commands: register graceful stubs so invoking them in the web
+  // build shows an explanation instead of failing with "command not found".
+  const openFixtureCommand = vscode.commands.registerCommand(
+    'biofmt.openFixture',
+    async () => {
+      vscode.window.showInformationMessage(
+        'Opening bundled sample fixtures is only available in the desktop BioFmt extension.'
+      );
+    }
+  );
+
+  const navigateToRegionCommand = vscode.commands.registerCommand(
+    'biofmt.navigateToRegion',
+    async () => {
+      vscode.window.showInformationMessage(
+        'Cross-file region navigation is only available in the desktop BioFmt extension.'
+      );
+    }
+  );
+
   context.subscriptions.push(
     openPreviewCommand,
     openDiagnosticRuleCommand,
     openDiagnosticSpecCommand,
-    copyDiagnosticRuleCommand
+    copyDiagnosticRuleCommand,
+    copyRowCommand,
+    copyCellCommand,
+    jumpToDefinitionCommand,
+    openFixtureCommand,
+    navigateToRegionCommand
   );
+}
+
+/**
+ * The `biofmt.indexedPreview` custom editor is contributed for both the desktop
+ * and web builds, but only the desktop build can read tabix/BAM indexes from the
+ * filesystem. Register a read-only fallback in the web build so opening a
+ * `.vcf.gz`/`.bam` in vscode.dev shows a clear explanation rather than an empty
+ * or broken editor.
+ */
+function registerIndexedFallback(context: vscode.ExtensionContext): void {
+  const provider: vscode.CustomReadonlyEditorProvider = {
+    openCustomDocument(uri) {
+      return { uri, dispose: () => {} };
+    },
+    resolveCustomEditor(_document, webviewPanel) {
+      webviewPanel.webview.options = { enableScripts: false };
+      webviewPanel.webview.html = getIndexedFallbackHtml();
+    },
+  };
+
+  context.subscriptions.push(
+    vscode.window.registerCustomEditorProvider('biofmt.indexedPreview', provider, {
+      supportsMultipleEditorsPerDocument: true,
+    })
+  );
+}
+
+function getIndexedFallbackHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
+  <title>BioFmt</title>
+  <style>
+    body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); padding: 2rem 2.5rem; line-height: 1.6; }
+    h2 { font-weight: 600; }
+    code { font-family: var(--vscode-editor-font-family, monospace); }
+  </style>
+</head>
+<body>
+  <h2>Indexed &amp; binary files need the desktop extension</h2>
+  <p>BioFmt on the web (vscode.dev, github.dev) previews text formats only. Indexed and binary files such as <code>.vcf.gz</code>, <code>.bed.gz</code>, and <code>.bam</code> rely on tabix/BAM indexes read from the local filesystem, which the web build cannot access.</p>
+  <p>Open this file with the desktop BioFmt extension to use the region navigator and binary previews.</p>
+</body>
+</html>`;
 }
 
 async function startLanguageServer(context: vscode.ExtensionContext): Promise<void> {

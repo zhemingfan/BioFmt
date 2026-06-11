@@ -5,9 +5,7 @@ import * as vscode from 'vscode';
 import { BamFile, BamRecord } from '@gmod/bam';
 import type { FileProvider, ProviderMetadata, ReferenceInfo, RegionResult } from './types';
 import type { IndexInfo } from './indexDiscovery';
-
-/** Maximum number of records returned per region query */
-const MAX_REGION_ROWS = 10000;
+import { capRegionRows, DEFAULT_MAX_REGION_ROWS } from './regionLimit';
 
 /**
  * Convert a numeric quality array to ASCII Phred+33 string.
@@ -115,6 +113,7 @@ export class BamProvider implements FileProvider {
   private _refs: ReferenceInfo[] = [];
   private _headerLines: string[] = [];
   private _indexToChr: { refName: string; length: number }[] = [];
+  private maxRows: number;
 
   private constructor(
     bam: BamFile,
@@ -122,17 +121,20 @@ export class BamProvider implements FileProvider {
     refs: ReferenceInfo[],
     headerLines: string[],
     indexToChr: { refName: string; length: number }[],
+    maxRows: number,
   ) {
     this.bam = bam;
     this._metadata = metadata;
     this._refs = refs;
     this._headerLines = headerLines;
     this._indexToChr = indexToChr;
+    this.maxRows = maxRows > 0 ? maxRows : DEFAULT_MAX_REGION_ROWS;
   }
 
   static async create(
     uri: vscode.Uri,
     indexInfo: IndexInfo,
+    maxRows: number = DEFAULT_MAX_REGION_ROWS,
   ): Promise<BamProvider> {
     const filePath = uri.fsPath;
     const indexPath = indexInfo.uri.fsPath;
@@ -171,7 +173,7 @@ export class BamProvider implements FileProvider {
       references: refs,
     };
 
-    return new BamProvider(bam, metadata, refs, headerLines, indexToChr);
+    return new BamProvider(bam, metadata, refs, headerLines, indexToChr, maxRows);
   }
 
   async getRows(startLine: number, endLine: number): Promise<string[]> {
@@ -182,11 +184,10 @@ export class BamProvider implements FileProvider {
   async getRegion(chrom: string, start: number, end: number): Promise<RegionResult> {
     const records = await this.bam.getRecordsForRange(chrom, start, end);
 
-    const truncated = records.length > MAX_REGION_ROWS;
-    const subset = truncated ? records.slice(0, MAX_REGION_ROWS) : records;
+    const { rows: subset, hasMore } = capRegionRows(records, this.maxRows);
     const rows = subset.map((r) => bamRecordToSamLine(r, this._indexToChr));
 
-    return { rows, hasMore: truncated };
+    return { rows, hasMore };
   }
 
   async getReferences(): Promise<ReferenceInfo[]> {

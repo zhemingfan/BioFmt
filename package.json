@@ -2,7 +2,7 @@
   "name": "biofmt",
   "displayName": "BioFmt",
   "description": "View and validate genomics, transcriptomics, and proteomics text formats with syntax highlighting, LSP features, and high-performance previews",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "jfan",
   "license": "GPL-3.0",
   "workspaces": [
@@ -710,6 +710,8 @@
     "test:unit": "mocha --require ts-node/register 'test/unit/**/*.test.ts'",
     "test:integration": "node ./test/runIntegration.js",
     "test:perf": "mocha --require ts-node/register 'test/perf/**/*.test.ts' --timeout 60000",
+    "test:webview": "cd webview && npm test",
+    "coverage": "c8 npm run test:unit",
     "package": "vsce package"
   },
   "devDependencies": {
@@ -720,6 +722,7 @@
     "@typescript-eslint/parser": "^6.13.0",
     "@vscode/test-electron": "^2.3.8",
     "@vscode/vsce": "^2.22.0",
+    "c8": "^11.0.0",
     "esbuild": "^0.19.8",
     "eslint": "^8.55.0",
     "mocha": "^10.2.0",

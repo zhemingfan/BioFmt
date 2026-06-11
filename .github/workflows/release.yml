@@ -1,0 +1,71 @@
+name: Release
+
+# Publishes the extension to the VS Code Marketplace when a version tag is pushed.
+# Requires a VSCE_PAT repository secret (a Marketplace-scoped Azure DevOps PAT).
+# See RELEASING.md.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # attach the .vsix to the GitHub release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install webview dependencies
+        run: cd webview && npm ci
+
+      # Re-run the same gates as CI so a tag never publishes something that
+      # would not have passed on main.
+      - name: Check generated files are up to date
+        run: |
+          npm run gen:formats
+          npm run sync:grammars
+          git diff --exit-code
+
+      - name: Type-check extension and server
+        run: npx tsc --noEmit
+
+      - name: Type-check webview
+        run: cd webview && npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Package
+        run: npx vsce package --no-dependencies -o "biofmt-${{ github.ref_name }}.vsix"
+
+      - name: Publish to the VS Code Marketplace
+        run: npx vsce publish --no-dependencies --packagePath "biofmt-${{ github.ref_name }}.vsix"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Upload .vsix as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: biofmt-vsix
+          path: "biofmt-${{ github.ref_name }}.vsix"
+
+      - name: Attach .vsix to the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "biofmt-${{ github.ref_name }}.vsix"

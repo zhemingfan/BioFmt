@@ -1,0 +1,5 @@
+#version 2.4
+Hugo_Symbol	Entrez_Gene_Id	Center	NCBI_Build	Chromosome	Start_Position	End_Position	Strand	Variant_Classification	Variant_Type	Reference_Allele	Tumor_Seq_Allele1	Tumor_Seq_Allele2	Tumor_Sample_Barcode
+TP53	7157	WUGSC	GRCh38	17	7675088	7675088	+	Missense_Mutation	SNP	C	C	T	TCGA-AB-1234
+KRAS	3845	WUGSC	GRCh38	12	25245350	25245350	+	Missense_Mutation	SNP	C	C	A	TCGA-AB-5678
+BRAF	673	WUGSC	GRCh38	7	140753336	140753336	+	Missense_Mutation	SNP	A	A	T	TCGA-AB-9012
