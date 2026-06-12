@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionParams,
+} from 'vscode-languageserver/node';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { withSpecRef } from '../specRefs';
 import type { BioFmtSettings, ValidatorContext } from './types';
 import { shouldValidateLine } from './types';
@@ -164,4 +171,72 @@ function sumCigarQueryBases(cigar: string): number {
     if ('MIS=X'.includes(m[2])) sum += parseInt(m[1], 10);
   }
   return sum;
+}
+
+// ----- Completion (LSP IntelliSense) -----
+
+// Predefined optional tags from the SAM optional-fields specification.
+const SAM_STANDARD_TAGS: { tag: string; type: string; description: string }[] = [
+  { tag: 'NM', type: 'i', description: 'Edit distance to the reference' },
+  { tag: 'MD', type: 'Z', description: 'Mismatching positions/bases' },
+  { tag: 'AS', type: 'i', description: 'Alignment score' },
+  { tag: 'XS', type: 'i', description: 'Suboptimal alignment score' },
+  { tag: 'RG', type: 'Z', description: 'Read group' },
+  { tag: 'BC', type: 'Z', description: 'Barcode sequence' },
+  { tag: 'MC', type: 'Z', description: 'CIGAR string of the mate' },
+  { tag: 'MQ', type: 'i', description: 'Mapping quality of the mate' },
+  { tag: 'SA', type: 'Z', description: 'Supplementary (chimeric) alignments' },
+  { tag: 'OA', type: 'Z', description: 'Original alignment' },
+  { tag: 'OC', type: 'Z', description: 'Original CIGAR' },
+  { tag: 'OP', type: 'i', description: 'Original mapping position' },
+  { tag: 'OQ', type: 'Z', description: 'Original base quality' },
+  { tag: 'PG', type: 'Z', description: 'Program that generated the alignment' },
+  { tag: 'NH', type: 'i', description: 'Number of reported alignments' },
+  { tag: 'HI', type: 'i', description: 'Query hit index' },
+  { tag: 'IH', type: 'i', description: 'Stored alignments for the query' },
+  { tag: 'SM', type: 'i', description: 'Single-end mapping quality' },
+  { tag: 'UQ', type: 'i', description: 'Phred likelihood of the segment' },
+  { tag: 'LB', type: 'Z', description: 'Library' },
+  { tag: 'PU', type: 'Z', description: 'Platform unit' },
+  { tag: 'PT', type: 'Z', description: 'Read annotations' },
+  { tag: 'TC', type: 'i', description: 'Number of segments in the template' },
+  { tag: 'FI', type: 'i', description: 'Segment index in the template' },
+  { tag: 'RX', type: 'Z', description: 'Sequence bases of the (UMI) barcode' },
+  { tag: 'QX', type: 'Z', description: 'Quality of the (UMI) barcode bases' },
+  { tag: 'CO', type: 'Z', description: 'Free-text comment' },
+];
+
+function readSamLine(document: TextDocument, line: number): string {
+  return document
+    .getText({ start: { line, character: 0 }, end: { line: line + 1, character: 0 } })
+    .replace(/\r?\n$/, '');
+}
+
+// Completion for standard optional tags, scoped to the optional-tag region (columns 12+).
+export function getSamCompletions(
+  document: TextDocument,
+  params: CompletionParams,
+): CompletionItem[] {
+  const position = params.position;
+  const lineText = readSamLine(document, position.line);
+  if (lineText.startsWith('@')) return [];
+
+  const columns = lineText.split('\t');
+  if (columns.length < 11) return [];
+
+  // Optional tags begin at column index 11.
+  const tagsStart = columns.slice(0, 11).join('\t').length + 1;
+  if (position.character < tagsStart) return [];
+
+  // Only complete the TAG portion of the active token (before any ':' is typed).
+  const prefix = lineText.slice(tagsStart, position.character);
+  const activeToken = prefix.slice(prefix.lastIndexOf('\t') + 1);
+  if (activeToken.includes(':')) return [];
+
+  return SAM_STANDARD_TAGS.map((t) => ({
+    label: t.tag,
+    kind: CompletionItemKind.Property,
+    detail: `${t.type} — ${t.description}`,
+    insertText: `${t.tag}:${t.type}:`,
+  }));
 }

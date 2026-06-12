@@ -7,6 +7,11 @@ import {
   HoverParams,
   DocumentSymbol,
   SymbolKind,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionParams,
+  DefinitionParams,
+  Location,
 } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { withSpecRef } from '../specRefs';
@@ -543,4 +548,133 @@ export function getVcfSymbols(document: TextDocument): DocumentSymbol[] {
   }
 
   return symbols;
+}
+
+// ----- Completion + go-to-definition (LSP IntelliSense) -----
+
+// Read one line of the document without its trailing newline.
+function readLine(document: TextDocument, line: number): string {
+  return document
+    .getText({ start: { line, character: 0 }, end: { line: line + 1, character: 0 } })
+    .replace(/\r?\n$/, '');
+}
+
+function fieldDefsToCompletions(
+  defs: Iterable<{ id: string; type: string; number: string; description: string }>,
+): CompletionItem[] {
+  const items: CompletionItem[] = [];
+  for (const def of defs) {
+    items.push({
+      label: def.id,
+      kind: CompletionItemKind.Field,
+      detail: `${def.type} (${def.number})`,
+      documentation: def.description,
+    });
+  }
+  return items;
+}
+
+// Completion for declared INFO/FORMAT keys and FILTER values, each scoped to its column.
+export function getVcfCompletions(
+  document: TextDocument,
+  params: CompletionParams,
+): CompletionItem[] {
+  const position = params.position;
+  const lineText = readLine(document, position.line);
+  if (lineText.startsWith('#')) return [];
+
+  const header = getVcfHeader(document);
+  const columns = lineText.split('\t');
+  const ch = position.character;
+
+  // FILTER column (index 6): PASS plus declared filters
+  if (columns.length >= 7) {
+    const filterStart = columns.slice(0, 6).join('\t').length + 1;
+    const filterEnd = filterStart + columns[6].length;
+    if (ch >= filterStart && ch <= filterEnd) {
+      const items: CompletionItem[] = [
+        { label: 'PASS', kind: CompletionItemKind.Constant, detail: 'All filters passed' },
+      ];
+      for (const def of header.filter.values()) {
+        items.push({
+          label: def.id,
+          kind: CompletionItemKind.Field,
+          detail: 'FILTER',
+          documentation: def.description,
+        });
+      }
+      return items;
+    }
+  }
+
+  // INFO column (index 7): declared INFO keys
+  if (columns.length >= 8) {
+    const infoStart = columns.slice(0, 7).join('\t').length + 1;
+    const infoEnd = infoStart + columns[7].length;
+    if (ch >= infoStart && ch <= infoEnd) {
+      return fieldDefsToCompletions(header.info.values());
+    }
+  }
+
+  // FORMAT column (index 8): declared FORMAT keys
+  if (columns.length >= 9) {
+    const formatStart = columns.slice(0, 8).join('\t').length + 1;
+    const formatEnd = formatStart + columns[8].length;
+    if (ch >= formatStart && ch <= formatEnd) {
+      return fieldDefsToCompletions(header.format.values());
+    }
+  }
+
+  return [];
+}
+
+// Go-to-definition: an INFO/FORMAT/FILTER key on a data line jumps to its header declaration.
+export function getVcfDefinition(
+  document: TextDocument,
+  params: DefinitionParams,
+): Location[] | null {
+  const position = params.position;
+  const lineText = readLine(document, position.line);
+  if (lineText.startsWith('#')) return null;
+
+  const header = getVcfHeader(document);
+  const wordRange = getWordRangeAtPosition(lineText, position.character);
+  if (!wordRange) return null;
+  const word = lineText.substring(wordRange.start, wordRange.end);
+  const columns = lineText.split('\t');
+  const ch = position.character;
+
+  let targetLine = -1;
+
+  if (columns.length >= 7) {
+    const filterStart = columns.slice(0, 6).join('\t').length + 1;
+    const filterEnd = filterStart + columns[6].length;
+    const def = header.filter.get(word);
+    if (def && ch >= filterStart && ch <= filterEnd) targetLine = def.line;
+  }
+  if (targetLine < 0 && columns.length >= 8) {
+    const infoStart = columns.slice(0, 7).join('\t').length + 1;
+    const infoEnd = infoStart + columns[7].length;
+    const def = header.info.get(word);
+    if (def && ch >= infoStart && ch <= infoEnd) targetLine = def.line;
+  }
+  if (targetLine < 0 && columns.length >= 9) {
+    const formatStart = columns.slice(0, 8).join('\t').length + 1;
+    const formatEnd = formatStart + columns[8].length;
+    const def = header.format.get(word);
+    if (def && ch >= formatStart && ch <= formatEnd) targetLine = def.line;
+  }
+
+  if (targetLine < 0) return null;
+
+  const targetText = readLine(document, targetLine);
+  return [
+    {
+      uri: document.uri,
+      range: {
+        start: { line: targetLine, character: 0 },
+        end: { line: targetLine, character: targetText.length },
+      },
+    },
+  ];
 }
