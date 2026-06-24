@@ -17,11 +17,17 @@ import {
   DocumentSymbolParams,
   CodeActionParams,
   CodeAction,
+  CompletionItem,
+  CompletionParams,
+  Definition,
+  DefinitionParams,
 } from 'vscode-languageserver/node';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { getValidator } from './validators';
-import { getVcfHover, getVcfSymbols, getVcfHeader, clearHeaderCache } from './validators/vcf';
+import { getVcfHover, getVcfSymbols, getVcfHeader, getVcfCompletions, getVcfDefinition, clearHeaderCache } from './validators/vcf';
+import { getGff3Completions, getGff3Definition, clearGff3IndexCache } from './validators/gff3';
+import { getSamCompletions } from './validators/sam';
 import type { BioFmtSettings, ValidatorContext } from './validators/types';
 import { defaultSettings } from './validators/types';
 import { WorkspaceScanner } from './workspace/workspaceScanner';
@@ -60,6 +66,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       codeActionProvider: true,
       foldingRangeProvider: true,
       documentSymbolProvider: true,
+      completionProvider: { triggerCharacters: ['=', ';', ':', ','] },
+      definitionProvider: true,
     },
   };
 
@@ -125,6 +133,7 @@ connection.onNotification('biofmt/workspaceCancel', () => {
 documents.onDidClose((e) => {
   documentSettings.delete(e.document.uri);
   clearHeaderCache(e.document.uri);
+  clearGff3IndexCache(e.document.uri);
   visibleRanges.delete(e.document.uri);
 });
 
@@ -134,6 +143,7 @@ documents.onDidOpen((e) => {
 
 documents.onDidChangeContent((change) => {
   clearHeaderCache(change.document.uri);
+  clearGff3IndexCache(change.document.uri);
   validateDocument(change.document);
 });
 
@@ -173,6 +183,38 @@ connection.onHover((params: HoverParams): Hover | null => {
   switch (languageId) {
     case 'omics-vcf':
       return getVcfHover(document, params);
+    default:
+      return null;
+  }
+});
+
+// Completion provider
+connection.onCompletion((params: CompletionParams): CompletionItem[] => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) return [];
+
+  switch (getLanguageId(document)) {
+    case 'omics-vcf':
+      return getVcfCompletions(document, params);
+    case 'omics-gff3':
+      return getGff3Completions(document, params);
+    case 'omics-sam':
+      return getSamCompletions(document, params);
+    default:
+      return [];
+  }
+});
+
+// Go-to-definition provider
+connection.onDefinition((params: DefinitionParams): Definition | null => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) return null;
+
+  switch (getLanguageId(document)) {
+    case 'omics-vcf':
+      return getVcfDefinition(document, params);
+    case 'omics-gff3':
+      return getGff3Definition(document, params);
     default:
       return null;
   }

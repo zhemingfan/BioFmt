@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionParams,
+  DefinitionParams,
+  Location,
+} from 'vscode-languageserver/node';
+import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { withSpecRef } from '../specRefs';
 import type { BioFmtSettings, ValidatorContext } from './types';
 
@@ -47,7 +56,7 @@ const VALID_STRANDS = new Set(['+', '-', '.', '?']);
 const VALID_PHASES = new Set(['0', '1', '2', '.']);
 const CDS_PHASES = new Set(['0', '1', '2']);
 const MULTIVALUE_ATTRIBUTES = new Set(['Parent', 'Alias', 'Note', 'Dbxref', 'Ontology_term']);
-const RESERVED_ATTRIBUTES = new Set([
+export const RESERVED_ATTRIBUTES = new Set([
   'ID',
   'Name',
   'Alias',
@@ -641,4 +650,182 @@ function hasDbtag(value: string): boolean {
 
 function isPercentEscape(value: string, index: number): boolean {
   return index + 2 < value.length && /^[0-9A-Fa-f]{2}$/.test(value.slice(index + 1, index + 3));
+}
+
+// ----- Completion + go-to-definition (LSP IntelliSense) -----
+
+const REFERENCE_ATTRIBUTES = new Set(['Parent', 'Derives_from']);
+
+interface Gff3Index {
+  idToLine: Map<string, number[]>;
+  attributeKeys: Set<string>;
+}
+
+const gff3IndexCache = new Map<string, { version: number; index: Gff3Index }>();
+
+export function clearGff3IndexCache(uri: string): void {
+  gff3IndexCache.delete(uri);
+}
+
+export function getGff3Index(document: TextDocument): Gff3Index {
+  const cached = gff3IndexCache.get(document.uri);
+  if (cached && cached.version === document.version) return cached.index;
+  const index = buildGff3Index(document.getText());
+  gff3IndexCache.set(document.uri, { version: document.version, index });
+  return index;
+}
+
+// Lightweight, non-diagnostic split of a GFF3 attributes column into tag -> values.
+// Kept separate from parseAttributes so the index never re-runs validation.
+function splitGff3Attributes(raw: string): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  if (raw === '.' || raw.length === 0) return out;
+  const normalized = raw.endsWith(';') ? raw.slice(0, -1) : raw;
+  for (const part of normalized.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq <= 0) continue;
+    out.set(part.slice(0, eq), part.slice(eq + 1).split(','));
+  }
+  return out;
+}
+
+function buildGff3Index(text: string): Gff3Index {
+  const idToLine = new Map<string, number[]>();
+  const attributeKeys = new Set<string>();
+  const lines = text.split('\n');
+
+  for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+    const line = lines[lineNo];
+    // The FASTA section (if present) is sequence data, not features.
+    if (line.startsWith('##FASTA') || line.startsWith('>')) break;
+    if (line.length === 0 || line.startsWith('#')) continue;
+
+    const columns = line.split('\t');
+    if (columns.length !== 9) continue;
+
+    for (const [tag, values] of splitGff3Attributes(columns[8])) {
+      attributeKeys.add(tag);
+      if (tag === 'ID') {
+        for (const id of values) {
+          const existing = idToLine.get(id);
+          if (existing) existing.push(lineNo);
+          else idToLine.set(id, [lineNo]);
+        }
+      }
+    }
+  }
+
+  return { idToLine, attributeKeys };
+}
+
+function readGff3Line(document: TextDocument, line: number): string {
+  return document
+    .getText({ start: { line, character: 0 }, end: { line: line + 1, character: 0 } })
+    .replace(/\r?\n$/, '');
+}
+
+// Completion inside the attributes column: reserved tags, or known IDs in Parent/Derives_from values.
+export function getGff3Completions(
+  document: TextDocument,
+  params: CompletionParams,
+): CompletionItem[] {
+  const position = params.position;
+  const lineText = readGff3Line(document, position.line);
+  if (lineText.length === 0 || lineText.startsWith('#') || lineText.startsWith('>')) return [];
+
+  const columns = lineText.split('\t');
+  if (columns.length !== 9) return [];
+
+  const attrStart = columnOffset(columns, 8);
+  const ch = position.character;
+  if (ch < attrStart) return [];
+
+  const prefix = lineText.slice(attrStart, ch);
+  const segment = prefix.slice(prefix.lastIndexOf(';') + 1);
+  const eq = segment.indexOf('=');
+
+  if (eq < 0) {
+    // Tag position: offer reserved attribute keys.
+    return [...RESERVED_ATTRIBUTES].map((tag) => ({
+      label: tag,
+      kind: CompletionItemKind.Property,
+      insertText: `${tag}=`,
+    }));
+  }
+
+  if (REFERENCE_ATTRIBUTES.has(segment.slice(0, eq))) {
+    // Value position within Parent=/Derives_from=: offer known feature IDs.
+    return [...getGff3Index(document).idToLine.keys()].map((id) => ({
+      label: id,
+      kind: CompletionItemKind.Reference,
+    }));
+  }
+
+  return [];
+}
+
+// Go-to-definition: a Parent/Derives_from value jumps to the feature line(s) declaring that ID.
+export function getGff3Definition(
+  document: TextDocument,
+  params: DefinitionParams,
+): Location[] | null {
+  const position = params.position;
+  const lineText = readGff3Line(document, position.line);
+  if (lineText.length === 0 || lineText.startsWith('#') || lineText.startsWith('>')) return null;
+
+  const columns = lineText.split('\t');
+  if (columns.length !== 9) return null;
+
+  const attrStart = columnOffset(columns, 8);
+  const attrCol = columns[8];
+  const rel = position.character - attrStart;
+  if (rel < 0 || rel > attrCol.length) return null;
+
+  // Locate the ;-delimited segment containing the cursor.
+  let segStart = 0;
+  for (let i = 0; i < attrCol.length; i++) {
+    if (attrCol[i] === ';') {
+      if (i >= rel) break;
+      segStart = i + 1;
+    }
+  }
+  let segEnd = attrCol.indexOf(';', segStart);
+  if (segEnd < 0) segEnd = attrCol.length;
+  const segment = attrCol.slice(segStart, segEnd);
+
+  const eq = segment.indexOf('=');
+  if (eq < 0 || !REFERENCE_ATTRIBUTES.has(segment.slice(0, eq))) return null;
+
+  // Within the value, find the comma-delimited ID under the cursor.
+  const relInSeg = rel - segStart;
+  const valueOffset = eq + 1;
+  if (relInSeg < valueOffset) return null; // cursor on the tag, not a value
+  const valuesPart = segment.slice(valueOffset);
+  const relInValue = relInSeg - valueOffset;
+
+  let vStart = 0;
+  for (let i = 0; i < valuesPart.length; i++) {
+    if (valuesPart[i] === ',') {
+      if (i >= relInValue) break;
+      vStart = i + 1;
+    }
+  }
+  let vEnd = valuesPart.indexOf(',', vStart);
+  if (vEnd < 0) vEnd = valuesPart.length;
+  const targetId = valuesPart.slice(vStart, vEnd);
+  if (!targetId) return null;
+
+  const lineNos = getGff3Index(document).idToLine.get(targetId);
+  if (!lineNos || lineNos.length === 0) return null;
+
+  return lineNos.map((ln) => {
+    const targetText = readGff3Line(document, ln);
+    return {
+      uri: document.uri,
+      range: {
+        start: { line: ln, character: 0 },
+        end: { line: ln, character: targetText.length },
+      },
+    };
+  });
 }
