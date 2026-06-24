@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
+import { Gff3TreeView } from './Gff3TreeView';
 import { useScrollHandler } from '../hooks';
 import type { DocumentMetadata } from '../types';
 import { navigateToRegion } from '../vscodeApi';
@@ -78,8 +79,16 @@ export function GtfGffPreview({ metadata, rows, loadedLineCount, onRequestRows }
   const [featureFilter, setFeatureFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'tree'>('table');
 
   const isGff3 = metadata.languageId === 'omics-gff3';
+
+  // In tree mode, request the whole file so the parent/child hierarchy is complete.
+  useEffect(() => {
+    if (isGff3 && viewMode === 'tree') {
+      onRequestRows(0, metadata.lineCount);
+    }
+  }, [isGff3, viewMode, metadata.lineCount, onRequestRows]);
 
   // Parse rows
   const { parsedRows, features } = useMemo(() => {
@@ -195,54 +204,78 @@ export function GtfGffPreview({ metadata, rows, loadedLineCount, onRequestRows }
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="filter-bar">
-        <label>
-          Feature type:
-          <select
-            value={featureFilter}
-            onChange={(e) => setFeatureFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            {features.map(f => (
-              <option key={f} value={f}>{f}</option>
-            ))}
-          </select>
-        </label>
+      {/* View toggle: GFF3 has a Parent/child hierarchy; GTF does not. */}
+      {isGff3 && (
+        <div className="filter-bar" style={{ gap: 4 }}>
+          <span>View:</span>
+          <button onClick={() => setViewMode('table')} disabled={viewMode === 'table'}>
+            Table
+          </button>
+          <button onClick={() => setViewMode('tree')} disabled={viewMode === 'tree'}>
+            Tree
+          </button>
+          {viewMode === 'tree' && loadedLineCount < metadata.lineCount && (
+            <span className="filter-info">
+              Loading features… {loadedLineCount.toLocaleString()} / {metadata.lineCount.toLocaleString()} lines
+            </span>
+          )}
+        </div>
+      )}
 
-        <label>
-          Search attributes:
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="gene name, ID..."
-          />
-        </label>
+      {viewMode === 'tree' && isGff3 ? (
+        <Gff3TreeView rows={rows} />
+      ) : (
+        <>
+          {/* Filter bar */}
+          <div className="filter-bar">
+            <label>
+              Feature type:
+              <select
+                value={featureFilter}
+                onChange={(e) => setFeatureFilter(e.target.value)}
+              >
+                <option value="">All</option>
+                {features.map(f => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </label>
 
-        {(featureFilter || searchTerm) && (
-          <span className="filter-info">
-            Showing {filteredRows.length.toLocaleString()} of {parsedRows.length.toLocaleString()} features
-          </span>
-        )}
-      </div>
+            <label>
+              Search attributes:
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="gene name, ID..."
+              />
+            </label>
 
-      {/* Tip */}
-      <div className="tip">
-        Click a row to expand its attributes
-      </div>
+            {(featureFilter || searchTerm) && (
+              <span className="filter-info">
+                Showing {filteredRows.length.toLocaleString()} of {parsedRows.length.toLocaleString()} features
+              </span>
+            )}
+          </div>
 
-      {/* Table */}
-      <div className="table-container" style={{ flex: 1 }}>
-        <VirtualTable
-          columns={GTF_COLUMNS}
-          rows={filteredRows}
-          onScroll={handleScroll}
-          onRowClick={handleRowClick}
-          expandedRow={expandedRow}
-          renderExpandedContent={renderExpandedContent}
-        />
-      </div>
+          {/* Tip */}
+          <div className="tip">
+            Click a row to expand its attributes
+          </div>
+
+          {/* Table */}
+          <div className="table-container" style={{ flex: 1 }}>
+            <VirtualTable
+              columns={GTF_COLUMNS}
+              rows={filteredRows}
+              onScroll={handleScroll}
+              onRowClick={handleRowClick}
+              expandedRow={expandedRow}
+              renderExpandedContent={renderExpandedContent}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }
