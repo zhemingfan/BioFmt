@@ -8,6 +8,12 @@ import {
   CompletionParams,
   DefinitionParams,
   Location,
+  ReferenceParams,
+  RenameParams,
+  PrepareRenameParams,
+  WorkspaceEdit,
+  TextEdit,
+  Range,
 } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { withSpecRef } from '../specRefs';
@@ -652,13 +658,29 @@ function isPercentEscape(value: string, index: number): boolean {
   return index + 2 < value.length && /^[0-9A-Fa-f]{2}$/.test(value.slice(index + 1, index + 3));
 }
 
-// ----- Completion + go-to-definition (LSP IntelliSense) -----
+// ----- Completion, go-to-definition, references, rename (LSP IntelliSense) -----
 
 const REFERENCE_ATTRIBUTES = new Set(['Parent', 'Derives_from']);
+// Attributes whose values are feature IDs participating in the ID graph.
+const ID_BEARING_ATTRIBUTES = new Set(['ID', 'Parent', 'Derives_from']);
+// Structural characters and whitespace that are not valid in a bare feature ID
+// (they would need percent-encoding), so a plain rename must reject them.
+// A literal hyphen is intentionally allowed (legal and common in feature IDs).
+const INVALID_ID_CHARS = /[;=,&\s]/;
+
+interface Gff3Occurrence {
+  line: number;
+  startChar: number;
+  endChar: number;
+  isDeclaration: boolean;
+}
 
 interface Gff3Index {
   idToLine: Map<string, number[]>;
   attributeKeys: Set<string>;
+  // Every occurrence of each feature ID: ID= declarations plus
+  // Parent=/Derives_from= references, with precise column ranges.
+  occurrences: Map<string, Gff3Occurrence[]>;
 }
 
 const gff3IndexCache = new Map<string, { version: number; index: Gff3Index }>();
@@ -692,6 +714,7 @@ function splitGff3Attributes(raw: string): Map<string, string[]> {
 function buildGff3Index(text: string): Gff3Index {
   const idToLine = new Map<string, number[]>();
   const attributeKeys = new Set<string>();
+  const occurrences = new Map<string, Gff3Occurrence[]>();
   const lines = text.split('\n');
 
   for (let lineNo = 0; lineNo < lines.length; lineNo++) {
@@ -703,25 +726,84 @@ function buildGff3Index(text: string): Gff3Index {
     const columns = line.split('\t');
     if (columns.length !== 9) continue;
 
-    for (const [tag, values] of splitGff3Attributes(columns[8])) {
+    for (const tag of splitGff3Attributes(columns[8]).keys()) {
       attributeKeys.add(tag);
-      if (tag === 'ID') {
-        for (const id of values) {
-          const existing = idToLine.get(id);
-          if (existing) existing.push(lineNo);
-          else idToLine.set(id, [lineNo]);
-        }
-      }
     }
+
+    forEachIdToken(line, (attr, id, startChar, endChar) => {
+      const isDeclaration = attr === 'ID';
+      const entry: Gff3Occurrence = { line: lineNo, startChar, endChar, isDeclaration };
+      const existing = occurrences.get(id);
+      if (existing) existing.push(entry);
+      else occurrences.set(id, [entry]);
+
+      if (isDeclaration) {
+        const lns = idToLine.get(id);
+        if (lns) lns.push(lineNo);
+        else idToLine.set(id, [lineNo]);
+      }
+    });
   }
 
-  return { idToLine, attributeKeys };
+  return { idToLine, attributeKeys, occurrences };
 }
 
 function readGff3Line(document: TextDocument, line: number): string {
   return document
     .getText({ start: { line, character: 0 }, end: { line: line + 1, character: 0 } })
     .replace(/\r?\n$/, '');
+}
+
+// Walk the ID-bearing tokens (ID / Parent / Derives_from values) of a single
+// feature line, reporting each value token and its absolute [startChar, endChar).
+function forEachIdToken(
+  lineText: string,
+  cb: (attr: string, id: string, startChar: number, endChar: number) => void,
+): void {
+  const columns = lineText.split('\t');
+  if (columns.length !== 9) return;
+  const attrStart = columnOffset(columns, 8);
+  const attrCol = columns[8];
+
+  let segStart = 0;
+  for (;;) {
+    let segEnd = attrCol.indexOf(';', segStart);
+    if (segEnd < 0) segEnd = attrCol.length;
+    const segment = attrCol.slice(segStart, segEnd);
+    const eq = segment.indexOf('=');
+    const attr = eq > 0 ? segment.slice(0, eq) : '';
+    if (eq > 0 && ID_BEARING_ATTRIBUTES.has(attr)) {
+      const valuePart = segment.slice(eq + 1);
+      const valueStart = segStart + eq + 1;
+      let tStart = 0;
+      for (;;) {
+        let tEnd = valuePart.indexOf(',', tStart);
+        if (tEnd < 0) tEnd = valuePart.length;
+        if (tEnd > tStart) {
+          const absStart = attrStart + valueStart + tStart;
+          cb(attr, valuePart.slice(tStart, tEnd), absStart, absStart + (tEnd - tStart));
+        }
+        if (tEnd >= valuePart.length) break;
+        tStart = tEnd + 1;
+      }
+    }
+    if (segEnd >= attrCol.length) break;
+    segStart = segEnd + 1;
+  }
+}
+
+// The ID-bearing token under the cursor on a feature line, if any.
+function findIdTokenAt(
+  lineText: string,
+  character: number,
+): { attr: string; id: string; startChar: number; endChar: number } | null {
+  let hit: { attr: string; id: string; startChar: number; endChar: number } | null = null;
+  forEachIdToken(lineText, (attr, id, startChar, endChar) => {
+    if (character >= startChar && character <= endChar) {
+      hit = { attr, id, startChar, endChar };
+    }
+  });
+  return hit;
 }
 
 // Completion inside the attributes column: reserved tags, or known IDs in Parent/Derives_from values.
@@ -769,53 +851,13 @@ export function getGff3Definition(
   document: TextDocument,
   params: DefinitionParams,
 ): Location[] | null {
-  const position = params.position;
-  const lineText = readGff3Line(document, position.line);
+  const lineText = readGff3Line(document, params.position.line);
   if (lineText.length === 0 || lineText.startsWith('#') || lineText.startsWith('>')) return null;
 
-  const columns = lineText.split('\t');
-  if (columns.length !== 9) return null;
+  const hit = findIdTokenAt(lineText, params.position.character);
+  if (!hit || !REFERENCE_ATTRIBUTES.has(hit.attr)) return null;
 
-  const attrStart = columnOffset(columns, 8);
-  const attrCol = columns[8];
-  const rel = position.character - attrStart;
-  if (rel < 0 || rel > attrCol.length) return null;
-
-  // Locate the ;-delimited segment containing the cursor.
-  let segStart = 0;
-  for (let i = 0; i < attrCol.length; i++) {
-    if (attrCol[i] === ';') {
-      if (i >= rel) break;
-      segStart = i + 1;
-    }
-  }
-  let segEnd = attrCol.indexOf(';', segStart);
-  if (segEnd < 0) segEnd = attrCol.length;
-  const segment = attrCol.slice(segStart, segEnd);
-
-  const eq = segment.indexOf('=');
-  if (eq < 0 || !REFERENCE_ATTRIBUTES.has(segment.slice(0, eq))) return null;
-
-  // Within the value, find the comma-delimited ID under the cursor.
-  const relInSeg = rel - segStart;
-  const valueOffset = eq + 1;
-  if (relInSeg < valueOffset) return null; // cursor on the tag, not a value
-  const valuesPart = segment.slice(valueOffset);
-  const relInValue = relInSeg - valueOffset;
-
-  let vStart = 0;
-  for (let i = 0; i < valuesPart.length; i++) {
-    if (valuesPart[i] === ',') {
-      if (i >= relInValue) break;
-      vStart = i + 1;
-    }
-  }
-  let vEnd = valuesPart.indexOf(',', vStart);
-  if (vEnd < 0) vEnd = valuesPart.length;
-  const targetId = valuesPart.slice(vStart, vEnd);
-  if (!targetId) return null;
-
-  const lineNos = getGff3Index(document).idToLine.get(targetId);
+  const lineNos = getGff3Index(document).idToLine.get(hit.id);
   if (!lineNos || lineNos.length === 0) return null;
 
   return lineNos.map((ln) => {
@@ -828,4 +870,85 @@ export function getGff3Definition(
       },
     };
   });
+}
+
+// Find all references: every occurrence (declaration + references) of the ID under the cursor.
+export function getGff3References(
+  document: TextDocument,
+  params: ReferenceParams,
+): Location[] | null {
+  const lineText = readGff3Line(document, params.position.line);
+  if (lineText.length === 0 || lineText.startsWith('#') || lineText.startsWith('>')) return null;
+
+  const hit = findIdTokenAt(lineText, params.position.character);
+  if (!hit) return null;
+
+  const occ = getGff3Index(document).occurrences.get(hit.id);
+  if (!occ || occ.length === 0) return null;
+
+  const includeDeclaration = params.context?.includeDeclaration ?? true;
+  const selected = includeDeclaration ? occ : occ.filter((o) => !o.isDeclaration);
+
+  return selected.map((o) => locationFor(document, o));
+}
+
+// Prepare rename: confirm the cursor is on an identifier and report its span + current name.
+export function getGff3PrepareRename(
+  document: TextDocument,
+  params: PrepareRenameParams,
+): { range: Range; placeholder: string } | null {
+  const lineText = readGff3Line(document, params.position.line);
+  if (lineText.length === 0 || lineText.startsWith('#') || lineText.startsWith('>')) return null;
+
+  const hit = findIdTokenAt(lineText, params.position.character);
+  if (!hit) return null;
+
+  return {
+    range: {
+      start: { line: params.position.line, character: hit.startChar },
+      end: { line: params.position.line, character: hit.endChar },
+    },
+    placeholder: hit.id,
+  };
+}
+
+// Rename: rewrite the identifier under the cursor at its declaration and every reference.
+export function getGff3Rename(
+  document: TextDocument,
+  params: RenameParams,
+): WorkspaceEdit | null {
+  const lineText = readGff3Line(document, params.position.line);
+  if (lineText.length === 0 || lineText.startsWith('#') || lineText.startsWith('>')) return null;
+
+  const hit = findIdTokenAt(lineText, params.position.character);
+  if (!hit) return null;
+
+  if (params.newName.length === 0 || INVALID_ID_CHARS.test(params.newName)) {
+    throw new Error(
+      `Invalid GFF3 identifier "${params.newName}": must not be empty or contain whitespace, ';', '=', ',' or '&'.`,
+    );
+  }
+
+  const occ = getGff3Index(document).occurrences.get(hit.id);
+  if (!occ || occ.length === 0) return null;
+
+  const edits: TextEdit[] = occ.map((o) => ({
+    range: {
+      start: { line: o.line, character: o.startChar },
+      end: { line: o.line, character: o.endChar },
+    },
+    newText: params.newName,
+  }));
+
+  return { changes: { [document.uri]: edits } };
+}
+
+function locationFor(document: TextDocument, occ: Gff3Occurrence): Location {
+  return {
+    uri: document.uri,
+    range: {
+      start: { line: occ.line, character: occ.startChar },
+      end: { line: occ.line, character: occ.endChar },
+    },
+  };
 }
