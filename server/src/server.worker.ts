@@ -29,13 +29,25 @@ import {
   CompletionParams,
   Definition,
   DefinitionParams,
+  ReferenceParams,
+  Location,
+  RenameParams,
+  PrepareRenameParams,
+  WorkspaceEdit,
   DidChangeConfigurationNotification,
 } from 'vscode-languageserver/browser';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { getValidator } from './validators';
 import { getVcfHover, getVcfSymbols, getVcfCompletions, getVcfDefinition, clearHeaderCache } from './validators/vcf';
-import { getGff3Completions, getGff3Definition, clearGff3IndexCache } from './validators/gff3';
+import {
+  getGff3Completions,
+  getGff3Definition,
+  getGff3References,
+  getGff3PrepareRename,
+  getGff3Rename,
+  clearGff3IndexCache,
+} from './validators/gff3';
 import { getSamCompletions } from './validators/sam';
 import type { BioFmtSettings, ValidatorContext } from './validators/types';
 import { defaultSettings } from './validators/types';
@@ -70,6 +82,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       documentSymbolProvider: true,
       completionProvider: { triggerCharacters: ['=', ';', ':', ','] },
       definitionProvider: true,
+      referencesProvider: true,
+      renameProvider: { prepareProvider: true },
     },
   };
 });
@@ -183,6 +197,44 @@ connection.onDefinition((params: DefinitionParams): Definition | null => {
       return getVcfDefinition(document, params);
     case 'omics-gff3':
       return getGff3Definition(document, params);
+    default:
+      return null;
+  }
+});
+
+// Find-all-references provider
+connection.onReferences((params: ReferenceParams): Location[] | null => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) return null;
+
+  switch (getLanguageId(document)) {
+    case 'omics-gff3':
+      return getGff3References(document, params);
+    default:
+      return null;
+  }
+});
+
+// Rename providers (prepare + apply)
+connection.onPrepareRename((params: PrepareRenameParams) => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) return null;
+
+  switch (getLanguageId(document)) {
+    case 'omics-gff3':
+      return getGff3PrepareRename(document, params);
+    default:
+      return null;
+  }
+});
+
+connection.onRenameRequest((params: RenameParams): WorkspaceEdit | null => {
+  const document = documents.get(params.textDocument.uri);
+  if (!document) return null;
+
+  switch (getLanguageId(document)) {
+    case 'omics-gff3':
+      return getGff3Rename(document, params);
     default:
       return null;
   }
