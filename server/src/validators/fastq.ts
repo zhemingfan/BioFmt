@@ -10,7 +10,7 @@ export function validateFastq(
   _context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
 
   for (let i = 0; i + 3 < maxLines; i += 4) {

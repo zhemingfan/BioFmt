@@ -51,7 +51,21 @@ export function parseVcfHeader(text: string): ParsedHeader {
     headerEndLine: 0,
   };
 
-  const lines = text.split('\n');
+  // Only the header (lines starting with '#') is needed. Scan for the first
+  // non-'#' line and split just that prefix — a large VCF is never fully split
+  // into a million-element array on every hover/validate/completion. O(header),
+  // not O(file). Splitting on /\r?\n/ also strips CRLF '\r' from header fields.
+  let headerCharEnd = text.length;
+  for (let pos = 0; pos < text.length; ) {
+    if (text.charCodeAt(pos) !== 35 /* '#' */) {
+      headerCharEnd = pos;
+      break;
+    }
+    const nl = text.indexOf('\n', pos);
+    if (nl === -1) break;
+    pos = nl + 1;
+  }
+  const lines = text.slice(0, headerCharEnd).split(/\r?\n/);
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -167,7 +181,7 @@ export function validateVcf(
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   const header = parseVcfHeader(text);
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
 
   // Update context with actual header end line
   const ctx = { ...context, headerEndLine: header.headerEndLine };
@@ -245,14 +259,22 @@ export function validateVcf(
 
       // Strict-mode checks
       if (settings.validation.level === 'strict') {
-        // POS must be >= 1
-        const pos = parseInt(columns[1], 10);
-        if (!isNaN(pos) && pos < 1) {
-          const posStart = columns[0].length + 1;
+        // POS must be a positive integer (>= 1). A non-numeric POS previously
+        // slipped through because parseInt(...) is NaN and the guard skipped it.
+        const posText = columns[1];
+        const posStart = columns[0].length + 1;
+        if (!/^\d+$/.test(posText)) {
           diagnostics.push(withSpecRef({
             severity: DiagnosticSeverity.Error,
-            range: { start: { line: i, character: posStart }, end: { line: i, character: posStart + columns[1].length } },
-            message: `POS must be >= 1 (1-based coordinate), found ${pos}`,
+            range: { start: { line: i, character: posStart }, end: { line: i, character: posStart + posText.length } },
+            message: `POS must be a positive integer, found "${posText}"`,
+            source: 'biofmt',
+          }, 'VCF-S005'));
+        } else if (parseInt(posText, 10) < 1) {
+          diagnostics.push(withSpecRef({
+            severity: DiagnosticSeverity.Error,
+            range: { start: { line: i, character: posStart }, end: { line: i, character: posStart + posText.length } },
+            message: `POS must be >= 1 (1-based coordinate), found ${parseInt(posText, 10)}`,
             source: 'biofmt',
           }, 'VCF-S005'));
         }
@@ -354,7 +376,10 @@ export function validateVcf(
 
           for (let s = 9; s < columns.length; s++) {
             const sampleVals = columns[s].split(':');
-            if (sampleVals.length !== formatKeys.length && columns[s] !== '.') {
+            // The VCF spec permits trailing per-sample sub-fields to be dropped
+            // (only GT must remain), so fewer values than FORMAT keys is legal.
+            // Only MORE values than keys is invalid.
+            if (sampleVals.length > formatKeys.length && columns[s] !== '.') {
               const sampleStart = columns.slice(0, s).join('\t').length + 1;
               diagnostics.push(withSpecRef({
                 severity: DiagnosticSeverity.Warning,

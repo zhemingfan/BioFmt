@@ -83,7 +83,7 @@ export function validateGff3(
   _context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
 
   let seenVersion = false;
   let reportedVersionNotFirst = false;
@@ -715,7 +715,7 @@ function buildGff3Index(text: string): Gff3Index {
   const idToLine = new Map<string, number[]>();
   const attributeKeys = new Set<string>();
   const occurrences = new Map<string, Gff3Occurrence[]>();
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
 
   for (let lineNo = 0; lineNo < lines.length; lineNo++) {
     const line = lines[lineNo];

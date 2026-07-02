@@ -254,7 +254,7 @@ connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
 
   if (languageId === 'omics-vcf') {
     const text = document.getText();
-    const lines = text.split('\n');
+    const lines = text.split(/\r?\n/);
     let headerStart = -1;
 
     for (let i = 0; i < lines.length; i++) {

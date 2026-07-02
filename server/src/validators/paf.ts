@@ -12,7 +12,7 @@ export function validatePaf(
   context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const pafValidStrands = new Set(['+', '-']);
 
   for (let i = 0; i < lines.length; i++) {

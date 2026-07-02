@@ -93,6 +93,20 @@ describe('GenomicIndexRegistry', () => {
       assert.strictEqual(hits[0].uri, 'file:///b.bed');
     });
 
+    it('finds overlaps when chrom names sort differently under localeCompare vs code units', () => {
+      // Regression: indexDocument sorted with String.localeCompare, but findOverlapping's
+      // binary search compares chroms with code-unit `<`. 'B' (0x42) < 'a' (0x61) by code
+      // unit, but localeCompare orders 'a' before 'B' — so the search landed in the wrong
+      // partition and missed a valid overlap.
+      const registry = new GenomicIndexRegistry();
+      registry.indexDocument(
+        doc('file:///a.bed', 'omics-bed', 'a\t100\t200\nB\t100\t200\n', 1) as any
+      );
+      const hits = registry.findOverlapping('B', 150, 160);
+      assert.strictEqual(hits.length, 1, "should find the region on chrom 'B'");
+      assert.strictEqual(hits[0].chrom, 'B');
+    });
+
     it('respects chromosome boundaries', () => {
       const registry = new GenomicIndexRegistry();
       registry.indexDocument(

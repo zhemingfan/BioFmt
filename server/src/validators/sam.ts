@@ -18,7 +18,7 @@ export function validateSam(
   context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
 
   for (let i = 0; i < lines.length; i++) {
     if (!shouldValidateLine(context, i)) continue;
