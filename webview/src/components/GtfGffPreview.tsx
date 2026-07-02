@@ -51,7 +51,20 @@ const GTF_COLUMNS: ColumnDefinition[] = [
   { key: 'attributes', label: 'attributes', width: 400 },
 ];
 
-function parseAttributes(attrString: string, isGff3: boolean): Record<string, string> {
+/**
+ * Percent-decode a GFF3 attribute value, tolerating literal/malformed '%'.
+ * decodeURIComponent throws a URIError on sequences like "50% coverage"; a viewer
+ * must not crash on real-world files that contain a bare '%', so fall back to raw.
+ */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+export function parseAttributes(attrString: string, isGff3: boolean): Record<string, string> {
   const attrs: Record<string, string> = {};
 
   if (isGff3) {
@@ -60,7 +73,7 @@ function parseAttributes(attrString: string, isGff3: boolean): Record<string, st
     for (const pair of pairs) {
       const [key, value] = pair.split('=');
       if (key && value) {
-        attrs[key.trim()] = decodeURIComponent(value.trim());
+        attrs[key.trim()] = safeDecode(value.trim());
       }
     }
   } else {

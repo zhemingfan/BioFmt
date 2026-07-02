@@ -111,7 +111,7 @@
       }
     },
     "data-line": {
-      "begin": "^([^\\t#][^\\t]*)\\t([0-9]+)\\t([^\\t]+)\\t([ACGTNacgtn]+)\\t([^\\t]+)\\t([^\\t]+)\\t([^\\t]+)\\t([^\\t]+)\\t",
+      "begin": "^([^\\t#][^\\t]*)\\t([0-9]+)\\t([^\\t]+)\\t([ACGTNRYSWKMBDHVacgtnryswkmbdhv]+)\\t([^\\t]+)\\t([^\\t]+)\\t([^\\t]+)\\t([^\\t]+)(?:\\t|$)",
       "beginCaptures": {
         "1": { "name": "string.unquoted.chrom.vcf" },
         "2": { "name": "constant.numeric.pos.vcf" },

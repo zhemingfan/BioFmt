@@ -11,7 +11,7 @@ export function validateBedpe(
   context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
 
   for (let i = 0; i < lines.length; i++) {
     if (!shouldValidateLine(context, i)) continue;
@@ -57,7 +57,13 @@ export function validateBedpe(
       continue;
     }
 
-    if (start1 < 0 || start2 < 0) {
+    // BEDPE represents an unknown mate (e.g. a single breakend) with chrom='.',
+    // start=-1, end=-1. Exempt that sentinel from the negative/order checks, but
+    // still flag a genuinely negative coordinate on a known mate.
+    const mate1Known = columns[0] !== '.' && start1 !== -1;
+    const mate2Known = columns[3] !== '.' && start2 !== -1;
+
+    if ((mate1Known && start1 < 0) || (mate2Known && start2 < 0)) {
       diagnostics.push(withSpecRef({
         severity: DiagnosticSeverity.Error,
         range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },
@@ -66,7 +72,7 @@ export function validateBedpe(
       }, 'BEDPE-004'));
     }
 
-    if (end1 < start1 || end2 < start2) {
+    if ((mate1Known && end1 < start1) || (mate2Known && end2 < start2)) {
       diagnostics.push(withSpecRef({
         severity: DiagnosticSeverity.Error,
         range: { start: { line: i, character: 0 }, end: { line: i, character: line.length } },

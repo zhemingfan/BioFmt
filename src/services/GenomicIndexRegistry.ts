@@ -66,10 +66,12 @@ export class GenomicIndexRegistry {
       }
     }
 
-    // Sort by chrom + start for binary search
+    // Sort by chrom + start for binary search. Must use code-unit comparison (not
+    // localeCompare) so the ordering matches findOverlapping's binary search, which
+    // compares chroms with `<`. A mismatch lands the search in the wrong partition.
     regions.sort((a, b) => {
-      const chromCmp = a.chrom.localeCompare(b.chrom);
-      if (chromCmp !== 0) return chromCmp;
+      if (a.chrom < b.chrom) return -1;
+      if (a.chrom > b.chrom) return 1;
       return a.start - b.start;
     });
 

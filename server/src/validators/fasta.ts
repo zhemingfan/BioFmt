@@ -10,7 +10,7 @@ export function validateFasta(
   _context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const maxLines = Math.min(lines.length, settings.lsp.viewportBufferLines);
   const validBases = /^[ACGTUNRYSWKMBDHVacgtunryswkmbdhv.*\-\s]+$/;
   let sawHeader = false;

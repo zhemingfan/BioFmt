@@ -74,7 +74,7 @@ export class WorkspaceScanner {
       const validator = getValidator(file.languageId);
       if (!validator) return null;
 
-      const lines = text.split('\n');
+      const lines = text.split(/\r?\n/);
       const context: ValidatorContext = {
         uri: file.uri,
         lineCount: lines.length,

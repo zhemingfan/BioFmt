@@ -12,7 +12,7 @@ export function validateGtf(
   context: ValidatorContext
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
 
   const validStrands = new Set(['+', '-', '.']);
   const validFrames = new Set(['0', '1', '2', '.']);

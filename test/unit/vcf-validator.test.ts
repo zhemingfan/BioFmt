@@ -57,3 +57,34 @@ describe('VCF Validator', () => {
     assert.deepStrictEqual(actualCodes, expectedCodes);
   });
 });
+
+describe('VCF-X001 sample / FORMAT arity', () => {
+  const headerLines = [
+    '##fileformat=VCFv4.3',
+    '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+    '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">',
+    '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1',
+  ].join('\n');
+
+  function x001CodesFor(sample: string): string[] {
+    const text = headerLines + '\n' + `chr1\t100\t.\tA\tT\t30\tPASS\t.\tGT:GQ\t${sample}\n`;
+    const lines = text.split('\n');
+    const context: ValidatorContext = {
+      uri: 'file:///t.vcf',
+      lineCount: lines.length,
+      headerEndLine: 0,
+      bufferLines: lines.length + 10,
+    };
+    return validateVcf(text, defaultSettings, context)
+      .filter(d => d.code === 'VCF-X001')
+      .map(d => String(d.code));
+  }
+
+  it('does not flag a sample that drops trailing FORMAT sub-fields (spec-legal)', () => {
+    assert.deepStrictEqual(x001CodesFor('0/1'), []);
+  });
+
+  it('flags a sample with more values than FORMAT keys', () => {
+    assert.deepStrictEqual(x001CodesFor('0/1:99:100'), ['VCF-X001']);
+  });
+});
