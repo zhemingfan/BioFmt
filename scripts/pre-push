@@ -6,6 +6,15 @@
 
 set -e
 
+echo "=== Pre-push: No stress-test figures uploaded ==="
+tracked_figs=$(git ls-files -- 'test/stress' | grep -Ei '\.(png|jpe?g|gif|svg|pdf|webp|bmp|tiff?)$' || true)
+if [ -n "$tracked_figs" ]; then
+  echo "ERROR: image files are tracked under test/stress and must stay local:" >&2
+  printf '  - %s\n' $tracked_figs >&2
+  echo "Run 'git rm --cached <file>' to untrack them (they are git-ignored)." >&2
+  exit 1
+fi
+
 echo "=== Pre-push: Type-check extension and server ==="
 npx tsc --noEmit
 
