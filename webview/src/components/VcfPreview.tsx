@@ -79,30 +79,51 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     };
   }, []);
 
-  // Parse VCF rows incrementally — only parse newly appended rows
-  const parsedCache = useRef<{ count: number; rows: ParsedVcfRow[] }>({ count: 0, rows: [] });
+  // Build the FORMAT definition map once (used by row parsing and tooltips).
+  const formatDefs = useMemo(() => {
+    const map = new Map<string, FormatDefinition>();
+    for (const fd of headerInfo?.formatFields ?? []) {
+      map.set(fd.id, fd);
+    }
+    return map;
+  }, [headerInfo]);
+
+  // Parse VCF rows incrementally — only parse newly appended rows, and only the
+  // samples that can actually be displayed (sampleColumnLimit by default, or all
+  // once "Show all samples" is toggled). This avoids parsing thousands of hidden
+  // sample columns on population-scale VCFs; re-parses when more become visible.
+  const parsedCache = useRef<{ count: number; rows: ParsedVcfRow[]; sampleParseCount: number }>({
+    count: 0, rows: [], sampleParseCount: 0,
+  });
   const parsedRows = useMemo(() => {
     const headerEndLine = headerInfo?.headerEndLine ?? 0;
     const maxRows = metadata.previewSettings?.maxLines ?? MAX_DISPLAY_ROWS;
+    const totalSamples = headerInfo?.samples?.length ?? 0;
+    const neededSamples = showAllSamples
+      ? totalSamples
+      : Math.min(metadata.previewSettings?.sampleColumnLimit ?? 10, totalSamples);
     const prev = parsedCache.current;
 
-    // If headerInfo changed (e.g. re-parsed), start over
-    const startFrom = prev.count < headerEndLine ? headerEndLine : prev.count;
-    const result = prev.count >= headerEndLine ? [...prev.rows] : [];
+    // Re-parse from scratch if the header changed or we now need MORE samples
+    // than were parsed before (e.g. the user just toggled "Show all samples").
+    const reset = prev.count < headerEndLine || prev.sampleParseCount < neededSamples;
+    const sampleParseCount = reset ? neededSamples : prev.sampleParseCount;
+    const startFrom = reset ? headerEndLine : prev.count;
+    const result = reset ? [] : [...prev.rows];
 
     for (let i = startFrom; i < rows.length && result.length < maxRows; i++) {
       const line = rows[i];
       if (!line || line.startsWith('#')) continue;
 
-      const parsed = parseVcfLine(line, i, headerInfo);
+      const parsed = parseVcfLine(line, i, headerInfo, formatDefs, sampleParseCount);
       if (parsed) {
         result.push(parsed);
       }
     }
 
-    parsedCache.current = { count: rows.length, rows: result };
+    parsedCache.current = { count: rows.length, rows: result, sampleParseCount };
     return result;
-  }, [rows, headerInfo, metadata]);
+  }, [rows, headerInfo, metadata, showAllSamples, formatDefs]);
 
   // Apply filters
   const filteredRows = useMemo(() => {
@@ -144,15 +165,6 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       filters: Array.from(filters).sort(),
     };
   }, [parsedRows]);
-
-  // Build format definition map once for tooltip generation
-  const formatDefs = useMemo(() => {
-    const map = new Map<string, FormatDefinition>();
-    for (const fd of headerInfo?.formatFields ?? []) {
-      map.set(fd.id, fd);
-    }
-    return map;
-  }, [headerInfo]);
 
   // Determine which samples to show
   const sampleColumns = useMemo(() => {
@@ -484,7 +496,13 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   );
 }
 
-function parseVcfLine(line: string, lineNumber: number, headerInfo: VcfHeaderInfo | null): ParsedVcfRow | null {
+export function parseVcfLine(
+  line: string,
+  lineNumber: number,
+  headerInfo: VcfHeaderInfo | null,
+  formatDefs: Map<string, FormatDefinition>,
+  maxSamples: number
+): ParsedVcfRow | null {
   const columns = line.split('\t');
   if (columns.length < 8) return null;
 
@@ -517,13 +535,10 @@ function parseVcfLine(line: string, lineNumber: number, headerInfo: VcfHeaderInf
     samples = {};
     typedSamples = {};
 
-    // Build format definitions map
-    const formatDefs = new Map<string, FormatDefinition>();
-    for (const fd of headerInfo.formatFields) {
-      formatDefs.set(fd.id, fd);
-    }
-
-    for (let i = 0; i < headerInfo.samples.length && 9 + i < columns.length; i++) {
+    // Parse only the samples that can be displayed (maxSamples). formatDefs is
+    // built once by the caller instead of rebuilt per line.
+    const sampleCount = Math.min(headerInfo.samples.length, maxSamples);
+    for (let i = 0; i < sampleCount && 9 + i < columns.length; i++) {
       const sampleCol = columns[9 + i];
       if (!sampleCol) break;
       const sampleName = headerInfo.samples[i];
