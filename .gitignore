@@ -50,3 +50,15 @@ test/fixtures/large_250k.vcf
 # Environment
 .env
 .env.local
+
+# Stress-test figures and generated data — keep local, never upload.
+# Enforced by scripts/pre-commit and scripts/pre-push.
+test/stress/figures/
+test/stress/results/
+test/stress/**/*.png
+test/stress/**/*.jpg
+test/stress/**/*.jpeg
+test/stress/**/*.gif
+test/stress/**/*.svg
+test/stress/**/*.pdf
+test/stress/**/*.webp

@@ -1,0 +1,18 @@
+#!/bin/sh
+# Pre-commit hook: keep stress-test figures local.
+# Refuses to commit image files under test/stress/ (they are also git-ignored).
+#
+# Install: git config core.hooksPath scripts   (done by npm postinstall)
+
+staged=$(git diff --cached --name-only --diff-filter=ACM \
+  | grep -Ei '^test/stress/.*\.(png|jpe?g|gif|svg|pdf|webp|bmp|tiff?)$' || true)
+
+if [ -n "$staged" ]; then
+  echo "ERROR: refusing to commit figure/image files under test/stress (must stay local):" >&2
+  printf '  - %s\n' $staged >&2
+  echo "They are git-ignored. Unstage with: git restore --staged <file>" >&2
+  echo "(Do not use 'git add -f' on these — keep figures local.)" >&2
+  exit 1
+fi
+
+exit 0
