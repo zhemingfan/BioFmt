@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "note": "flat = no Parent; hier = gene->mRNA->exon->CDS with Parent=. Both validated whole-file (GFF3 is not viewport-bounded)."
+  },
+  "rows": [
+    {
+      "lines": 10000,
+      "flat_ms": 25.412666999999942,
+      "flat_heap_mb": 27.279029846191406,
+      "hier_ms": 31.94708300000002,
+      "hier_heap_mb": 34.233375549316406,
+      "ratio_time": 1.2571322403901997,
+      "hier_diags": 0,
+      "flat_diags": 0
+    },
+    {
+      "lines": 50000,
+      "flat_ms": 122.12874999999985,
+      "flat_heap_mb": 44.681236267089844,
+      "hier_ms": 160.20454100000006,
+      "hier_heap_mb": 80.09154510498047,
+      "ratio_time": 1.3117676304719426,
+      "hier_diags": 0,
+      "flat_diags": 0
+    },
+    {
+      "lines": 100000,
+      "flat_ms": 247.6981249999999,
+      "flat_heap_mb": 96.80021667480469,
+      "hier_ms": 334.4532079999999,
+      "hier_heap_mb": 108.41190338134766,
+      "ratio_time": 1.3502452148154132,
+      "hier_diags": 0,
+      "flat_diags": 0
+    },
+    {
+      "lines": 200000,
+      "flat_ms": 530.2652090000001,
+      "flat_heap_mb": 160.78185272216797,
+      "hier_ms": 810.7382500000003,
+      "hier_heap_mb": 205.85376739501953,
+      "ratio_time": 1.528929743531411,
+      "hier_diags": 0,
+      "flat_diags": 0
+    },
+    {
+      "lines": 500000,
+      "flat_ms": 1518.5477499999997,
+      "flat_heap_mb": 398.9522018432617,
+      "hier_ms": 1993.2726659999971,
+      "hier_heap_mb": 546.1994552612305,
+      "ratio_time": 1.3126177072798648,
+      "hier_diags": 0,
+      "flat_diags": 0
+    },
+    {
+      "lines": 1000000,
+      "flat_ms": 2844.145625000001,
+      "flat_heap_mb": 804.9815292358398,
+      "hier_ms": 3944.3670420000017,
+      "hier_heap_mb": 1110.5505676269531,
+      "ratio_time": 1.386837230600666,
+      "hier_diags": 0,
+      "flat_diags": 0
+    }
+  ]
+}

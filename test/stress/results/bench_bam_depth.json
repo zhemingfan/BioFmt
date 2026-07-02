@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "chr": "chr1",
+    "window": 1000000,
+    "cap": 10000,
+    "note": "reads piled into a fixed 1Mb window; query cost scales with materialized records (depth), not the display cap"
+  },
+  "rows": [
+    {
+      "depth": 1000,
+      "bam_mb": 0.006426811218261719,
+      "query_ms": 5.489458000000013,
+      "materialized": 1000,
+      "displayed": 1000,
+      "heap_mb": 0.685455322265625,
+      "wasted_records": 0
+    },
+    {
+      "depth": 5000,
+      "bam_mb": 0.029706954956054688,
+      "query_ms": 4.555750000000103,
+      "materialized": 5000,
+      "displayed": 5000,
+      "heap_mb": 2.3019790649414062,
+      "wasted_records": 0
+    },
+    {
+      "depth": 10000,
+      "bam_mb": 0.0554046630859375,
+      "query_ms": 3.571374999999989,
+      "materialized": 10000,
+      "displayed": 10000,
+      "heap_mb": 3.8250656127929688,
+      "wasted_records": 0
+    },
+    {
+      "depth": 20000,
+      "bam_mb": 0.1061868667602539,
+      "query_ms": 5.904416999999967,
+      "materialized": 20000,
+      "displayed": 10000,
+      "heap_mb": 7.7087554931640625,
+      "wasted_records": 10000
+    },
+    {
+      "depth": 50000,
+      "bam_mb": 0.2503232955932617,
+      "query_ms": 15.809207999999899,
+      "materialized": 50000,
+      "displayed": 10000,
+      "heap_mb": 18.87206268310547,
+      "wasted_records": 40000
+    },
+    {
+      "depth": 100000,
+      "bam_mb": 0.5028524398803711,
+      "query_ms": 28.509750000000167,
+      "materialized": 100000,
+      "displayed": 10000,
+      "heap_mb": 38.22517395019531,
+      "wasted_records": 90000
+    },
+    {
+      "depth": 200000,
+      "bam_mb": 1.0197162628173828,
+      "query_ms": 79.99929199999997,
+      "materialized": 200000,
+      "displayed": 10000,
+      "heap_mb": 77.67948150634766,
+      "wasted_records": 190000
+    },
+    {
+      "depth": 500000,
+      "bam_mb": 2.4832754135131836,
+      "query_ms": 178.07791599999928,
+      "materialized": 500000,
+      "displayed": 10000,
+      "heap_mb": 186.13993072509766,
+      "wasted_records": 490000
+    }
+  ]
+}

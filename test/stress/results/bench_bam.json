@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "chr": "chr1",
+    "chrLen": 250000000,
+    "maxRegionRecords": 10000,
+    "samtools": "1.9",
+    "note": "BAM Reader = samtools view whole-file->CSV; BioFmt = @gmod/bam indexed region query (mirrors BamProvider)"
+  },
+  "rows": [
+    {
+      "reads": 100000,
+      "bam_mb": 0.6686763763427734,
+      "bamReader_ms": 1001.0272920000001,
+      "biofmt_open_ms": 1.4544160000000375,
+      "biofmt_open_records": 400,
+      "biofmt_nav_ms": 0.034874999999829015,
+      "biofmt_nav_records": 40,
+      "speedup_open": 688.2675190591787,
+      "speedup_nav": 28703.29152702245
+    },
+    {
+      "reads": 250000,
+      "bam_mb": 1.5702619552612305,
+      "bamReader_ms": 2485.7675,
+      "biofmt_open_ms": 0.5114999999987049,
+      "biofmt_open_records": 1000,
+      "biofmt_nav_ms": 0.0739159999993717,
+      "biofmt_nav_records": 100,
+      "speedup_open": 4859.7605083212,
+      "speedup_nav": 33629.62687403443
+    },
+    {
+      "reads": 500000,
+      "bam_mb": 3.1054582595825195,
+      "bamReader_ms": 4975.366458,
+      "biofmt_open_ms": 1.7606660000019474,
+      "biofmt_open_records": 2000,
+      "biofmt_nav_ms": 0.15275000000110595,
+      "biofmt_nav_records": 200,
+      "speedup_open": 2825.8434353787134,
+      "speedup_nav": 32571.9571716136
+    },
+    {
+      "reads": 1000000,
+      "bam_mb": 6.202212333679199,
+      "bamReader_ms": 10286.009791000004,
+      "biofmt_open_ms": 2.956500000000233,
+      "biofmt_open_records": 4000,
+      "biofmt_nav_ms": 1.0895409999939147,
+      "biofmt_nav_records": 400,
+      "speedup_open": 3479.117128699203,
+      "speedup_nav": 9440.681710057219
+    },
+    {
+      "reads": 2000000,
+      "bam_mb": 11.25079345703125,
+      "bamReader_ms": 19915.87225,
+      "biofmt_open_ms": 5.1822919999976875,
+      "biofmt_open_records": 8000,
+      "biofmt_nav_ms": 2.6365419999929145,
+      "biofmt_nav_records": 800,
+      "speedup_open": 3843.0625387394007,
+      "speedup_nav": 7553.785318061887
+    },
+    {
+      "reads": 3000000,
+      "bam_mb": 16.4301815032959,
+      "bamReader_ms": 29717.88070800001,
+      "biofmt_open_ms": 1.3812500000058208,
+      "biofmt_open_records": 12000,
+      "biofmt_nav_ms": 0.1693749999976717,
+      "biofmt_nav_records": 1201,
+      "speedup_open": 21515.20775230753,
+      "speedup_nav": 175456.1222636666
+    }
+  ]
+}

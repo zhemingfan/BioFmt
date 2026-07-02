@@ -1,0 +1,72 @@
+{
+  "meta": {
+    "formatKeys": [
+      "GT",
+      "DP",
+      "GQ",
+      "AD",
+      "PL"
+    ],
+    "viewportRows": 500,
+    "sampleColumnLimit": 10,
+    "note": "VcfPreview parses all S samples/row but shows only 10; cost is the all-samples column."
+  },
+  "rows": [
+    {
+      "samples": 2,
+      "parse_all_ms_row": 0.001008666500000004,
+      "parse_shown_ms_row": 0.0010284790000000044,
+      "wasted_x": 0.9807361161482145,
+      "viewport500_all_ms": 0.504333250000002,
+      "viewport500_shown_ms": 0.5142395000000022
+    },
+    {
+      "samples": 10,
+      "parse_all_ms_row": 0.005071916499999986,
+      "parse_shown_ms_row": 0.005046395999999959,
+      "wasted_x": 1.005057173475888,
+      "viewport500_all_ms": 2.535958249999993,
+      "viewport500_shown_ms": 2.5231979999999794
+    },
+    {
+      "samples": 50,
+      "parse_all_ms_row": 0.025263604000000044,
+      "parse_shown_ms_row": 0.005045541500000013,
+      "wasted_x": 5.007114499008675,
+      "viewport500_all_ms": 12.631802000000022,
+      "viewport500_shown_ms": 2.5227707500000065
+    },
+    {
+      "samples": 100,
+      "parse_all_ms_row": 0.05058045800000002,
+      "parse_shown_ms_row": 0.0050693125000000235,
+      "wasted_x": 9.977774698245529,
+      "viewport500_all_ms": 25.29022900000001,
+      "viewport500_shown_ms": 2.534656250000012
+    },
+    {
+      "samples": 500,
+      "parse_all_ms_row": 0.2529088125000001,
+      "parse_shown_ms_row": 0.005067312499999844,
+      "wasted_x": 49.90985112917506,
+      "viewport500_all_ms": 126.45440625000003,
+      "viewport500_shown_ms": 2.533656249999922
+    },
+    {
+      "samples": 1000,
+      "parse_all_ms_row": 0.5059585399999968,
+      "parse_shown_ms_row": 0.005019333000000188,
+      "wasted_x": 100.80194719098691,
+      "viewport500_all_ms": 252.97926999999842,
+      "viewport500_shown_ms": 2.509666500000094
+    },
+    {
+      "samples": 2504,
+      "parse_all_ms_row": 1.2724154199999975,
+      "parse_shown_ms_row": 0.00504818750000004,
+      "wasted_x": 252.05391439996782,
+      "viewport500_all_ms": 636.2077099999988,
+      "viewport500_shown_ms": 2.52409375000002
+    }
+  ]
+}

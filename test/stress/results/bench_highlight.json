@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "engine": "vscode-textmate + vscode-oniguruma (same as VS Code)",
+    "linesPerFormat": 20000,
+    "note": "Both are TextMate grammars tokenized by the identical engine; this isolates grammar efficiency."
+  },
+  "rows": [
+    {
+      "format": "vcf",
+      "lines": 20003,
+      "biofmt_ms": 268.1296669999999,
+      "biofmt_klines_s": 74.60196487694144,
+      "biofmt_tokens": 580040,
+      "biosyntax_ms": 204.4462500000002,
+      "biosyntax_klines_s": 97.83989679438963,
+      "biosyntax_tokens": 360013,
+      "ratio_biofmt_over_biosyntax": 0.7624902245524373
+    },
+    {
+      "format": "sam",
+      "lines": 20002,
+      "biofmt_ms": 164.20329200000015,
+      "biofmt_klines_s": 121.81241774373186,
+      "biofmt_tokens": 420004,
+      "biosyntax_ms": 288.286333,
+      "biosyntax_klines_s": 69.3824080796782,
+      "biosyntax_tokens": 20014,
+      "ratio_biofmt_over_biosyntax": 1.7556671945407754
+    },
+    {
+      "format": "bed",
+      "lines": 20000,
+      "biofmt_ms": 50.30945900000006,
+      "biofmt_klines_s": 397.5395561299909,
+      "biofmt_tokens": 160000,
+      "biosyntax_ms": 106.43224999999984,
+      "biosyntax_klines_s": 187.91296810882068,
+      "biosyntax_tokens": 220000,
+      "ratio_biofmt_over_biosyntax": 2.115551471145808
+    },
+    {
+      "format": "gtf",
+      "lines": 20000,
+      "biofmt_ms": 73.90612499999952,
+      "biofmt_klines_s": 270.6135655197743,
+      "biofmt_tokens": 340000,
+      "biosyntax_ms": 476.75316700000076,
+      "biosyntax_klines_s": 41.9504292459162,
+      "biosyntax_tokens": 623000,
+      "ratio_biofmt_over_biosyntax": 6.45079371973573
+    },
+    {
+      "format": "fasta",
+      "lines": 20006,
+      "biofmt_ms": 47.241916999999376,
+      "biofmt_klines_s": 423.4798515902787,
+      "biofmt_tokens": 25722,
+      "biosyntax_ms": 1362.1840409999986,
+      "biosyntax_klines_s": 14.686708548804692,
+      "biosyntax_tokens": 1203218,
+      "ratio_biofmt_over_biosyntax": 28.834224508713664
+    },
+    {
+      "format": "fastq",
+      "lines": 20000,
+      "biofmt_ms": 42.8862079999999,
+      "biofmt_klines_s": 466.3503940474301,
+      "biofmt_tokens": 25000,
+      "biosyntax_ms": 1377.4026669999985,
+      "biosyntax_klines_s": 14.520082238231954,
+      "biosyntax_tokens": 1053890,
+      "ratio_biofmt_over_biosyntax": 32.11761382587152
+    }
+  ]
+}
