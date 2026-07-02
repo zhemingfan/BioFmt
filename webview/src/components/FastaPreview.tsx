@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtualTable, ColumnDefinition, TableRow } from './VirtualTable';
 import { useScrollHandler } from '../hooks';
-import { baseToColor } from '../utils/phredColor';
+import { residueColor, autoScheme, detectSequenceType, AA_SCHEMES, type ColorScheme } from '../utils/residueColor';
 import type { DocumentMetadata } from '../types';
 import { StatsPanel, StatItem } from './StatsPanel';
 import { Histogram } from './Histogram';
@@ -37,6 +37,7 @@ const WRAP_WIDTH = 80;
 
 export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }: FastaPreviewProps) {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [colorScheme, setColorScheme] = useState<ColorScheme | 'auto'>('auto');
 
   // Parse FASTA sequences incrementally
   const parsedCache = useRef<{ count: number; sequences: ParsedSequence[]; pending: ParsedSequence | null }>({
@@ -109,6 +110,9 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
     const seq = sequences[index];
     if (!seq) return null;
 
+    const seqType = detectSequenceType(seq.sequence);
+    const activeScheme: ColorScheme = colorScheme === 'auto' ? autoScheme(seq.sequence) : colorScheme;
+
     // Wrap sequence into lines
     const lines: string[] = [];
     for (let i = 0; i < seq.sequence.length; i += WRAP_WIDTH) {
@@ -122,7 +126,9 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
             &gt;{seq.name} {seq.description}
           </div>
           <div className="expanded-section-header" style={{ fontSize: '0.85em', opacity: 0.7 }}>
-            {seq.length.toLocaleString()} bp | GC: {seq.validCount > 0 ? ((seq.gcCount / seq.validCount) * 100).toFixed(1) : '0.0'}%
+            {seq.length.toLocaleString()} {seqType === 'aa' ? 'aa' : 'bp'}
+            {seqType === 'nt' && ` | GC: ${seq.validCount > 0 ? ((seq.gcCount / seq.validCount) * 100).toFixed(1) : '0.0'}%`}
+            {` | ${activeScheme} coloring`}
           </div>
         </div>
         <div className="expanded-section">
@@ -134,7 +140,7 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
                 </span>
                 <span>
                   {line.split('').map((base, baseIdx) => (
-                    <span key={baseIdx} style={{ color: baseToColor(base) }}>{base}</span>
+                    <span key={baseIdx} style={{ color: residueColor(base, activeScheme) }}>{base}</span>
                   ))}
                 </span>
               </div>
@@ -143,7 +149,7 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
         </div>
       </div>
     );
-  }, [sequences]);
+  }, [sequences, colorScheme]);
 
   // Handle scroll for lazy loading
   const handleScroll = useScrollHandler({
@@ -199,8 +205,17 @@ export function FastaPreview({ metadata, rows, loadedLineCount, onRequestRows }:
         </StatsPanel>
       )}
 
-      <div className="tip">
-        Click a row to view the sequence with base coloring
+      <div className="filter-bar">
+        <label>
+          Color scheme:{' '}
+          <select value={colorScheme} onChange={(e) => setColorScheme(e.target.value as ColorScheme | 'auto')}>
+            <option value="auto">Auto (detect protein/nucleotide)</option>
+            {AA_SCHEMES.map((s) => (
+              <option key={s.id} value={s.id}>{s.label}{s.kind === 'aa' ? ' (amino acid)' : ''}</option>
+            ))}
+          </select>
+        </label>
+        <span className="filter-info">Click a row to view the sequence with residue coloring</span>
       </div>
 
       <div className="table-container" style={{ flex: 1 }}>
