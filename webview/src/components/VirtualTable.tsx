@@ -6,6 +6,7 @@ import { useDiagnostics } from '../diagnostics/DiagnosticsContext';
 import { RowStatus, RowStatusHeaderSpacer, severityRowClass, STATUS_COL_WIDTH } from './RowStatus';
 import { useTableFind } from '../find/useTableFind';
 import { FindBar } from './FindBar';
+import { useGridKeyboard } from '../keyboard/useGridKeyboard';
 
 // Row type allows string columns plus extra parsed metadata (prefixed with _)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -158,6 +159,14 @@ export function VirtualTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [find.scrollTick]);
 
+  // Keyboard navigation: arrow/paging focus with Enter to activate a row.
+  const grid = useGridKeyboard({
+    rowCount: displayRows.length,
+    colCount: columns.length,
+    scrollToRow: (r) => listRef.current?.scrollToItem(r, 'smart'),
+    onActivate: (r) => onRowClick?.(displayRows[r], r),
+  });
+
   // Register how to scroll this list to a given source line (for error nav).
   const displayRowsRef = useRef(displayRows);
   displayRowsRef.current = displayRows;
@@ -190,14 +199,14 @@ export function VirtualTable({
     return (
       <div
         style={baseStyle}
-        className={`virtual-table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)} ${isActiveMatch ? 'find-active-row' : ''}`}
-        onClick={() => onRowClick?.(row, index)}
+        className={`virtual-table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)} ${isActiveMatch ? 'find-active-row' : ''} ${grid.isRowFocused(index) ? 'grid-row-focused' : ''}`}
+        onClick={() => { grid.focus(index, 0); onRowClick?.(row, index); }}
       >
         {showStatus && <RowStatus line={line} />}
-        {columnWidths.map(col => (
+        {columnWidths.map((col, colIdx) => (
           <div
             key={col.key}
-            className="virtual-table-cell"
+            className={`virtual-table-cell ${grid.isFocused(index, colIdx) ? 'grid-cell-focused' : ''}`}
             style={{
               width: col.computedWidth,
               minWidth: col.computedMinWidth,
@@ -217,7 +226,7 @@ export function VirtualTable({
         ))}
       </div>
     );
-  }, [displayRows, columnWidths, expandedRow, onRowClick, showStatus, resolveLine, worstFor, find.highlight, find.activeRow]);
+  }, [displayRows, columnWidths, expandedRow, onRowClick, showStatus, resolveLine, worstFor, find.highlight, find.activeRow, grid.isRowFocused, grid.isFocused, grid.focus]);
 
   // Calculate total width (add the status column when diagnostics are shown)
   const totalWidth =
@@ -225,7 +234,13 @@ export function VirtualTable({
     (showStatus ? STATUS_COL_WIDTH : 0);
 
   return (
-    <div ref={containerRef} className={`virtual-table-container ${className}`} style={{ flex: 1, overflow: 'hidden' }}>
+    <div
+      ref={containerRef}
+      className={`virtual-table-container ${className}`}
+      style={{ flex: 1, overflow: 'hidden' }}
+      tabIndex={0}
+      onKeyDown={grid.handleKeyDown}
+    >
       {/* Search/Export toolbar */}
       {(searchable || exportable) && (
         <div
