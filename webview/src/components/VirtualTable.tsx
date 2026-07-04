@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FixedSizeList as List } from 'react-window';
 import { useDiagnostics } from '../diagnostics/DiagnosticsContext';
 import { RowStatus, RowStatusHeaderSpacer, severityRowClass, STATUS_COL_WIDTH } from './RowStatus';
+import { useTableFind } from '../find/useTableFind';
+import { FindBar } from './FindBar';
 
 // Row type allows string columns plus extra parsed metadata (prefixed with _)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,7 +76,6 @@ export function VirtualTable({
 }: VirtualTableProps) {
   const [containerHeight, setContainerHeight] = useState(600);
   const [resizeOverrides, setResizeOverrides] = useState<Record<string, number>>({});
-  const [searchTerm, setSearchTerm] = useState('');
   const resizingRef = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
 
   // Diagnostic markers: when the extension has forwarded diagnostics for this
@@ -143,25 +144,27 @@ export function VirtualTable({
     });
   }, [columns, resizeOverrides]);
 
-  // Search filtering
-  const filteredRows = useMemo(() => {
-    if (!searchTerm) return rows;
-    const lower = searchTerm.toLowerCase();
-    return rows.filter(row =>
-      columns.some(col => {
-        const val = row[col.key];
-        return val != null && String(val).toLowerCase().includes(lower);
-      })
-    );
-  }, [rows, searchTerm, columns]);
+  // In-preview find (Cmd+F): highlight + jump, with optional filter-to-matches.
+  const getRowText = useCallback(
+    (row: TableRow) => columns.map((c) => String(row[c.key] ?? '')).join('\n'),
+    [columns]
+  );
+  const find = useTableFind(rows, getRowText);
+  const displayRows = find.displayRows;
+
+  // Scroll to the active match whenever next/prev is pressed.
+  useEffect(() => {
+    if (find.matchCount > 0) listRef.current?.scrollToItem(find.scrollIndex, 'center');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [find.scrollTick]);
 
   // Register how to scroll this list to a given source line (for error nav).
-  const filteredRowsRef = useRef(filteredRows);
-  filteredRowsRef.current = filteredRows;
+  const displayRowsRef = useRef(displayRows);
+  displayRowsRef.current = displayRows;
   useEffect(() => {
     if (!showStatus) return;
     registerScroller((line: number) => {
-      const idx = filteredRowsRef.current.findIndex((r) => resolveLine(r) === line);
+      const idx = displayRowsRef.current.findIndex((r) => resolveLine(r) === line);
       if (idx >= 0) listRef.current?.scrollToItem(idx, 'center');
     });
     return () => registerScroller(null);
@@ -169,10 +172,11 @@ export function VirtualTable({
 
   // Row renderer
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const row = filteredRows[index];
+    const row = displayRows[index];
     if (!row) return null;
 
     const isExpanded = expandedRow === index;
+    const isActiveMatch = row === find.activeRow;
     const line = showStatus ? resolveLine(row) : undefined;
     const sev = showStatus && line != null ? worstFor(line) : undefined;
     const baseStyle: React.CSSProperties = {
@@ -186,7 +190,7 @@ export function VirtualTable({
     return (
       <div
         style={baseStyle}
-        className={`virtual-table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)}`}
+        className={`virtual-table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)} ${isActiveMatch ? 'find-active-row' : ''}`}
         onClick={() => onRowClick?.(row, index)}
       >
         {showStatus && <RowStatus line={line} />}
@@ -208,12 +212,12 @@ export function VirtualTable({
           >
             {col.render
               ? col.render(row[col.key] || '', row, index)
-              : row[col.key] || ''}
+              : find.highlight(String(row[col.key] ?? ''))}
           </div>
         ))}
       </div>
     );
-  }, [filteredRows, columnWidths, expandedRow, onRowClick, showStatus, resolveLine, worstFor]);
+  }, [displayRows, columnWidths, expandedRow, onRowClick, showStatus, resolveLine, worstFor, find.highlight, find.activeRow]);
 
   // Calculate total width (add the status column when diagnostics are shown)
   const totalWidth =
@@ -236,31 +240,22 @@ export function VirtualTable({
           }}
         >
           {searchable && (
-            <input
-              type="text"
-              placeholder="Search rows..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                flex: 1,
-                maxWidth: 300,
-                padding: '3px 8px',
-                border: '1px solid var(--vscode-input-border, #3c3c3c)',
-                background: 'var(--vscode-input-background, #1e1e1e)',
-                color: 'var(--vscode-input-foreground, #ccc)',
-                borderRadius: 3,
-                fontSize: '0.85em',
-              }}
-            />
-          )}
-          {searchTerm && (
-            <span style={{ fontSize: '0.8em', opacity: 0.7 }}>
-              {filteredRows.length} of {rows.length} rows
-            </span>
+            find.isOpen ? (
+              <FindBar find={find} />
+            ) : (
+              <button
+                type="button"
+                className="find-open-btn"
+                title="Find in preview (Ctrl/Cmd+F)"
+                onClick={find.open}
+              >
+                Find
+              </button>
+            )
           )}
           {exportable && (
             <button
-              onClick={() => exportRowsAsTsv(columns, filteredRows)}
+              onClick={() => exportRowsAsTsv(columns, displayRows)}
               title="Export visible rows as TSV"
               style={{
                 marginLeft: 'auto',
@@ -336,7 +331,7 @@ export function VirtualTable({
           <List
             ref={listRef}
             height={containerHeight}
-            itemCount={filteredRows.length}
+            itemCount={displayRows.length}
             itemSize={rowHeight}
             width="100%"
             onScroll={onScroll}
@@ -347,9 +342,9 @@ export function VirtualTable({
       </div>
 
       {/* Expanded row content */}
-      {expandedRow !== null && expandedRow !== undefined && renderExpandedContent && filteredRows[expandedRow] && (
+      {expandedRow !== null && expandedRow !== undefined && renderExpandedContent && displayRows[expandedRow] && (
         <div className="virtual-table-expanded-content">
-          {renderExpandedContent(filteredRows[expandedRow], expandedRow)}
+          {renderExpandedContent(displayRows[expandedRow], expandedRow)}
         </div>
       )}
     </div>

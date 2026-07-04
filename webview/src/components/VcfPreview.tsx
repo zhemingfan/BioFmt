@@ -13,6 +13,8 @@ import { navigateToRegion } from '../vscodeApi';
 import { getVcfPreviewDisplayScope } from '../../../src/shared/vcfPreviewDisplay';
 import { useDiagnostics } from '../diagnostics/DiagnosticsContext';
 import { RowStatus, RowStatusHeaderSpacer, severityRowClass, STATUS_COL_WIDTH } from './RowStatus';
+import { useTableFind } from '../find/useTableFind';
+import { FindBar } from './FindBar';
 
 interface VcfPreviewProps {
   metadata: DocumentMetadata;
@@ -208,6 +210,17 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     });
   }, [filteredRows, sort]);
 
+  // In-preview find (Cmd+F) over the displayed rows; matches against the raw line.
+  const getRowText = useCallback((row: ParsedVcfRow) => row.raw, []);
+  const find = useTableFind(sortedRows, getRowText);
+  const displayRows = find.displayRows;
+
+  // Scroll to the active find match on next/prev.
+  useEffect(() => {
+    if (find.matchCount > 0) listRef.current?.scrollToItem(find.scrollIndex, 'center');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [find.scrollTick]);
+
   // Export visible (filtered + sorted) rows as a proper VCF file
   const exportVcf = useCallback(() => {
     const headerEndLine = headerInfo?.headerEndLine ?? 0;
@@ -234,20 +247,21 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
   // Row renderer for virtual list
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const row = sortedRows[index];
+    const row = displayRows[index];
     if (!row) return null;
 
     const isExpanded = expandedRow === row.lineNumber;
+    const isActiveMatch = row === find.activeRow;
     const sev = showStatus ? worstFor(row.lineNumber) : undefined;
 
     return (
       <div style={style}>
         <div
-          className={`table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)}`}
+          className={`table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)} ${isActiveMatch ? 'find-active-row' : ''}`}
           onClick={() => setExpandedRow(isExpanded ? null : row.lineNumber)}
         >
           {showStatus && <RowStatus line={row.lineNumber} />}
-          <div className="table-cell" style={{ width: colWidths.chrom, flexShrink: 0 }} title={row.chrom}>{row.chrom}</div>
+          <div className="table-cell" style={{ width: colWidths.chrom, flexShrink: 0 }} title={row.chrom}>{find.highlight(row.chrom)}</div>
           <div className="table-cell" style={{ width: colWidths.pos, flexShrink: 0 }} title={`Go to ${row.chrom}:${row.pos}`}>
             <span
               className="nav-link"
@@ -259,9 +273,9 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
               {row.pos}
             </span>
           </div>
-          <div className="table-cell" style={{ width: colWidths.id, flexShrink: 0 }} title={row.id}>{row.id}</div>
-          <div className="table-cell" style={{ width: colWidths.ref, flexShrink: 0 }} title={row.ref}>{row.ref}</div>
-          <div className="table-cell" style={{ width: colWidths.alt, flexShrink: 0 }} title={row.alt}>{row.alt}</div>
+          <div className="table-cell" style={{ width: colWidths.id, flexShrink: 0 }} title={row.id}>{find.highlight(row.id)}</div>
+          <div className="table-cell" style={{ width: colWidths.ref, flexShrink: 0 }} title={row.ref}>{find.highlight(row.ref)}</div>
+          <div className="table-cell" style={{ width: colWidths.alt, flexShrink: 0 }} title={row.alt}>{find.highlight(row.alt)}</div>
           <div className="table-cell" style={{ width: colWidths.qual, flexShrink: 0 }} title={row.qual?.toString() || '.'}>{row.qual ?? '.'}</div>
           <div className="table-cell" style={{ width: colWidths.filter, flexShrink: 0 }} title={row.filter}><FilterBadge value={row.filter} /></div>
           <div
@@ -299,7 +313,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       </div>
     );
-  }, [sortedRows, expandedRow, sampleColumns, colWidths, formatDefs, showStatus, worstFor]);
+  }, [displayRows, expandedRow, sampleColumns, colWidths, formatDefs, showStatus, worstFor, find.highlight, find.activeRow]);
 
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
@@ -326,12 +340,12 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   );
 
   // Register how to scroll the list to a given source line (for error nav).
-  const sortedRowsRef = useRef(sortedRows);
-  sortedRowsRef.current = sortedRows;
+  const displayRowsRef = useRef(displayRows);
+  displayRowsRef.current = displayRows;
   useEffect(() => {
     if (!showStatus) return;
     registerScroller((line: number) => {
-      const idx = sortedRowsRef.current.findIndex((r) => r.lineNumber === line);
+      const idx = displayRowsRef.current.findIndex((r) => r.lineNumber === line);
       if (idx >= 0) listRef.current?.scrollToItem(idx, 'center');
     });
     return () => registerScroller(null);
@@ -415,6 +429,22 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </StatsPanel>
       )}
 
+      {/* Find toolbar */}
+      <div className="vcf-find-toolbar">
+        {find.isOpen ? (
+          <FindBar find={find} />
+        ) : (
+          <button
+            type="button"
+            className="find-open-btn"
+            title="Find in preview (Ctrl/Cmd+F)"
+            onClick={find.open}
+          >
+            Find
+          </button>
+        )}
+      </div>
+
       {/* Table */}
       <div className="table-container">
         <div ref={containerRef} style={{ overflowX: 'auto' }}>
@@ -483,7 +513,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
           <List
             ref={listRef}
             height={listHeight}
-            itemCount={sortedRows.length}
+            itemCount={displayRows.length}
             itemSize={ROW_HEIGHT}
             width={Math.max(totalWidth + statusWidth, containerWidth)}
             onScroll={handleScroll}
