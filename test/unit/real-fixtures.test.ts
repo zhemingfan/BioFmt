@@ -45,6 +45,28 @@ function dataRows(text: string): number {
 }
 
 describe('real-world fixtures', () => {
+  // Guard against the committed set silently shrinking: a manifest entry that has
+  // a pinned sha256 was fetched and committed, so its file (and index, for
+  // indexed entries) must still be present. Removing a fixture therefore requires
+  // a visible edit to sources.json — it can't quietly vanish while tests stay
+  // green (the per-entry checks below skip absent files by design).
+  it('every pinned fixture (and its index) is committed', () => {
+    const missing: string[] = [];
+    for (const entry of manifest.entries) {
+      if (!entry.sha256) continue; // not yet fetched/pinned — allowed to be absent
+      const abs = path.join(REPO_ROOT, entry.out);
+      if (!fs.existsSync(abs)) missing.push(entry.out);
+      if (entry.expect.regionQuery && !fs.existsSync(`${abs}.tbi`)) {
+        missing.push(`${entry.out}.tbi`);
+      }
+    }
+    assert.deepStrictEqual(
+      missing,
+      [],
+      `pinned fixtures missing from the repo (clear their sha256 in sources.json to intentionally drop them): ${missing.join(', ')}`
+    );
+  });
+
   for (const entry of manifest.entries) {
     const abs = path.join(REPO_ROOT, entry.out);
 
