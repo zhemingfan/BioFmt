@@ -22,7 +22,7 @@ interface Entry {
   languageId: string;
   out: string;
   sha256: string;
-  expect: { minRows: number; regionQuery?: string };
+  expect: { minRows: number; regionQuery?: string; maxDiagnostics?: number };
 }
 
 const manifest: { entries: Entry[] } = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
@@ -107,6 +107,33 @@ describe('real-world fixtures', () => {
           diags = validator(text, defaultSettings, ctx);
         });
         assert.ok(Array.isArray(diags), 'validator did not return a diagnostics array');
+      });
+
+      it('produces no false-positive diagnostics (canonical data is valid)', async () => {
+        // These fixtures are canonical output from the tools/portals themselves,
+        // so a valid one should validate clean. Any diagnostic here is almost
+        // certainly a validator false positive on real-world data. `maxDiagnostics`
+        // (default 0) is the escape hatch if a fixture ever has a genuine advisory.
+        const text = await readText(abs);
+        const validator = getValidator(entry.languageId)!;
+        const lineCount = text.split(/\r?\n/).length;
+        const ctx: ValidatorContext = {
+          uri: `file://${abs}`,
+          lineCount,
+          headerEndLine: 0,
+          bufferLines: 5000,
+          visibleRanges: [{ startLine: 0, endLine: lineCount }],
+        };
+        const diags = validator(text, defaultSettings, ctx);
+        const allowed = entry.expect.maxDiagnostics ?? 0;
+        const sample = diags
+          .slice(0, 3)
+          .map((d) => `L${d.range.start.line + 1} [${d.code || ''}] ${d.message}`)
+          .join(' | ');
+        assert.ok(
+          diags.length <= allowed,
+          `canonical fixture produced ${diags.length} diagnostic(s) (allowed ${allowed}): ${sample}`
+        );
       });
 
       it(`has at least ${entry.expect.minRows} data rows`, async () => {

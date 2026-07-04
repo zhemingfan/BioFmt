@@ -88,3 +88,29 @@ describe('VCF-X001 sample / FORMAT arity', () => {
     assert.deepStrictEqual(x001CodesFor('0/1:99:100'), ['VCF-X001']);
   });
 });
+
+describe('VCF single-breakend ALT (real-world: GRIDSS/Manta)', () => {
+  const HDR = '##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n';
+  const hasS002 = (text: string): boolean => {
+    const lines = text.split('\n');
+    const context: ValidatorContext = {
+      uri: 'file:///sb.vcf',
+      lineCount: lines.length,
+      headerEndLine: 0,
+      bufferLines: lines.length + 10,
+    };
+    return validateVcf(text, defaultSettings, context).some((d) => String(d.code) === 'VCF-S002');
+  };
+
+  it('accepts a trailing-dot single breakend (e.g. "TTTTA.")', () => {
+    assert.ok(!hasS002(HDR + 'chr1\t100\tbnd\tT\tTTTTA.\t.\tPASS\t.'));
+  });
+
+  it('accepts a leading-dot single breakend (e.g. ".AATCG")', () => {
+    assert.ok(!hasS002(HDR + 'chr1\t200\tbnd\tA\t.AATCG\t.\tPASS\t.'));
+  });
+
+  it('still flags a genuinely invalid ALT', () => {
+    assert.ok(hasS002(HDR + 'chr1\t300\tx\tA\tXYZ\t.\tPASS\t.'));
+  });
+});

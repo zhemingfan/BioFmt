@@ -382,7 +382,11 @@ function parseAttributes(
     }
 
     const splitValues = value.split(',');
-    if (splitValues.length > 1 && !MULTIVALUE_ATTRIBUTES.has(tag)) {
+    // Comma is the GFF3 multi-value separator; it is only disallowed on reserved
+    // single-value attributes (e.g. ID, Target). Custom attributes such as
+    // `tag` (used by GENCODE/Ensembl: tag=basic,Ensembl_canonical,...) may be
+    // comma-separated, so only flag reserved-but-not-multivalue attributes.
+    if (splitValues.length > 1 && RESERVED_ATTRIBUTES.has(tag) && !MULTIVALUE_ATTRIBUTES.has(tag)) {
       addDiagnostic(diagnostics, settings, 'GFF3_INVALID_MULTIVALUE_ATTRIBUTE', lineNo, line, `Attribute "${tag}" does not allow comma-separated values`, DiagnosticSeverity.Error, valueStart, valueStart + value.length);
     }
 
