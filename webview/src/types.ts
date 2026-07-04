@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import type { PreviewDiagnostic } from '../../src/shared/diagnostics';
+
+export type { PreviewDiagnostic } from '../../src/shared/diagnostics';
+
 export interface VsCodeApi {
   postMessage(message: unknown): void;
   getState(): unknown;
@@ -225,7 +229,9 @@ export type MessageFromExtension =
   | { command: 'rowData'; rows: string[]; startLine: number }
   | { command: 'headerInfo'; headerInfo: VcfHeaderInfo }
   | { command: 'regionData'; rows: string[]; chrom: string; start: number; end: number; requestId: string; hasMore: boolean; error?: string }
-  | { command: 'references'; refs: ReferenceInfo[] };
+  | { command: 'references'; refs: ReferenceInfo[] }
+  | { command: 'diagnostics'; diagnostics: PreviewDiagnostic[] }
+  | { command: 'navError'; dir: 'next' | 'prev' };
 
 export type MessageToExtension =
   | { command: 'getMetadata' }
@@ -233,4 +239,6 @@ export type MessageToExtension =
   | { command: 'requestHeader' }
   | { command: 'requestRegion'; chrom: string; start: number; end: number; requestId: string }
   | { command: 'requestReferences' }
-  | { command: 'navigateToRegion'; chrom: string; start: number; end: number };
+  | { command: 'navigateToRegion'; chrom: string; start: number; end: number }
+  | { command: 'requestDiagnostics' }
+  | { command: 'revealLine'; line: number };

@@ -11,6 +11,8 @@ import { StatsPanel, StatItem } from './StatsPanel';
 import { summarizeVariantTypes } from '../utils/variantType';
 import { navigateToRegion } from '../vscodeApi';
 import { getVcfPreviewDisplayScope } from '../../../src/shared/vcfPreviewDisplay';
+import { useDiagnostics } from '../diagnostics/DiagnosticsContext';
+import { RowStatus, RowStatusHeaderSpacer, severityRowClass, STATUS_COL_WIDTH } from './RowStatus';
 
 interface VcfPreviewProps {
   metadata: DocumentMetadata;
@@ -35,6 +37,11 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
   const [showAllSamples, setShowAllSamples] = useState(false);
   const [colWidths, setColWidths] = useState<Record<ColKey, number>>({ ...DEFAULT_COL_WIDTHS });
   const resizingRef = useRef<{ key: ColKey; startX: number; startWidth: number } | null>(null);
+
+  // Diagnostic markers: prepend a status column keyed by each row's source line.
+  const { hasDiagnostics: showStatus, worstFor, registerScroller } = useDiagnostics();
+  const listRef = useRef<List>(null);
+  const statusWidth = showStatus ? STATUS_COL_WIDTH : 0;
 
   // Reactive list height — updates when the webview pane is resized
   const [listHeight, setListHeight] = useState(() => Math.max(200, window.innerHeight - 300));
@@ -231,13 +238,15 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     if (!row) return null;
 
     const isExpanded = expandedRow === row.lineNumber;
+    const sev = showStatus ? worstFor(row.lineNumber) : undefined;
 
     return (
       <div style={style}>
         <div
-          className={`table-row ${isExpanded ? 'expanded' : ''}`}
+          className={`table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)}`}
           onClick={() => setExpandedRow(isExpanded ? null : row.lineNumber)}
         >
+          {showStatus && <RowStatus line={row.lineNumber} />}
           <div className="table-cell" style={{ width: colWidths.chrom, flexShrink: 0 }} title={row.chrom}>{row.chrom}</div>
           <div className="table-cell" style={{ width: colWidths.pos, flexShrink: 0 }} title={`Go to ${row.chrom}:${row.pos}`}>
             <span
@@ -290,7 +299,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       </div>
     );
-  }, [sortedRows, expandedRow, sampleColumns, colWidths, formatDefs]);
+  }, [sortedRows, expandedRow, sampleColumns, colWidths, formatDefs, showStatus, worstFor]);
 
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
@@ -315,6 +324,18 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     }),
     [metadata.lineCount, metadata.previewSettings?.maxLines, parsedRows.length, headerInfo?.headerEndLine]
   );
+
+  // Register how to scroll the list to a given source line (for error nav).
+  const sortedRowsRef = useRef(sortedRows);
+  sortedRowsRef.current = sortedRows;
+  useEffect(() => {
+    if (!showStatus) return;
+    registerScroller((line: number) => {
+      const idx = sortedRowsRef.current.findIndex((r) => r.lineNumber === line);
+      if (idx >= 0) listRef.current?.scrollToItem(idx, 'center');
+    });
+    return () => registerScroller(null);
+  }, [showStatus, registerScroller]);
 
   return (
     <div className="vcf-preview">
@@ -398,7 +419,8 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       <div className="table-container">
         <div ref={containerRef} style={{ overflowX: 'auto' }}>
           {/* Header row */}
-          <div className="table-header" style={{ width: Math.max(totalWidth, containerWidth) }}>
+          <div className="table-header" style={{ width: Math.max(totalWidth + statusWidth, containerWidth) }}>
+            {showStatus && <RowStatusHeaderSpacer />}
             {(['chrom', 'pos', 'id', 'ref', 'alt', 'qual', 'filter', 'info'] as ColKey[]).map((key) => {
               const isSortable = key === 'chrom' || key === 'pos';
               const isActive = sort.col === key;
@@ -459,10 +481,11 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
 
           {/* Virtual list */}
           <List
+            ref={listRef}
             height={listHeight}
             itemCount={sortedRows.length}
             itemSize={ROW_HEIGHT}
-            width={Math.max(totalWidth, containerWidth)}
+            width={Math.max(totalWidth + statusWidth, containerWidth)}
             onScroll={handleScroll}
           >
             {Row}

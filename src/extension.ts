@@ -17,9 +17,14 @@ import { clampRowRange, getPreviewLineLimit, normalizePreviewMaxLines } from './
 import type { DeclarativeRenderSpec } from './shared/formatSpec';
 import { WorkspaceLintLifecycle } from './shared/workspaceLintLifecycle';
 import { parseInfoField } from './shared/infoField';
+import { attachDiagnosticBridge, pushDiagnostics } from './services/DiagnosticBridge';
+import { DiagnosticGutter } from './services/DiagnosticGutter';
 
 let client: LanguageClient | undefined;
 let genomicRegistry: GenomicIndexRegistry | undefined;
+// The preview panel that currently has focus, so keyboard commands
+// (next/prev error) target the right one.
+let activePreviewPanel: vscode.WebviewPanel | undefined;
 const workspaceLintLifecycle = new WorkspaceLintLifecycle<vscode.FileSystemWatcher>();
 
 // Map of supported language IDs for BioFmt
@@ -88,6 +93,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Start LSP server
   await startLanguageServer(context);
 
+  // Paint gutter icons for error/warning diagnostics in omics editors
+  context.subscriptions.push(
+    new DiagnosticGutter(context.extensionPath, (id) => ALL_LANGUAGES.includes(id))
+  );
+
   // Set up cross-format navigation
   setupGenomicIndex(context);
 
@@ -118,6 +128,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
       const document = editor.document;
       const languageId = document.languageId;
+      const sourceViewColumn = editor.viewColumn;
 
       if (!ALL_LANGUAGES.includes(languageId)) {
         vscode.window.showWarningMessage(
@@ -172,6 +183,25 @@ function registerCommands(context: vscode.ExtensionContext): void {
       // Set up panel content
       panel.webview.html = getPreviewHtml(panel.webview, context, document);
 
+      // Forward this document's diagnostics into the preview so it can render
+      // row-level error markers; refreshes automatically as diagnostics change.
+      const diagnosticBridge = attachDiagnosticBridge(panel, document.uri);
+
+      // Track which preview is focused so keyboard error-nav commands hit it,
+      // and expose a context key for their keybinding `when` clause.
+      const setActive = (active: boolean) => {
+        if (active) {
+          activePreviewPanel = panel;
+        } else if (activePreviewPanel === panel) {
+          activePreviewPanel = undefined;
+        }
+        void vscode.commands.executeCommand('setContext', 'biofmtPreviewFocused', active);
+      };
+      setActive(panel.active);
+      const viewStateListener = panel.onDidChangeViewState((e) =>
+        setActive(e.webviewPanel.active)
+      );
+
       // Handle messages from webview
       panel.webview.onDidReceiveMessage(
         async (message) => {
@@ -188,6 +218,30 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 rows,
                 startLine: message.startLine,
               });
+              // Report the preview's viewport so viewport-aware validation
+              // covers what the table is showing, not just the editor's view.
+              void client?.sendNotification('biofmt/visibleRange', {
+                uri: document.uri.toString(),
+                ranges: [{ startLine: message.startLine, endLine: message.endLine }],
+                source: 'preview',
+              });
+              break;
+            }
+            case 'requestDiagnostics':
+              pushDiagnostics(panel, document.uri);
+              break;
+            case 'revealLine': {
+              const line = typeof message.line === 'number' ? Math.max(0, message.line) : 0;
+              const shown = await vscode.window.showTextDocument(document, {
+                viewColumn: sourceViewColumn,
+                preserveFocus: false,
+              });
+              const pos = new vscode.Position(line, 0);
+              shown.selection = new vscode.Selection(pos, pos);
+              shown.revealRange(
+                new vscode.Range(pos, pos),
+                vscode.TextEditorRevealType.InCenter
+              );
               break;
             }
             case 'getMetadata': {
@@ -222,13 +276,23 @@ function registerCommands(context: vscode.ExtensionContext): void {
         context.subscriptions
       );
 
-      // Close preview when document closes; dispose listener when panel closes
+      // Close preview when document closes; dispose listeners when panel closes
       const closeListener = vscode.workspace.onDidCloseTextDocument((doc) => {
         if (doc === document) {
           panel.dispose();
         }
       });
-      panel.onDidDispose(() => closeListener.dispose());
+      panel.onDidDispose(() => {
+        closeListener.dispose();
+        diagnosticBridge.dispose();
+        viewStateListener.dispose();
+        // Only surrender the focus context if this panel actually held it, so
+        // disposing a background preview can't disable nav on the focused one.
+        if (activePreviewPanel === panel) {
+          activePreviewPanel = undefined;
+          void vscode.commands.executeCommand('setContext', 'biofmtPreviewFocused', false);
+        }
+      });
       context.subscriptions.push(closeListener);
     }
   );
@@ -388,6 +452,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
     }
   );
 
+  // Navigate to the next/previous error row in the focused preview. The webview
+  // owns row order, so the command just forwards intent; F8/Shift+F8 are bound to
+  // these only while a preview is focused (see package.json `when` clause).
+  const nextErrorCommand = vscode.commands.registerCommand('biofmt.preview.nextError', () => {
+    void activePreviewPanel?.webview.postMessage({ command: 'navError', dir: 'next' });
+  });
+  const prevErrorCommand = vscode.commands.registerCommand('biofmt.preview.prevError', () => {
+    void activePreviewPanel?.webview.postMessage({ command: 'navError', dir: 'prev' });
+  });
+
   // Warn when a file is too large for VS Code to syntax-highlight.
   // VS Code silently disables TextMate tokenization above ~20 MB
   // (editor.largeFileOptimizations). Users see plain white text with no
@@ -422,6 +496,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
     openDiagnosticRuleCommand,
     openDiagnosticSpecCommand,
     copyDiagnosticRuleCommand,
+    nextErrorCommand,
+    prevErrorCommand,
     largFileListener
   );
 }

@@ -22,7 +22,9 @@ import { GfaPreview } from './components/GfaPreview';
 import { FastaPreview } from './components/FastaPreview';
 import { FastqPreview } from './components/FastqPreview';
 import { FileSizeBanner } from './components/FileSizeBanner';
-import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo } from './types';
+import { DiagnosticsProvider } from './diagnostics/DiagnosticsContext';
+import { DiagnosticNav } from './components/DiagnosticNav';
+import type { DocumentMetadata, MessageFromExtension, VcfHeaderInfo, PreviewDiagnostic } from './types';
 import { getVsCode } from './vscodeApi';
 import { getPreviewLineLimit } from '../../src/shared/previewLimits';
 import './styles.css';
@@ -44,6 +46,7 @@ export function App() {
   const loadedCountRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [headerInfo, setHeaderInfo] = useState<VcfHeaderInfo | null>(null);
+  const [diagnostics, setDiagnostics] = useState<PreviewDiagnostic[]>([]);
   const rowCache = useRef<Map<number, string>>(new Map());
   const pendingRequests = useRef<Set<string>>(new Set());
   const flushContiguousRows = useCallback(() => {
@@ -70,6 +73,11 @@ export function App() {
   useEffect(() => {
     vscode.postMessage({ command: 'getMetadata' });
     vscode.postMessage({ command: 'requestRows', startLine: 0, endLine: 500 });
+    vscode.postMessage({ command: 'requestDiagnostics' });
+  }, []);
+
+  const revealLine = useCallback((line: number) => {
+    vscode.postMessage({ command: 'revealLine', line });
   }, []);
 
   // Handle messages from extension
@@ -122,6 +130,10 @@ export function App() {
 
         case 'headerInfo':
           setHeaderInfo(message.headerInfo);
+          break;
+
+        case 'diagnostics':
+          setDiagnostics(message.diagnostics);
           break;
       }
       } catch (err) {
@@ -417,10 +429,11 @@ export function App() {
   }
 
   return (
-    <>
+    <DiagnosticsProvider diagnostics={diagnostics} onRevealLine={revealLine}>
       <FileSizeBanner metadata={metadata} />
+      <DiagnosticNav />
       {preview}
-    </>
+    </DiagnosticsProvider>
   );
 }
 
