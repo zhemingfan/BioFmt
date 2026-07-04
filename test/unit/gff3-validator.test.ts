@@ -187,3 +187,19 @@ describe('GFF3 Validator', () => {
     assert.ok(implied.every(diagnostic => diagnostic.severity !== DiagnosticSeverity.Error), `Expected no implied FASTA errors, got ${implied.map(d => d.code).join(', ')}`);
   });
 });
+
+describe('GFF3 multi-value attributes (real-world: GENCODE tag)', () => {
+  it('allows comma-separated values on custom attributes (GENCODE tag=)', () => {
+    const codes = codesFor('##gff-version 3\nchr1\ttest\tgene\t1\t100\t.\t+\t.\tID=g1;tag=basic,Ensembl_canonical,GENCODE_Primary');
+    assert.ok(!codes.includes('GFF3_INVALID_MULTIVALUE_ATTRIBUTE'), 'custom multi-value attribute should be allowed');
+  });
+
+  it('still flags comma-separated values on reserved single-value attributes (ID)', () => {
+    assertHasCode('##gff-version 3\nchr1\ttest\tgene\t1\t100\t.\t+\t.\tID=a,b', 'GFF3_INVALID_MULTIVALUE_ATTRIBUTE');
+  });
+
+  it('allows comma-separated values on reserved multi-value attributes (Parent)', () => {
+    const codes = codesFor('##gff-version 3\nchr1\ttest\tmRNA\t1\t100\t.\t+\t.\tID=m1;Parent=g1,g2');
+    assert.ok(!codes.includes('GFF3_INVALID_MULTIVALUE_ATTRIBUTE'));
+  });
+});

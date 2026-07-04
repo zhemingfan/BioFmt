@@ -116,10 +116,11 @@ describe('validateGtf', () => {
     assert.ok(hasWarning(diagnostics, 'GTF attributes must contain gene_id'));
   });
 
-  // GTF-S003 (strict): attributes missing transcript_id -> Warning
-  it('warns when attributes are missing transcript_id in strict mode (GTF-S003)', () => {
+  // GTF-S003 (strict): non-gene features missing transcript_id -> Warning
+  // (gene-type features legitimately omit transcript_id — see the GENCODE tests below.)
+  it('warns when a non-gene feature is missing transcript_id in strict mode (GTF-S003)', () => {
     const line =
-      'chr19\tsrc\tgene\t100\t200\t.\t+\t.\tgene_id "g"; gene_name "n";';
+      'chr19\tsrc\texon\t100\t200\t.\t+\t.\tgene_id "g"; gene_name "n";';
     const diagnostics = run(line);
     assert.ok(hasWarning(diagnostics, 'GTF attributes must contain transcript_id'));
   });
@@ -142,5 +143,17 @@ describe('validateGtf', () => {
     assert.ok(!hasWarning(diagnostics, 'GTF attributes should be in format'));
     assert.ok(!hasWarning(diagnostics, 'GTF attributes must contain gene_id'));
     assert.ok(!hasWarning(diagnostics, 'GTF attributes must contain transcript_id'));
+  });
+});
+
+describe('validateGtf transcript_id on gene features (real-world: GENCODE)', () => {
+  it('does not require transcript_id on gene-type features', () => {
+    const d = run('chr1\tHAVANA\tgene\t1\t100\t.\t+\t.\tgene_id "ENSG1";');
+    assert.ok(!hasWarning(d, 'transcript_id'), 'gene features legitimately omit transcript_id');
+  });
+
+  it('still requires transcript_id on non-gene features (exon)', () => {
+    const d = run('chr1\tHAVANA\texon\t1\t100\t.\t+\t.\tgene_id "ENSG1";');
+    assert.ok(hasWarning(d, 'transcript_id'), 'exon without transcript_id should warn');
   });
 });

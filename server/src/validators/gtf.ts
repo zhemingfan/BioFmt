@@ -106,7 +106,10 @@ export function validateGtf(
             source: 'biofmt',
           }, 'GTF-S002'));
         }
-        if (!attrs.includes('transcript_id')) {
+        // `gene`-type features describe a gene, not a transcript, so GENCODE/
+        // Ensembl legitimately omit transcript_id on them; only require it on
+        // transcript-level and sub-features.
+        if (!attrs.includes('transcript_id') && columns[2] !== 'gene') {
           const attrsStart = columns.slice(0, 8).join('\t').length + 1;
           diagnostics.push(withSpecRef({
             severity: DiagnosticSeverity.Warning,

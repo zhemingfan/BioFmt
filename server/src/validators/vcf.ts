@@ -295,9 +295,12 @@ export function validateVcf(
         const alt = columns[4];
         if (alt !== '.' && alt !== '*') {
           for (const allele of alt.split(',')) {
-            // Valid: bases, <ID>, *, ., or breakend notation []
+            // Valid: bases, <ID>, *, mated breakend notation ([]), or single
+            // breakend notation (a contig sequence with a leading/trailing ".",
+            // e.g. GRIDSS/Manta "TTTT." or ".AATC" — VCF 4.2 §5.4.9).
             if (!/^[ACGTNacgtn]+$/.test(allele) && !/^<.+>$/.test(allele) && allele !== '*' &&
-                !/[[\]]/.test(allele)) {
+                !/[[\]]/.test(allele) &&
+                !/^[ACGTNacgtn]+\.$/.test(allele) && !/^\.[ACGTNacgtn]+$/.test(allele)) {
               const altStart = columns.slice(0, 4).join('\t').length + 1;
               diagnostics.push(withSpecRef({
                 severity: DiagnosticSeverity.Warning,
