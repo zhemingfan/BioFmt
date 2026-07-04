@@ -732,6 +732,7 @@
     "test:perf": "mocha --require ts-node/register 'test/perf/**/*.test.ts' --timeout 60000",
     "test:webview": "cd webview && npm test",
     "coverage": "c8 npm run test:unit",
+    "fetch:fixtures": "ts-node scripts/fetch-real-fixtures.ts",
     "package": "vsce package"
   },
   "devDependencies": {

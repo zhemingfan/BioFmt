@@ -1,0 +1,12 @@
+{
+  "id": "kg_1000g_chr22_vcf",
+  "source": "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
+  "obtain": "tabix",
+  "command": "tabix -h https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz 22:16050000-16070000 | bgzip; tabix -p vcf",
+  "out": "test/fixtures/real/1000g/1000g_phase3_chr22_16.05-16.07Mb.vcf.gz",
+  "sha256": "f9118c92cc5499765e5cb6b9dd09e77416dadb353529f4dfe915f5f38dd4c07f",
+  "license": "IGSR / 1000 Genomes open data",
+  "attribution": "IGSR / 1000 Genomes Project, phase 3 (release 20130502)",
+  "build": "GRCh37",
+  "generated_at_utc": "2026-07-04T02:33:17.300Z"
+}

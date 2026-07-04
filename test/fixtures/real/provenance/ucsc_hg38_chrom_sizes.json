@@ -1,0 +1,12 @@
+{
+  "id": "ucsc_hg38_chrom_sizes",
+  "source": "http://hgdownload.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes",
+  "obtain": "head",
+  "command": "curl http://hgdownload.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes | head (kept 30 data rows)",
+  "out": "test/fixtures/real/ucsc/hg38.chrom.sizes",
+  "sha256": "e04c1d358deda859aaac215782a00eae322756fe0766607292039685c6b9a927",
+  "license": "UCSC Genome Browser open download",
+  "attribution": "UCSC Genome Browser, hg38.chrom.sizes",
+  "build": "hg38",
+  "generated_at_utc": "2026-07-04T02:35:43.883Z"
+}

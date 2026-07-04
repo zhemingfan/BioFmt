@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// Offline verification of the committed real-world fixtures. Never touches the
+// network (that is scripts/fetch-real-fixtures.ts, run manually). For each
+// manifest entry with a committed file, this asserts the packaging contract and
+// that BioFmt's real validator processes the real file without crashing.
+
+import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
+import { unzip } from '@gmod/bgzf-filehandle';
+import { TabixIndexedFile } from '@gmod/tabix';
+import { getValidator } from '../../server/src/validators';
+import { defaultSettings, type ValidatorContext } from '../../server/src/validators/types';
+
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+const MANIFEST = path.join(REPO_ROOT, 'test', 'fixtures', 'real', 'sources.json');
+
+interface Entry {
+  id: string;
+  languageId: string;
+  out: string;
+  sha256: string;
+  expect: { minRows: number; regionQuery?: string };
+}
+
+const manifest: { entries: Entry[] } = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+
+async function readText(abs: string): Promise<string> {
+  const buf = fs.readFileSync(abs);
+  if (abs.endsWith('.gz')) {
+    const out = await unzip(buf);
+    return Buffer.from(out).toString('utf8');
+  }
+  return buf.toString('utf8');
+}
+
+function sha256(abs: string): string {
+  return crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
+}
+
+function dataRows(text: string): number {
+  return text.split(/\r?\n/).filter((l) => l.length > 0 && !l.startsWith('#')).length;
+}
+
+describe('real-world fixtures', () => {
+  for (const entry of manifest.entries) {
+    const abs = path.join(REPO_ROOT, entry.out);
+
+    describe(entry.id, () => {
+      if (!fs.existsSync(abs)) {
+        it('is fetched (run: npm run fetch:fixtures)', function () {
+          this.skip();
+        });
+        return;
+      }
+
+      it('matches the pinned sha256', () => {
+        if (!entry.sha256) return; // not pinned yet
+        assert.strictEqual(sha256(abs), entry.sha256, `checksum drift in ${entry.out}`);
+      });
+
+      it('is a format BioFmt supports', () => {
+        assert.strictEqual(
+          typeof getValidator(entry.languageId),
+          'function',
+          `no validator for ${entry.languageId}`
+        );
+      });
+
+      it('validates without throwing (robustness)', async () => {
+        const text = await readText(abs);
+        const validator = getValidator(entry.languageId)!;
+        const lineCount = text.split(/\r?\n/).length;
+        const ctx: ValidatorContext = {
+          uri: `file://${abs}`,
+          lineCount,
+          headerEndLine: 0,
+          bufferLines: 5000,
+          visibleRanges: [{ startLine: 0, endLine: lineCount }],
+        };
+        let diags: unknown;
+        assert.doesNotThrow(() => {
+          diags = validator(text, defaultSettings, ctx);
+        });
+        assert.ok(Array.isArray(diags), 'validator did not return a diagnostics array');
+      });
+
+      it(`has at least ${entry.expect.minRows} data rows`, async () => {
+        const text = await readText(abs);
+        const n = dataRows(text);
+        assert.ok(n >= entry.expect.minRows, `expected >= ${entry.expect.minRows} rows, got ${n}`);
+      });
+
+      if (entry.expect.regionQuery) {
+        it('answers an indexed region query via @gmod/tabix', async () => {
+          const tbi = `${abs}.tbi`;
+          assert.ok(fs.existsSync(tbi), `missing index: ${tbi}`);
+          const [chrom, range] = entry.expect.regionQuery!.split(':');
+          const [start, end] = range.split('-').map((v) => Number(v));
+          const t = new TabixIndexedFile({ path: abs, tbiPath: tbi });
+          const lines: string[] = [];
+          await t.getLines(chrom, start, end, { lineCallback: (l: string) => lines.push(l) });
+          assert.ok(lines.length > 0, 'region query returned no records');
+        });
+      }
+    });
+  }
+});
