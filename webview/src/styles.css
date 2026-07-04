@@ -1809,3 +1809,24 @@ mark.find-match {
   padding: 4px 8px;
   border-bottom: 1px solid var(--vscode-widget-border, #333);
 }
+
+/* ============================================================================
+   Keyboard navigation
+   ============================================================================ */
+
+/* The grid container is focusable but shows focus via the row/cell ring. */
+.virtual-table-container:focus,
+.table-container:focus {
+  outline: none;
+}
+
+.virtual-table-row.grid-row-focused,
+.table-row.grid-row-focused {
+  outline: 1px solid var(--vscode-focusBorder, #007fd4);
+  outline-offset: -1px;
+}
+
+.virtual-table-cell.grid-cell-focused {
+  box-shadow: inset 0 0 0 1px var(--vscode-focusBorder, #007fd4);
+  border-radius: 2px;
+}

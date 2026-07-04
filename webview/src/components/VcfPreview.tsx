@@ -15,6 +15,7 @@ import { useDiagnostics } from '../diagnostics/DiagnosticsContext';
 import { RowStatus, RowStatusHeaderSpacer, severityRowClass, STATUS_COL_WIDTH } from './RowStatus';
 import { useTableFind } from '../find/useTableFind';
 import { FindBar } from './FindBar';
+import { useGridKeyboard } from '../keyboard/useGridKeyboard';
 
 interface VcfPreviewProps {
   metadata: DocumentMetadata;
@@ -221,6 +222,24 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [find.scrollTick]);
 
+  // Keyboard navigation: arrow/paging row focus, Enter expands, Esc collapses.
+  const grid = useGridKeyboard({
+    rowCount: displayRows.length,
+    colCount: 1,
+    scrollToRow: (r) => listRef.current?.scrollToItem(r, 'smart'),
+    onActivate: (r) => {
+      const row = displayRows[r];
+      if (row) setExpandedRow((prev) => (prev === row.lineNumber ? null : row.lineNumber));
+    },
+    onEscape: () => {
+      if (expandedRow !== null) {
+        setExpandedRow(null);
+        return true;
+      }
+      return false;
+    },
+  });
+
   // Export visible (filtered + sorted) rows as a proper VCF file
   const exportVcf = useCallback(() => {
     const headerEndLine = headerInfo?.headerEndLine ?? 0;
@@ -257,8 +276,8 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
     return (
       <div style={style}>
         <div
-          className={`table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)} ${isActiveMatch ? 'find-active-row' : ''}`}
-          onClick={() => setExpandedRow(isExpanded ? null : row.lineNumber)}
+          className={`table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)} ${isActiveMatch ? 'find-active-row' : ''} ${grid.isRowFocused(index) ? 'grid-row-focused' : ''}`}
+          onClick={() => { grid.focus(index, 0); setExpandedRow(isExpanded ? null : row.lineNumber); }}
         >
           {showStatus && <RowStatus line={row.lineNumber} />}
           <div className="table-cell" style={{ width: colWidths.chrom, flexShrink: 0 }} title={row.chrom}>{find.highlight(row.chrom)}</div>
@@ -313,7 +332,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
         </div>
       </div>
     );
-  }, [displayRows, expandedRow, sampleColumns, colWidths, formatDefs, showStatus, worstFor, find.highlight, find.activeRow]);
+  }, [displayRows, expandedRow, sampleColumns, colWidths, formatDefs, showStatus, worstFor, find.highlight, find.activeRow, grid.isRowFocused, grid.focus]);
 
   // Handle scroll to load more rows
   const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
@@ -446,7 +465,7 @@ export function VcfPreview({ metadata, rows, headerInfo, loadedLineCount, onRequ
       </div>
 
       {/* Table */}
-      <div className="table-container">
+      <div className="table-container" tabIndex={0} onKeyDown={grid.handleKeyDown}>
         <div ref={containerRef} style={{ overflowX: 'auto' }}>
           {/* Header row */}
           <div className="table-header" style={{ width: Math.max(totalWidth + statusWidth, containerWidth) }}>
