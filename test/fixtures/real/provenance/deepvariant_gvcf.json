@@ -1,0 +1,12 @@
+{
+  "id": "deepvariant_gvcf",
+  "source": "https://raw.githubusercontent.com/google/deepvariant/r1.9/deepvariant/testdata/golden.postprocess_gvcf_output.g.vcf",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/google/deepvariant/r1.9/deepvariant/testdata/golden.postprocess_gvcf_output.g.vcf -o test/fixtures/real/deepvariant/golden.gvcf.g.vcf",
+  "out": "test/fixtures/real/deepvariant/golden.gvcf.g.vcf",
+  "sha256": "67c82cd23234a00160ab4101800e8a116cb25a10424241809f3b6474e709a605",
+  "license": "BSD-3-Clause",
+  "attribution": "Google DeepVariant (github.com/google/deepvariant), BSD-3-Clause",
+  "build": "unspecified",
+  "generated_at_utc": "2026-07-04T02:33:05.992Z"
+}

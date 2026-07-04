@@ -1,0 +1,12 @@
+{
+  "id": "gridss_sv_vcf",
+  "source": "https://raw.githubusercontent.com/PapenfussLab/gridss/master/example/COLO829v003T.purple.sv.vcf",
+  "obtain": "head",
+  "command": "curl https://raw.githubusercontent.com/PapenfussLab/gridss/master/example/COLO829v003T.purple.sv.vcf | head (kept 60 data rows)",
+  "out": "test/fixtures/real/gridss/COLO829v003T.sv.slice.vcf",
+  "sha256": "2104bd429a22deea8213529abdca4e60bbfcaa8988f8705492f130c5b37b8dc9",
+  "license": "GPL-3.0",
+  "attribution": "GRIDSS (github.com/PapenfussLab/gridss), GPL-3.0",
+  "build": "hg19-like (example)",
+  "generated_at_utc": "2026-07-04T02:33:06.577Z"
+}

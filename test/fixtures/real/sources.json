@@ -1,0 +1,173 @@
+{
+  "$comment": "Manifest of license-vetted real-world fixtures. Source of truth for scripts/fetch-real-fixtures.ts (dev-only, network) and test/unit/real-fixtures.test.ts (offline). Committed fixtures are generated artifacts; sha256 is pinned by the fetch script. See ATTRIBUTION.md.",
+  "version": 1,
+  "root": "test/fixtures/real",
+  "entries": [
+    {
+      "id": "deepvariant_golden_vcf",
+      "languageId": "omics-vcf",
+      "license": "BSD-3-Clause",
+      "attribution": "Google DeepVariant (github.com/google/deepvariant), BSD-3-Clause",
+      "build": "unspecified",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/google/deepvariant/r1.9/deepvariant/testdata/golden.postprocess_single_site_output.vcf",
+      "out": "test/fixtures/real/deepvariant/golden.single_site.vcf",
+      "sha256": "08116cb4d8cf16b6cd1726f2615afe071673d72b8a2966cea894a17222e31c44",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "deepvariant_gvcf",
+      "languageId": "omics-vcf",
+      "license": "BSD-3-Clause",
+      "attribution": "Google DeepVariant (github.com/google/deepvariant), BSD-3-Clause",
+      "build": "unspecified",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/google/deepvariant/r1.9/deepvariant/testdata/golden.postprocess_gvcf_output.g.vcf",
+      "out": "test/fixtures/real/deepvariant/golden.gvcf.g.vcf",
+      "sha256": "67c82cd23234a00160ab4101800e8a116cb25a10424241809f3b6474e709a605",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "freebayes_tiny_vcf",
+      "languageId": "omics-vcf",
+      "license": "MIT",
+      "attribution": "freebayes (github.com/freebayes/freebayes), MIT",
+      "build": "unspecified",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/freebayes/freebayes/master/test/regression_baseline/tiny_chr22.vcf",
+      "out": "test/fixtures/real/freebayes/tiny_chr22.vcf",
+      "sha256": "c6d2b95edff43847e4398edce253e1ced59933ffd8a66e104a389e7c4d9bac33",
+      "expect": {
+        "minRows": 3
+      }
+    },
+    {
+      "id": "gridss_sv_vcf",
+      "languageId": "omics-vcf",
+      "license": "GPL-3.0",
+      "attribution": "GRIDSS (github.com/PapenfussLab/gridss), GPL-3.0",
+      "build": "hg19-like (example)",
+      "obtain": "head",
+      "headDataRows": 60,
+      "source": "https://raw.githubusercontent.com/PapenfussLab/gridss/master/example/COLO829v003T.purple.sv.vcf",
+      "out": "test/fixtures/real/gridss/COLO829v003T.sv.slice.vcf",
+      "sha256": "2104bd429a22deea8213529abdca4e60bbfcaa8988f8705492f130c5b37b8dc9",
+      "expect": {
+        "minRows": 5
+      }
+    },
+    {
+      "id": "giab_hg002_vcf",
+      "languageId": "omics-vcf",
+      "license": "NIST GIAB public benchmark (consented for redistribution)",
+      "attribution": "NIST Genome in a Bottle, HG002 NISTv4.2.1 GRCh38 benchmark",
+      "build": "GRCh38",
+      "obtain": "tabix",
+      "region": "chr20:10000000-10020000",
+      "source": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+      "out": "test/fixtures/real/giab/HG002_GRCh38_v4.2.1_chr20_10.0-10.02Mb.vcf.gz",
+      "sha256": "34bfa39b77a850254a14d24900e12a17a83759e8122319c5bfba008880f25a84",
+      "expect": {
+        "minRows": 20,
+        "regionQuery": "chr20:10000000-10020000"
+      }
+    },
+    {
+      "id": "giab_hg002_bed",
+      "languageId": "omics-bed",
+      "license": "NIST GIAB public benchmark (consented for redistribution)",
+      "attribution": "NIST Genome in a Bottle, HG002 NISTv4.2.1 GRCh38 benchmark regions",
+      "build": "GRCh38",
+      "obtain": "grep-slice",
+      "sliceChromPrefix": "chr20\t",
+      "sliceRows": 200,
+      "source": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed",
+      "out": "test/fixtures/real/giab/HG002_GRCh38_v4.2.1_chr20_regions.bed",
+      "sha256": "b98292fd5d663e761f55793556e17b741b92764dc83d71c21ddb318e237de8ef",
+      "expect": {
+        "minRows": 20
+      }
+    },
+    {
+      "id": "kg_1000g_chr22_vcf",
+      "languageId": "omics-vcf",
+      "license": "IGSR / 1000 Genomes open data",
+      "attribution": "IGSR / 1000 Genomes Project, phase 3 (release 20130502)",
+      "build": "GRCh37",
+      "obtain": "tabix",
+      "region": "22:16050000-16070000",
+      "source": "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz",
+      "out": "test/fixtures/real/1000g/1000g_phase3_chr22_16.05-16.07Mb.vcf.gz",
+      "sha256": "f9118c92cc5499765e5cb6b9dd09e77416dadb353529f4dfe915f5f38dd4c07f",
+      "expect": {
+        "minRows": 20,
+        "regionQuery": "22:16050000-16070000"
+      }
+    },
+    {
+      "id": "gencode_gtf_chr22",
+      "languageId": "omics-gtf",
+      "license": "GENCODE / EMBL-EBI open",
+      "attribution": "GENCODE release 50 (basic annotation)",
+      "build": "GRCh38.p14",
+      "obtain": "gunzip-grep-slice",
+      "sliceChromPrefix": "chr22\t",
+      "sliceRows": 300,
+      "source": "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_50/gencode.v50.basic.annotation.gtf.gz",
+      "out": "test/fixtures/real/gencode/gencode.v50.basic.chr22.gtf",
+      "sha256": "d21046f8997483020d6c3664c6405ced3817c8ab29f1e594750427954cab9d99",
+      "expect": {
+        "minRows": 20
+      }
+    },
+    {
+      "id": "gencode_gff3_chr22",
+      "languageId": "omics-gff3",
+      "license": "GENCODE / EMBL-EBI open",
+      "attribution": "GENCODE release 50 (basic annotation)",
+      "build": "GRCh38.p14",
+      "obtain": "gunzip-grep-slice",
+      "sliceChromPrefix": "chr22\t",
+      "sliceRows": 300,
+      "source": "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_50/gencode.v50.basic.annotation.gff3.gz",
+      "out": "test/fixtures/real/gencode/gencode.v50.basic.chr22.gff3",
+      "sha256": "4e38f0bae0e01149c8e33b030163f9598a5bc2f562f3d7e7657bc288a13b9409",
+      "expect": {
+        "minRows": 20
+      }
+    },
+    {
+      "id": "ucsc_hg38_chrom_sizes",
+      "languageId": "omics-chrom-sizes",
+      "license": "UCSC Genome Browser open download",
+      "attribution": "UCSC Genome Browser, hg38.chrom.sizes",
+      "build": "hg38",
+      "obtain": "head",
+      "headDataRows": 30,
+      "source": "http://hgdownload.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes",
+      "out": "test/fixtures/real/ucsc/hg38.chrom.sizes",
+      "sha256": "e04c1d358deda859aaac215782a00eae322756fe0766607292039685c6b9a927",
+      "expect": {
+        "minRows": 20
+      }
+    },
+    {
+      "id": "ucsc_psl_example",
+      "languageId": "omics-psl",
+      "license": "UCSC Genome Browser open download",
+      "attribution": "UCSC Genome Browser, bigPsl.psl example",
+      "build": "hg38",
+      "obtain": "direct",
+      "source": "https://genome.ucsc.edu/goldenpath/help/examples/bigPsl.psl",
+      "out": "test/fixtures/real/ucsc/bigPsl.psl",
+      "sha256": "c3c335bec5fbd99f26411982fea86a3847d2aa2ff0430d14955f80407c4c7120",
+      "expect": {
+        "minRows": 1
+      }
+    }
+  ]
+}

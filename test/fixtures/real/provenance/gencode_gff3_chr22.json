@@ -1,0 +1,12 @@
+{
+  "id": "gencode_gff3_chr22",
+  "source": "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_50/gencode.v50.basic.annotation.gff3.gz",
+  "obtain": "gunzip-grep-slice",
+  "command": "curl https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_50/gencode.v50.basic.annotation.gff3.gz | gzip -dc | grep \"^chr22\t\" (kept 300)",
+  "out": "test/fixtures/real/gencode/gencode.v50.basic.chr22.gff3",
+  "sha256": "4e38f0bae0e01149c8e33b030163f9598a5bc2f562f3d7e7657bc288a13b9409",
+  "license": "GENCODE / EMBL-EBI open",
+  "attribution": "GENCODE release 50 (basic annotation)",
+  "build": "GRCh38.p14",
+  "generated_at_utc": "2026-07-04T02:35:43.680Z"
+}

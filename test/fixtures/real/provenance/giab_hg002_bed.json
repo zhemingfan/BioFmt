@@ -1,0 +1,12 @@
+{
+  "id": "giab_hg002_bed",
+  "source": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed",
+  "obtain": "grep-slice",
+  "command": "curl https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed | grep \"^chr20\t\" (kept 200)",
+  "out": "test/fixtures/real/giab/HG002_GRCh38_v4.2.1_chr20_regions.bed",
+  "sha256": "b98292fd5d663e761f55793556e17b741b92764dc83d71c21ddb318e237de8ef",
+  "license": "NIST GIAB public benchmark (consented for redistribution)",
+  "attribution": "NIST Genome in a Bottle, HG002 NISTv4.2.1 GRCh38 benchmark regions",
+  "build": "GRCh38",
+  "generated_at_utc": "2026-07-04T02:37:04.659Z"
+}

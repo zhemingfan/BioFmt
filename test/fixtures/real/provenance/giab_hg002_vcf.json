@@ -1,0 +1,12 @@
+{
+  "id": "giab_hg002_vcf",
+  "source": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+  "obtain": "tabix",
+  "command": "tabix -h https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz chr20:10000000-10020000 | bgzip; tabix -p vcf",
+  "out": "test/fixtures/real/giab/HG002_GRCh38_v4.2.1_chr20_10.0-10.02Mb.vcf.gz",
+  "sha256": "34bfa39b77a850254a14d24900e12a17a83759e8122319c5bfba008880f25a84",
+  "license": "NIST GIAB public benchmark (consented for redistribution)",
+  "attribution": "NIST Genome in a Bottle, HG002 NISTv4.2.1 GRCh38 benchmark",
+  "build": "GRCh38",
+  "generated_at_utc": "2026-07-04T02:33:09.833Z"
+}

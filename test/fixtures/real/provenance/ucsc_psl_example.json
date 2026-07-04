@@ -1,0 +1,12 @@
+{
+  "id": "ucsc_psl_example",
+  "source": "https://genome.ucsc.edu/goldenpath/help/examples/bigPsl.psl",
+  "obtain": "direct",
+  "command": "curl -sSL https://genome.ucsc.edu/goldenpath/help/examples/bigPsl.psl -o test/fixtures/real/ucsc/bigPsl.psl",
+  "out": "test/fixtures/real/ucsc/bigPsl.psl",
+  "sha256": "c3c335bec5fbd99f26411982fea86a3847d2aa2ff0430d14955f80407c4c7120",
+  "license": "UCSC Genome Browser open download",
+  "attribution": "UCSC Genome Browser, bigPsl.psl example",
+  "build": "hg38",
+  "generated_at_utc": "2026-07-04T02:35:44.085Z"
+}

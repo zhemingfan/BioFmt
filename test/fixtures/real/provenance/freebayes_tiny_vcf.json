@@ -1,0 +1,12 @@
+{
+  "id": "freebayes_tiny_vcf",
+  "source": "https://raw.githubusercontent.com/freebayes/freebayes/master/test/regression_baseline/tiny_chr22.vcf",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/freebayes/freebayes/master/test/regression_baseline/tiny_chr22.vcf -o test/fixtures/real/freebayes/tiny_chr22.vcf",
+  "out": "test/fixtures/real/freebayes/tiny_chr22.vcf",
+  "sha256": "c6d2b95edff43847e4398edce253e1ced59933ffd8a66e104a389e7c4d9bac33",
+  "license": "MIT",
+  "attribution": "freebayes (github.com/freebayes/freebayes), MIT",
+  "build": "unspecified",
+  "generated_at_utc": "2026-07-04T02:33:06.365Z"
+}
