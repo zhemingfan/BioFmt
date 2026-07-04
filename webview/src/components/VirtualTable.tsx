@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
+import { useDiagnostics } from '../diagnostics/DiagnosticsContext';
+import { RowStatus, RowStatusHeaderSpacer, severityRowClass, STATUS_COL_WIDTH } from './RowStatus';
 
 // Row type allows string columns plus extra parsed metadata (prefixed with _)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,6 +32,11 @@ export interface VirtualTableProps {
   searchable?: boolean;
   /** Enable TSV export button. Default: true */
   exportable?: boolean;
+  /**
+   * Extract a row's 0-based source line, used to attach diagnostic markers.
+   * Defaults to `Number(row._lineNumber) - 1` (the convention most previews use).
+   */
+  getRowLine?: (row: TableRow) => number | undefined;
 }
 
 const DEFAULT_ROW_HEIGHT = 28;
@@ -63,11 +70,26 @@ export function VirtualTable({
   className = '',
   searchable = true,
   exportable = true,
+  getRowLine,
 }: VirtualTableProps) {
   const [containerHeight, setContainerHeight] = useState(600);
   const [resizeOverrides, setResizeOverrides] = useState<Record<string, number>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const resizingRef = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
+
+  // Diagnostic markers: when the extension has forwarded diagnostics for this
+  // document, prepend a status column keyed by each row's source line.
+  const { hasDiagnostics: showStatus, worstFor, registerScroller } = useDiagnostics();
+  const listRef = useRef<List>(null);
+  const resolveLine = useCallback(
+    (row: TableRow): number | undefined =>
+      getRowLine
+        ? getRowLine(row)
+        : row._lineNumber != null
+          ? Number(row._lineNumber) - 1
+          : undefined,
+    [getRowLine]
+  );
 
   // Measure container
   const containerRef = useCallback((node: HTMLDivElement | null) => {
@@ -133,12 +155,26 @@ export function VirtualTable({
     );
   }, [rows, searchTerm, columns]);
 
+  // Register how to scroll this list to a given source line (for error nav).
+  const filteredRowsRef = useRef(filteredRows);
+  filteredRowsRef.current = filteredRows;
+  useEffect(() => {
+    if (!showStatus) return;
+    registerScroller((line: number) => {
+      const idx = filteredRowsRef.current.findIndex((r) => resolveLine(r) === line);
+      if (idx >= 0) listRef.current?.scrollToItem(idx, 'center');
+    });
+    return () => registerScroller(null);
+  }, [showStatus, resolveLine, registerScroller]);
+
   // Row renderer
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const row = filteredRows[index];
     if (!row) return null;
 
     const isExpanded = expandedRow === index;
+    const line = showStatus ? resolveLine(row) : undefined;
+    const sev = showStatus && line != null ? worstFor(line) : undefined;
     const baseStyle: React.CSSProperties = {
       ...style,
       display: 'flex',
@@ -150,9 +186,10 @@ export function VirtualTable({
     return (
       <div
         style={baseStyle}
-        className={`virtual-table-row ${isExpanded ? 'expanded' : ''}`}
+        className={`virtual-table-row ${isExpanded ? 'expanded' : ''} ${severityRowClass(sev)}`}
         onClick={() => onRowClick?.(row, index)}
       >
+        {showStatus && <RowStatus line={line} />}
         {columnWidths.map(col => (
           <div
             key={col.key}
@@ -176,10 +213,12 @@ export function VirtualTable({
         ))}
       </div>
     );
-  }, [filteredRows, columnWidths, expandedRow, onRowClick]);
+  }, [filteredRows, columnWidths, expandedRow, onRowClick, showStatus, resolveLine, worstFor]);
 
-  // Calculate total width
-  const totalWidth = columnWidths.reduce((sum, col) => sum + col.computedWidth, 0);
+  // Calculate total width (add the status column when diagnostics are shown)
+  const totalWidth =
+    columnWidths.reduce((sum, col) => sum + col.computedWidth, 0) +
+    (showStatus ? STATUS_COL_WIDTH : 0);
 
   return (
     <div ref={containerRef} className={`virtual-table-container ${className}`} style={{ flex: 1, overflow: 'hidden' }}>
@@ -255,6 +294,7 @@ export function VirtualTable({
           minWidth: totalWidth,
         }}
       >
+        {showStatus && <RowStatusHeaderSpacer />}
         {columnWidths.map(col => (
           <div
             key={col.key}
@@ -294,6 +334,7 @@ export function VirtualTable({
       <div style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: totalWidth }}>
           <List
+            ref={listRef}
             height={containerHeight}
             itemCount={filteredRows.length}
             itemSize={rowHeight}

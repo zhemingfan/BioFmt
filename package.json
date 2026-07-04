@@ -579,6 +579,26 @@
       {
         "command": "biofmt.navigateToRegion",
         "title": "BioFmt: Navigate to Overlapping Region"
+      },
+      {
+        "command": "biofmt.preview.nextError",
+        "title": "BioFmt: Go to Next Error (Preview)"
+      },
+      {
+        "command": "biofmt.preview.prevError",
+        "title": "BioFmt: Go to Previous Error (Preview)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "biofmt.preview.nextError",
+        "key": "f8",
+        "when": "biofmtPreviewFocused"
+      },
+      {
+        "command": "biofmt.preview.prevError",
+        "key": "shift+f8",
+        "when": "biofmtPreviewFocused"
       }
     ],
     "menus": {

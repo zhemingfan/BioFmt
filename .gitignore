@@ -39,6 +39,7 @@ npm-debug.log*
 CLAUDE.md
 SPEC.md
 TODO.md
+docs/superpowers/
 
 # Temp files
 *.tmp

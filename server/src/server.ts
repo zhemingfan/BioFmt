@@ -44,6 +44,7 @@ import type { BioFmtSettings, ValidatorContext } from './validators/types';
 import { defaultSettings } from './validators/types';
 import { WorkspaceScanner } from './workspace/workspaceScanner';
 import { getDiagnosticCodeActions } from './diagnosticActions';
+import { VisibleRangeTracker } from './visibleRanges';
 
 // Create connection using all proposed features
 const connection = createConnection(ProposedFeatures.all);
@@ -51,8 +52,9 @@ const connection = createConnection(ProposedFeatures.all);
 // Document manager
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
-// Track visible editor ranges per document for viewport-aware validation
-const visibleRanges = new Map<string, { startLine: number; endLine: number }[]>();
+// Track visible ranges per document (per source: editor / preview) for
+// viewport-aware validation. Validation covers the union across sources.
+const visibleRanges = new VisibleRangeTracker();
 
 // Settings
 let globalSettings: BioFmtSettings = defaultSettings;
@@ -105,9 +107,11 @@ connection.onInitialized(() => {
   }
 });
 
-// Receive visible range updates from the client for viewport-aware validation
-connection.onNotification('biofmt/visibleRange', (params: { uri: string; ranges: { startLine: number; endLine: number }[] }) => {
-  visibleRanges.set(params.uri, params.ranges);
+// Receive visible range updates from the client for viewport-aware validation.
+// `source` distinguishes the text editor's viewport from a preview panel's so
+// both are validated (their union) rather than overwriting each other.
+connection.onNotification('biofmt/visibleRange', (params: { uri: string; ranges: { startLine: number; endLine: number }[]; source?: string }) => {
+  visibleRanges.set(params.uri, params.source ?? 'editor', params.ranges);
   const doc = documents.get(params.uri);
   if (doc) validateDocument(doc);
 });
