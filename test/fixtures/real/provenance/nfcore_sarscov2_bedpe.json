@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_sarscov2_bedpe",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/bed/test.bedpe",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/bed/test.bedpe -o test/fixtures/real/nfcore/sarscov2.test.bedpe",
+  "out": "test/fixtures/real/nfcore/sarscov2.test.bedpe",
+  "sha256": "8fe2543c794f97bc89bc29cccbe00f4701b613b01fc966aa1adb017db1083c60",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), sarscov2 test.bedpe, MIT",
+  "build": "SARS-CoV-2 (MN908947.3)",
+  "generated_at_utc": "2026-07-05T00:31:25.118Z"
+}

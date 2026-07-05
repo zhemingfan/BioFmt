@@ -1,0 +1,12 @@
+{
+  "id": "samtools_toy_sam",
+  "source": "https://raw.githubusercontent.com/samtools/samtools/develop/examples/toy.sam",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/samtools/samtools/develop/examples/toy.sam -o test/fixtures/real/samtools/toy.sam",
+  "out": "test/fixtures/real/samtools/toy.sam",
+  "sha256": "8cf7c1a088da7299c1b6d3051f491c3644dae7fb52fe0d5731bfcbb5331b6d3c",
+  "license": "MIT",
+  "attribution": "samtools (github.com/samtools/samtools), examples/toy.sam, MIT",
+  "build": "toy reference (example)",
+  "generated_at_utc": "2026-07-05T00:31:24.954Z"
+}

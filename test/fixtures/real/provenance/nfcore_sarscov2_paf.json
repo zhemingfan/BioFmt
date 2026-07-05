@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_sarscov2_paf",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.paf",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.paf -o test/fixtures/real/nfcore/sarscov2.genome.paf",
+  "out": "test/fixtures/real/nfcore/sarscov2.genome.paf",
+  "sha256": "651a4a510699673fd3ab1908a88aefa701914ae96d7cf1e4d00f4a2faadc48e3",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), sarscov2 genome.paf (minimap2 output), MIT",
+  "build": "SARS-CoV-2 (MN908947.3)",
+  "generated_at_utc": "2026-07-05T00:31:25.064Z"
+}

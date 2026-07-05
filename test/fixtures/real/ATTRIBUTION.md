@@ -21,6 +21,9 @@ intentionally excluded.
 | `1000g/` | IGSR / 1000 Genomes Project phase 3 (20130502) | Open data |
 | `gencode/` | GENCODE release 50 (basic annotation) | GENCODE / EMBL-EBI open |
 | `ucsc/` | UCSC Genome Browser (chrom.sizes, bigPsl example) | UCSC open download |
+| `samtools/` | samtools `examples/` (toy SAM + FASTA) | MIT |
+| `nfcore/` | nf-core/test-datasets (`modules` branch): PAF, BEDPE, narrow/broadPeak, bedGraph, Picard interval_list, FASTQ, BED12 | MIT |
+| `ensembl/` | Ensembl/ensembl-webcode sample WIG (canonical UCSC wiggle example) | Apache-2.0 |
 
 Each source retains its own upstream license; this directory does not relicense
 the data. BioFmt itself is GPL-3.0.

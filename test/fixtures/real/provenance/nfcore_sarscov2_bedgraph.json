@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_sarscov2_bedgraph",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/bedgraph/test.bedgraph",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/bedgraph/test.bedgraph -o test/fixtures/real/nfcore/sarscov2.test.bedgraph",
+  "out": "test/fixtures/real/nfcore/sarscov2.test.bedgraph",
+  "sha256": "909496415d0347f02522540fbfdda5aa7510bbad6c69060ee5e8bf0e047aa501",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), sarscov2 illumina test.bedgraph, MIT",
+  "build": "SARS-CoV-2 (MN908947.3)",
+  "generated_at_utc": "2026-07-05T00:31:25.284Z"
+}

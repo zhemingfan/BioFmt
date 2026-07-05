@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_hs_broadpeak",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/broadpeak/test.broadPeak",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/broadpeak/test.broadPeak -o test/fixtures/real/nfcore/homo_sapiens.test.broadPeak",
+  "out": "test/fixtures/real/nfcore/homo_sapiens.test.broadPeak",
+  "sha256": "6c08195015d0792193aa8d9765c2524c5b1568efa4c4fb638f2bea9230609794",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), homo_sapiens illumina test.broadPeak (MACS2 output), MIT",
+  "build": "GRCh38 (example)",
+  "generated_at_utc": "2026-07-05T00:31:25.229Z"
+}
