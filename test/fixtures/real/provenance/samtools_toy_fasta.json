@@ -1,0 +1,12 @@
+{
+  "id": "samtools_toy_fasta",
+  "source": "https://raw.githubusercontent.com/samtools/samtools/develop/examples/toy.fa",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/samtools/samtools/develop/examples/toy.fa -o test/fixtures/real/samtools/toy.fa",
+  "out": "test/fixtures/real/samtools/toy.fa",
+  "sha256": "83dddff1fed477fbd8337af78466d422a79e30ba0ddd6ef65473816acdc3d720",
+  "license": "MIT",
+  "attribution": "samtools (github.com/samtools/samtools), examples/toy.fa, MIT",
+  "build": "toy reference (example)",
+  "generated_at_utc": "2026-07-05T00:31:25.010Z"
+}

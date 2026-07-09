@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_hs_narrowpeak",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/narrowpeak/test.narrowPeak",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/narrowpeak/test.narrowPeak -o test/fixtures/real/nfcore/homo_sapiens.test.narrowPeak",
+  "out": "test/fixtures/real/nfcore/homo_sapiens.test.narrowPeak",
+  "sha256": "e23eb9d7bcaf8f3e47f7e5370bbbd7ea7581675306b7d75a9713a66c47dbf919",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), homo_sapiens illumina test.narrowPeak (MACS2 output), MIT",
+  "build": "GRCh38 (example)",
+  "generated_at_utc": "2026-07-05T00:31:25.176Z"
+}

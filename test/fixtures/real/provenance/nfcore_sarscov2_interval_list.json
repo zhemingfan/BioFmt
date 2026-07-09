@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_sarscov2_interval_list",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/picard/targets.interval_list",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/picard/targets.interval_list -o test/fixtures/real/nfcore/sarscov2.targets.interval_list",
+  "out": "test/fixtures/real/nfcore/sarscov2.targets.interval_list",
+  "sha256": "78b0f67c269a756677f1ffb9880e6be14e9caab41d080d275f5b2f70c542a72b",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), sarscov2 picard/targets.interval_list, MIT",
+  "build": "SARS-CoV-2 (MN908947.3)",
+  "generated_at_utc": "2026-07-05T00:31:25.393Z"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "ensembl_wig_example",
+  "source": "https://raw.githubusercontent.com/Ensembl/ensembl-webcode/main/htdocs/info/website/upload/sample_files/example.wig",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/Ensembl/ensembl-webcode/main/htdocs/info/website/upload/sample_files/example.wig -o test/fixtures/real/ensembl/example.wig",
+  "out": "test/fixtures/real/ensembl/example.wig",
+  "sha256": "b380b371f43a94d0e3279cef01f25c0a6fc825010a3498c70fc6604ad8b20a74",
+  "license": "Apache-2.0",
+  "attribution": "Ensembl/ensembl-webcode, sample_files/example.wig (canonical UCSC wiggle example), Apache-2.0",
+  "build": "hg-style example",
+  "generated_at_utc": "2026-07-05T00:31:25.337Z"
+}

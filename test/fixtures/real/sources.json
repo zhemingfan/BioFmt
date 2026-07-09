@@ -168,6 +168,160 @@
       "expect": {
         "minRows": 1
       }
+    },
+    {
+      "id": "samtools_toy_sam",
+      "languageId": "omics-sam",
+      "license": "MIT",
+      "attribution": "samtools (github.com/samtools/samtools), examples/toy.sam, MIT",
+      "build": "toy reference (example)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/samtools/samtools/develop/examples/toy.sam",
+      "out": "test/fixtures/real/samtools/toy.sam",
+      "sha256": "8cf7c1a088da7299c1b6d3051f491c3644dae7fb52fe0d5731bfcbb5331b6d3c",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "samtools_toy_fasta",
+      "languageId": "omics-fasta",
+      "license": "MIT",
+      "attribution": "samtools (github.com/samtools/samtools), examples/toy.fa, MIT",
+      "build": "toy reference (example)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/samtools/samtools/develop/examples/toy.fa",
+      "out": "test/fixtures/real/samtools/toy.fa",
+      "sha256": "83dddff1fed477fbd8337af78466d422a79e30ba0ddd6ef65473816acdc3d720",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "nfcore_sarscov2_paf",
+      "languageId": "omics-paf",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), sarscov2 genome.paf (minimap2 output), MIT",
+      "build": "SARS-CoV-2 (MN908947.3)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/genome.paf",
+      "out": "test/fixtures/real/nfcore/sarscov2.genome.paf",
+      "sha256": "651a4a510699673fd3ab1908a88aefa701914ae96d7cf1e4d00f4a2faadc48e3",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "nfcore_sarscov2_bedpe",
+      "languageId": "omics-bedpe",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), sarscov2 test.bedpe, MIT",
+      "build": "SARS-CoV-2 (MN908947.3)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/bed/test.bedpe",
+      "out": "test/fixtures/real/nfcore/sarscov2.test.bedpe",
+      "sha256": "8fe2543c794f97bc89bc29cccbe00f4701b613b01fc966aa1adb017db1083c60",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "nfcore_hs_narrowpeak",
+      "languageId": "omics-narrowpeak",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), homo_sapiens illumina test.narrowPeak (MACS2 output), MIT",
+      "build": "GRCh38 (example)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/narrowpeak/test.narrowPeak",
+      "out": "test/fixtures/real/nfcore/homo_sapiens.test.narrowPeak",
+      "sha256": "e23eb9d7bcaf8f3e47f7e5370bbbd7ea7581675306b7d75a9713a66c47dbf919",
+      "expect": {
+        "minRows": 5
+      }
+    },
+    {
+      "id": "nfcore_hs_broadpeak",
+      "languageId": "omics-broadpeak",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), homo_sapiens illumina test.broadPeak (MACS2 output), MIT",
+      "build": "GRCh38 (example)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/broadpeak/test.broadPeak",
+      "out": "test/fixtures/real/nfcore/homo_sapiens.test.broadPeak",
+      "sha256": "6c08195015d0792193aa8d9765c2524c5b1568efa4c4fb638f2bea9230609794",
+      "expect": {
+        "minRows": 5
+      }
+    },
+    {
+      "id": "nfcore_sarscov2_bedgraph",
+      "languageId": "omics-bedgraph",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), sarscov2 illumina test.bedgraph, MIT",
+      "build": "SARS-CoV-2 (MN908947.3)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/bedgraph/test.bedgraph",
+      "out": "test/fixtures/real/nfcore/sarscov2.test.bedgraph",
+      "sha256": "909496415d0347f02522540fbfdda5aa7510bbad6c69060ee5e8bf0e047aa501",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "ensembl_wig_example",
+      "languageId": "omics-wig",
+      "license": "Apache-2.0",
+      "attribution": "Ensembl/ensembl-webcode, sample_files/example.wig (canonical UCSC wiggle example), Apache-2.0",
+      "build": "hg-style example",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/Ensembl/ensembl-webcode/main/htdocs/info/website/upload/sample_files/example.wig",
+      "out": "test/fixtures/real/ensembl/example.wig",
+      "sha256": "b380b371f43a94d0e3279cef01f25c0a6fc825010a3498c70fc6604ad8b20a74",
+      "expect": {
+        "minRows": 5
+      }
+    },
+    {
+      "id": "nfcore_sarscov2_interval_list",
+      "languageId": "omics-interval-list",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), sarscov2 picard/targets.interval_list, MIT",
+      "build": "SARS-CoV-2 (MN908947.3)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/genome/picard/targets.interval_list",
+      "out": "test/fixtures/real/nfcore/sarscov2.targets.interval_list",
+      "sha256": "78b0f67c269a756677f1ffb9880e6be14e9caab41d080d275f5b2f70c542a72b",
+      "expect": {
+        "minRows": 1
+      }
+    },
+    {
+      "id": "nfcore_sarscov2_fastq",
+      "languageId": "omics-fastq",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), sarscov2 illumina test_1.fastq.gz, MIT",
+      "build": "SARS-CoV-2 (MN908947.3)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz",
+      "out": "test/fixtures/real/nfcore/sarscov2.test_1.fastq.gz",
+      "sha256": "0515ba304cb1bf7abcdd9c156b6affad7e580273f983dfed2e8fe2d918e800ff",
+      "expect": {
+        "minRows": 4
+      }
+    },
+    {
+      "id": "nfcore_hs_bed12",
+      "languageId": "omics-bed",
+      "license": "MIT",
+      "attribution": "nf-core/test-datasets (modules), homo_sapiens pacbio IsoSeq collapsed transcripts (BED12), MIT",
+      "build": "GRCh38 (example)",
+      "obtain": "direct",
+      "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/pacbio/bed/alz.ccs.fl.NEB_5p--NEB_Clontech_3p.flnc.clustered.singletons.merged.aligned_tc.bed",
+      "out": "test/fixtures/real/nfcore/homo_sapiens.isoseq.bed12.bed",
+      "sha256": "42cca27a5e3d2fa1e0573246057c9cc612ad0b5cacab141ffa8dc7406b10b12e",
+      "expect": {
+        "minRows": 3
+      }
     }
   ]
 }

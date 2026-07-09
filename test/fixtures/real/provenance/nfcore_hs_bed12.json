@@ -1,0 +1,12 @@
+{
+  "id": "nfcore_hs_bed12",
+  "source": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/pacbio/bed/alz.ccs.fl.NEB_5p--NEB_Clontech_3p.flnc.clustered.singletons.merged.aligned_tc.bed",
+  "obtain": "direct",
+  "command": "curl -sSL https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/pacbio/bed/alz.ccs.fl.NEB_5p--NEB_Clontech_3p.flnc.clustered.singletons.merged.aligned_tc.bed -o test/fixtures/real/nfcore/homo_sapiens.isoseq.bed12.bed",
+  "out": "test/fixtures/real/nfcore/homo_sapiens.isoseq.bed12.bed",
+  "sha256": "42cca27a5e3d2fa1e0573246057c9cc612ad0b5cacab141ffa8dc7406b10b12e",
+  "license": "MIT",
+  "attribution": "nf-core/test-datasets (modules), homo_sapiens pacbio IsoSeq collapsed transcripts (BED12), MIT",
+  "build": "GRCh38 (example)",
+  "generated_at_utc": "2026-07-05T00:32:37.812Z"
+}
