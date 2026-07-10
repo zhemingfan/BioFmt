@@ -5,6 +5,26 @@ All notable changes to BioFmt will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-09
+
+### Added
+
+- LSP IntelliSense: autocompletion and go-to-definition for VCF (INFO/FORMAT/FILTER keys), GFF3, and SAM.
+- GFF3 language features: find-all-references, rename, and a hierarchical feature tree view in the preview.
+- Inline error decorations that surface LSP diagnostics directly on the affected lines in the editor.
+- In-preview find with match highlighting and next/previous navigation, plus keyboard navigation in previews.
+- Amino-acid property colouring in the FASTA preview.
+
+### Changed
+
+- The VCF preview now parses only the sample columns currently in view, keeping population-scale cohorts responsive.
+
+### Fixed
+
+- CRLF handling across the bulk validators — Windows (CRLF) files no longer produce spurious diagnostics (most severely GFF3, which previously flagged a control-character error on every feature line).
+- VCF and BEDPE validation edge cases, and a GFF3 preview crash on a literal `%` in an attribute value.
+- Three validator false positives surfaced by real-world caller/portal output.
+
 ## [1.2.0] - 2026-06-11
 
 ### Added
