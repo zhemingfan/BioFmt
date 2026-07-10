@@ -68,3 +68,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Coverage reports + maintainer-only files (never shipped in the extension)
+coverage/**
+.c8rc.json
+RELEASING.md
