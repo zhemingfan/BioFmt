@@ -1,8 +1,10 @@
 # BioFmt
 
-BioFmt is a VS Code extension for inspecting genomics, transcriptomics, and proteomics files. It adds syntax highlighting, spec-referenced validation, and interactive previews for 27 bioinformatics formats, including indexed and binary files.
+BioFmt is a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=jfan.biofmt) for inspecting genomics, transcriptomics, and proteomics files. It adds syntax highlighting, spec-referenced validation, and interactive previews for 27 bioinformatics formats, including indexed and binary files.
 
 <img src="docs/VCF_preview.png" alt="VCF preview panel showing a sortable, filterable table of somatic structural variants" width="800">
+
+**[▶ Watch the demo](https://www.youtube.com/watch?v=XXcaYrkiQhI)**
 
 ## Highlights
 
@@ -24,7 +26,7 @@ BioFmt is a VS Code extension for inspecting genomics, transcriptomics, and prot
 
 ## Quick Start
 
-1. Install **BioFmt** from the VS Code Extensions panel.
+1. Install **[BioFmt](https://marketplace.visualstudio.com/items?itemName=jfan.biofmt)** from the VS Code Marketplace, or search "BioFmt" in the Extensions panel.
 2. Open a supported file such as `.vcf`, `.sam`, `.bed`, `.gff3`, `.fasta`, `.fastq`, `.mgf`, or `.bam`.
 3. Run **BioFmt: Open Preview** from the Command Palette, or click the preview icon in the editor title bar.
 4. Hover diagnostics or VCF INFO/FORMAT keys to see rule, field, and specification details.
@@ -75,3 +77,7 @@ GPL-3.0. See [LICENSE](LICENSE).
 ## Changelog
 
 See [CHANGELOG](CHANGELOG.md).
+
+## Contact
+
+BioFmt is built by [Jeremy Fan](https://zhemingfan.github.io/).
